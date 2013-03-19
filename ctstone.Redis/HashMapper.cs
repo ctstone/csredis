@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace ctstone.Redis
 {
@@ -26,6 +24,7 @@ namespace ctstone.Redis
         }
 
         public static T ReflectHash<T>(string[] fields, string[] values)
+            where T : new()
         {
             List<string> hash = new List<string>();
             for (int i = 0; i < fields.Length; i++)
@@ -36,6 +35,7 @@ namespace ctstone.Redis
         }
 
         public static T ReflectHash<T>(object[] fieldValues)
+            where T : new()
         {
             T obj = Activator.CreateInstance<T>();
             if (fieldValues.Length == 0)
