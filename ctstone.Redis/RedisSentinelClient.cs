@@ -10,6 +10,17 @@ namespace ctstone.Redis
     public class RedisSentinelClient : IDisposable
     {
         private RedisConnection _connection;
+        private RedisSubscriptionHandler _subscriptionHandler;
+
+        /// <summary>
+        /// Occurs when a subscription message has been received
+        /// </summary>
+        public event EventHandler<RedisSubscriptionReceivedEventArgs> SubscriptionReceived;
+
+        /// <summary>
+        /// Occurs when a subsciption channel is opened or closed
+        /// </summary>
+        public event EventHandler<RedisSubscriptionChangedEventArgs> SubscriptionChanged;
 
         /// <summary>
         /// Get a value indicating that the RedisSentinelClient connection is open
@@ -26,6 +37,9 @@ namespace ctstone.Redis
         {
             _connection = new RedisConnection(host, port);
             _connection.Connect(timeout);
+            _subscriptionHandler = new RedisSubscriptionHandler(_connection);
+            _subscriptionHandler.SubscriptionChanged += OnSubscriptionChanged;
+            _subscriptionHandler.SubscriptionReceived += OnSubscriptionReceived;
         }
 
         /// <summary>
@@ -90,10 +104,31 @@ namespace ctstone.Redis
 
         public void Subscribe(params string[] channels)
         {
+            _subscriptionHandler.HandleSubscription(RedisCommand.Subscribe(channels));
+        }
+
+        public void Unsubscribe(params string[] channels)
+        {
+            _subscriptionHandler.HandleSubscription(RedisCommand.Unsubscribe(channels));
         }
 
         public void PSubscribe(params string[] channelPatterns)
         {
+            _subscriptionHandler.HandleSubscription(RedisCommand.PSubscribe(channelPatterns));
+        }
+
+        public void PUnsubscribe(params string[] channelPatterns)
+        {
+            _subscriptionHandler.HandleSubscription(RedisCommand.PUnsubscribe(channelPatterns));
+        }
+
+        /// <summary>
+        /// Release resoures used by the current RedisSentinelClient
+        /// </summary>
+        public void Dispose()
+        {
+            if (_connection != null)
+                _connection.Dispose();
         }
 
         private T Write<T>(RedisCommand<T> command)
@@ -104,13 +139,16 @@ namespace ctstone.Redis
             return _connection.Call(command.Parser, command.Command, command.Arguments);
         }
 
-        /// <summary>
-        /// Release resoures used by the current RedisSentinelClient
-        /// </summary>
-        public void Dispose()
+        private void OnSubscriptionReceived(object sender, RedisSubscriptionReceivedEventArgs e)
         {
-            if (_connection != null)
-                _connection.Dispose();
+            if (SubscriptionReceived != null)
+                SubscriptionReceived(this, e);
+        }
+
+        private void OnSubscriptionChanged(object sender, RedisSubscriptionChangedEventArgs e)
+        {
+            if (SubscriptionChanged != null)
+                SubscriptionChanged(this, e);
         }
     }
 
