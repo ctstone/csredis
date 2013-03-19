@@ -14,6 +14,7 @@ using (var redis = new RedisClient("localhost", 6379, 0))
 ```
 
 The **asynchronous** client uses the .NET task framework and requires .NET4. Here is an example showing four ways to handle the async Task
+```csharp
 using (var redis = new RedisClientAsync("localhost", 6379, 0))
 {
   // fire-and-forget
@@ -43,31 +44,37 @@ redis.Auth("mystrongpasword");
 
 ##Flexible hash mapping
 Pass any POCO or anonymous object to the generic hash methods:
+```chsarp
 redis.HMSet("myhash", new
 {
   Field1 = "string",
   Field2 = true,
   Field3 = DateTime.Now,
 });
+```
 
 Or use a string Dictionary:
+```chsarp
 redis.HMSet("mydict", new Dictionary<string, string>
 {
   { "F1", "string" },
   { "F2", "true" },
   { "F3", DateTime.Now.ToString() },
 });
+```
 
 Or use the native API:
+```csharp
 redis.HMSet("myhash", new[] { "F1", "string", "F2", "true", "F3", DateTime.Now.ToString() });
+```
 
 ##Subscription model
 Because subscriptions block the active connection, subscriptions are not supported in RedisClientAsync.
 
 The subscription model is event based. Attach a handler to one or both of SubscriptionChanged/SubscriptionReceived to receive callbacks on subscription events. Pattern/non-pattern subscriptions are handled by the same events. Unsubscription will have to be handled by a background thread/task.
 
-SubscriptionChanged: Occurs when a subsciption channel is opened or closed
-RedisSubscriptionReceived: Occurs when a subscription message has been received
+**SubscriptionChanged**: Occurs when a subsciption channel is opened or closed
+**RedisSubscriptionReceived**: Occurs when a subscription message has been received
 
 Example:
 ```csharp
