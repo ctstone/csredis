@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D35E185E-A7E1-41E1-846C-21944F56074F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ctstone.Redis</RootNamespace>
+    <AssemblyName>ctstone.Redis</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Events.cs" />
+    <Compile Include="Exceptions.cs" />
+    <Compile Include="RedisArgs.cs" />
+    <Compile Include="RedisClientAsync.cs" />
+    <Compile Include="RedisCommands\RedisBool.cs" />
+    <Compile Include="RedisCommands\RedisBools.cs" />
+    <Compile Include="RedisCommands\RedisBytes.cs" />
+    <Compile Include="RedisCommands\RedisDate.cs" />
+    <Compile Include="RedisCommands\RedisDateMicro.cs" />
+    <Compile Include="RedisCommands\RedisFloat.cs" />
+    <Compile Include="RedisCommands\RedisHash.cs" />
+    <Compile Include="RedisCommands\RedisHashes.cs" />
+    <Compile Include="RedisCommands\RedisInt.cs" />
+    <Compile Include="RedisCommands\RedisIntNull.cs" />
+    <Compile Include="RedisCommands\RedisTuple.cs" />
+    <Compile Include="RedisCommands\RedisObject.cs" />
+    <Compile Include="RedisCommands\RedisObjects.cs" />
+    <Compile Include="RedisCommands\RedisStatus.cs" />
+    <Compile Include="RedisCommands\RedisString.cs" />
+    <Compile Include="RedisCommands\RedisStringNull.cs" />
+    <Compile Include="RedisCommands\RedisStrings.cs" />
+    <Compile Include="RedisCommands\RedisSubscription.cs" />
+    <Compile Include="RedisCommands\RedisValue.cs" />
+    <Compile Include="RedisConnection.cs" />
+    <Compile Include="RedisReader.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RedisClient.cs" />
+    <Compile Include="RedisCommand.cs" />
+    <Compile Include="RedisSentinelClient.cs" />
+    <Compile Include="RedisSentinelManager.cs" />
+    <Compile Include="Subscriptions.cs" />
+    <Compile Include="Types.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ctstone.Redis", "ctstone.Redis\ctstone.Redis.csproj", "{D35E185E-A7E1-41E1-846C-21944F56074F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ctstone.Redis.Tests", "ctstone.Redis.Tests\ctstone.Redis.Tests.csproj", "{422A4579-8C59-4E92-8EB5-2A45C38D27FB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D35E185E-A7E1-41E1-846C-21944F56074F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D35E185E-A7E1-41E1-846C-21944F56074F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D35E185E-A7E1-41E1-846C-21944F56074F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D35E185E-A7E1-41E1-846C-21944F56074F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{422A4579-8C59-4E92-8EB5-2A45C38D27FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{422A4579-8C59-4E92-8EB5-2A45C38D27FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{422A4579-8C59-4E92-8EB5-2A45C38D27FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{422A4579-8C59-4E92-8EB5-2A45C38D27FB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -6,6 +6,9 @@
 *.user
 *.sln.docstates
 
+# Configuration
+App.config
+
 # Build results
 
 [Dd]ebug/
