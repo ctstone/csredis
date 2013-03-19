@@ -56,6 +56,19 @@ namespace ctstone.Redis
             return Write(new RedisObject(command, args));
         }
 
+        /// <summary>
+        /// Block the current thread and wait for the given Redis command to complete
+        /// </summary>
+        /// <typeparam name="T">Redis command return type</typeparam>
+        /// <param name="func">Redis command method</param>
+        /// <returns>Redis command output</returns>
+        public T Wait<T>(Func<RedisClientAsync, Task<T>> func)
+        {
+            Task<T> task = func(this);
+            task.Wait();
+            return task.Result;
+        }
+
 
         #region Connection
         /// <summary>
