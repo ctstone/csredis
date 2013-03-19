@@ -454,7 +454,7 @@ namespace ctstone.Redis
         {
             return Write(RedisCommand.HMGet(key, fields));
         }
-        public Task<string> HMSet(string key, Dictionary<string, object> dict)
+        public Task<string> HMSet(string key, Dictionary<string, string> dict)
         {
             return Write(RedisCommand.HMSet(key, dict));
         }

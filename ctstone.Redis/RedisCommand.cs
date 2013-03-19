@@ -213,7 +213,7 @@ namespace ctstone.Redis
             string[] args = RedisArgs.Concat(key, fields);
             return new RedisStrings("HMGET", args);
         }
-        public static RedisStatus HMSet(string key, Dictionary<string, object> dict)
+        public static RedisStatus HMSet(string key, Dictionary<string, string> dict)
         {
             List<object> args = new List<object>();
             args.Add(key);

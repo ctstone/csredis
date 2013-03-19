@@ -43,8 +43,8 @@ namespace ctstone.Redis.Tests
         public void TestHashCreate_Dict()
         {
             _redis.Del("test");
-                
-            var my_dict = new Dictionary<string, object>
+
+            var my_dict = new Dictionary<string, string>
             {
                 { "key1", "value1" },
                 { "key2", "value2" },
@@ -174,7 +174,7 @@ namespace ctstone.Redis.Tests
         {
             _redis.Del("test");
 
-            var dict = new Dictionary<string, object>
+            var dict = new Dictionary<string, string>
             {
                 {"Key1", "Value1" },
                 {"Key2", "Value2" },
@@ -194,7 +194,7 @@ namespace ctstone.Redis.Tests
         {
             _redis.Del("test");
 
-            var dict = new Dictionary<string, object>
+            var dict = new Dictionary<string, string>
             {
                 {"Key1", "Value1" },
                 {"Key2", "Value2" },
@@ -265,7 +265,7 @@ namespace ctstone.Redis.Tests
         {
             _redis.Del("test");
 
-            var dict = new Dictionary<string, object>
+            var dict = new Dictionary<string, string>
             {
                 {"Key1", "Value1" },
                 {"Key2", "Value2" },

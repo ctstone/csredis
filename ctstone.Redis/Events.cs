@@ -10,13 +10,13 @@ namespace ctstone.Redis
         /// <summary>
         /// The subscription response
         /// </summary>
-        public RedisSubscriptionResponse Response { get; private set; }
+        public RedisSubscriptionChannel Response { get; private set; }
 
         /// <summary>
         /// Instantiate new instance of the RedisSubscriptionChangedEventArgs class
         /// </summary>
         /// <param name="response">The Redis server response</param>
-        public RedisSubscriptionChangedEventArgs(RedisSubscriptionResponse response)
+        public RedisSubscriptionChangedEventArgs(RedisSubscriptionChannel response)
         {
             Response = response;
         }

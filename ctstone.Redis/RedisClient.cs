@@ -583,7 +583,7 @@ namespace ctstone.Redis
         /// <param name="key">Hash key</param>
         /// <param name="dict">Dictionary mapping of hash</param>
         /// <returns>Status code</returns>
-        public string HMSet(string key, Dictionary<string, object> dict)
+        public string HMSet(string key, Dictionary<string, string> dict)
         {
             return Write(RedisCommand.HMSet(key, dict));
         }
