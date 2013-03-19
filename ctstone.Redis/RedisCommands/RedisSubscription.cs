@@ -10,7 +10,7 @@ namespace ctstone.Redis.RedisCommands
 
         private static RedisSubscriptionResponse ParseStream(Stream stream)
         {
-            return new RedisSubscriptionResponse(RedisReader.ReadMultiBulk(stream));
+            return RedisSubscriptionResponse.ReadResponse(RedisReader.ReadMultiBulk(stream));
         }
     }
 }

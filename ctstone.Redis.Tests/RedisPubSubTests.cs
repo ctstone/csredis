@@ -18,7 +18,7 @@ namespace ctstone.Redis.Tests
             _redis.SubscriptionReceived += (o, e) =>
             {
                 message_count++;
-                last_message = e.Message.Message;
+                last_message = e.Message.Body;
             };
             _redis.SubscriptionChanged += (o, e) =>
             {
@@ -60,7 +60,7 @@ namespace ctstone.Redis.Tests
             _redis.SubscriptionReceived += (o, e) =>
             {
                 message_count++;
-                last_message = e.Message.Message;
+                last_message = e.Message.Body;
             };
             _redis.SubscriptionChanged += (o, e) =>
             {

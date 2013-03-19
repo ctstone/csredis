@@ -42,15 +42,17 @@ namespace ctstone.Redis
                         case RedisSubscriptionResponseType.PSubscribe:
                         case RedisSubscriptionResponseType.Unsubscribe:
                         case RedisSubscriptionResponseType.PUnsubscribe:
-                            Count = resp.Count;
+                            RedisSubscriptionChannel channel = resp as RedisSubscriptionChannel;
+                            Count = channel.Count;
                             if (SubscriptionChanged != null)
-                                SubscriptionChanged(this, new RedisSubscriptionChangedEventArgs(resp));
+                                SubscriptionChanged(this, new RedisSubscriptionChangedEventArgs(channel));
                             break;
 
                         case RedisSubscriptionResponseType.Message:
                         case RedisSubscriptionResponseType.PMessage:
+                            RedisSubscriptionMessage message = resp as RedisSubscriptionMessage;
                             if (SubscriptionReceived != null)
-                                SubscriptionReceived(this, new RedisSubscriptionReceivedEventArgs(resp.Message));
+                                SubscriptionReceived(this, new RedisSubscriptionReceivedEventArgs(message));
                             break;
                     }
                     if (Count == 0)
@@ -205,8 +207,6 @@ namespace ctstone.Redis
             _monitorHandler.MonitorReceived += OnMonitorReceived;
 
         }
-
-        
 
         /// <summary>
         /// Enter pipeline mode

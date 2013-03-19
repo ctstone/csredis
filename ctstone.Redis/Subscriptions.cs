@@ -3,102 +3,125 @@
 namespace ctstone.Redis
 {
     /// <summary>
-    /// Represents a Redis subscription message
+    /// Base class for Redis pub/sub responses
     /// </summary>
-    public class RedisSubscriptionMessage
-    {
-        /// <summary>
-        /// Get or set the channel to which the message was published
-        /// </summary>
-        public string Channel { get; set; }
-
-        /// <summary>
-        /// Get or set the pattern that matched the published channel
-        /// </summary>
-        public string Pattern { get; set; }
-
-        /// <summary>
-        /// Get or set the message that was published
-        /// </summary>
-        public string Message { get; set; }
-    }
-
-    /// <summary>
-    /// Represents a Redis subscribe/unsubscribe response
-    /// </summary>
-    public class RedisSubscriptionResponse
+    public abstract class RedisSubscriptionResponse
     {
         /// <summary>
         /// The type of response
         /// </summary>
-        public RedisSubscriptionResponseType Type { get; set; }
+        public RedisSubscriptionResponseType Type { get; private set; }
 
         /// <summary>
-        /// Count of channel subscriptions
+        /// Get the channel to which the message was published, or null if not available
         /// </summary>
-        public long Count { get; set; }
+        public string Channel { get; protected set; }
 
         /// <summary>
-        /// Message response
+        /// Get the pattern that matched the published channel, or null if not available
         /// </summary>
-        public RedisSubscriptionMessage Message { get; set; }
+        public string Pattern { get; protected set; }
 
         /// <summary>
-        /// Instantiate a new instance of the RedisSubscriptionResponse class
+        /// Read multi-bulk response from Redis server
         /// </summary>
-        /// <param name="response">Server response</param>
-        public RedisSubscriptionResponse(object[] response)
+        /// <param name="response"></param>
+        /// <returns></returns>
+        public static RedisSubscriptionResponse ReadResponse(object[] response)
         {
-            Type = (RedisSubscriptionResponseType)Enum.Parse(typeof(RedisSubscriptionResponseType), response[0] as String, true);
-            switch (Type)
+            RedisSubscriptionResponseType type  = ParseType(response[0] as String);
+
+            RedisSubscriptionResponse obj;
+            switch (type)
             {
                 case RedisSubscriptionResponseType.Subscribe:
+                case RedisSubscriptionResponseType.Unsubscribe:
                 case RedisSubscriptionResponseType.PSubscribe:
-                    Message = new RedisSubscriptionMessage
-                    {
-                        Channel = response[1] as String,
-                        Pattern = response[1] as String,
-                    };
-                    Count = (long)response[2];
+                case RedisSubscriptionResponseType.PUnsubscribe:
+                    obj = new RedisSubscriptionChannel(type, response);
                     break;
 
                 case RedisSubscriptionResponseType.Message:
-                    Message = new RedisSubscriptionMessage
-                    {
-                        Channel = response[1] as String,
-                        Pattern = response[1] as String,
-                        Message = response[2] as String,
-                    };
+                case RedisSubscriptionResponseType.PMessage:
+                    obj = new RedisSubscriptionMessage(type, response);
+                    break;
+
+                default:
+                    throw new RedisProtocolException("Unexpected response type: " + type);
+            }
+            obj.Type = type;
+            return obj;
+        }
+
+        private static RedisSubscriptionResponseType ParseType(string type)
+        {
+            return (RedisSubscriptionResponseType)Enum.Parse(typeof(RedisSubscriptionResponseType), type, true);
+        }
+    }
+
+    /// <summary>
+    /// Represents a Redis channel in a pub/sub context
+    /// </summary>
+    public class RedisSubscriptionChannel : RedisSubscriptionResponse
+    {
+        /// <summary>
+        /// Get the number of subscription channels currently open on the current connection
+        /// </summary>
+        public long Count { get; private set; }
+
+        /// <summary>
+        /// Instantiate a new instance of the RedisSubscriptionChannel class
+        /// </summary>
+        /// <param name="type">The type of channel response</param>
+        /// <param name="response">Redis multi-bulk response</param>
+        public RedisSubscriptionChannel(RedisSubscriptionResponseType type, object[] response)
+        {
+            switch (type)
+            {
+                case RedisSubscriptionResponseType.Subscribe:
+                case RedisSubscriptionResponseType.Unsubscribe:
+                    Channel = response[1] as String;
+                    break;
+
+                case RedisSubscriptionResponseType.PSubscribe:
+                case RedisSubscriptionResponseType.PUnsubscribe:
+                    Pattern = response[1] as String;
+                    break;
+            }
+            Count = (long)response[2];
+        }
+    }
+
+    /// <summary>
+    /// Represents a Redis message in a pub/sub context
+    /// </summary>
+    public class RedisSubscriptionMessage : RedisSubscriptionResponse
+    {
+        /// <summary>
+        /// Get the message that was published
+        /// </summary>
+        public string Body { get; private set; }
+
+        /// <summary>
+        /// Instantiate a new instance of the RedisSubscriptionMessage class
+        /// </summary>
+        /// <param name="type">The type of message response</param>
+        /// <param name="response">Redis multi-bulk response</param>
+        public RedisSubscriptionMessage(RedisSubscriptionResponseType type, object[] response)
+        {
+            switch (type)
+            {
+                case RedisSubscriptionResponseType.Message:
+                    Channel = response[1] as String;
+                    Body = response[2] as String;
                     break;
 
                 case RedisSubscriptionResponseType.PMessage:
-                    Message = new RedisSubscriptionMessage
-                    {
-                        Channel = response[1] as String,
-                        Pattern = response[2] as String,
-                        Message = response[3] as String,
-                    };
-                    break;
-
-                case RedisSubscriptionResponseType.Unsubscribe:
-                case RedisSubscriptionResponseType.PUnsubscribe:
-                    Message = new RedisSubscriptionMessage
-                    {
-                        Channel = response[1] as String,
-                        Pattern = response[1] as String,
-                    };
-                    Count = (long)response[2];
+                    Pattern = response[1] as String;
+                    Channel = response[2] as String;
+                    Body = response[3] as String;
                     break;
             }
-        }
-
-        /// <summary>
-        /// Get a string representation of the response
-        /// </summary>
-        /// <returns>Type and message of the response</returns>
-        public override string ToString()
-        {
-            return String.Format("{0} - {1}", Type, Message);
         }
     }
 }
