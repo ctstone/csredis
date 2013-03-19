@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Events.cs" />
     <Compile Include="Exceptions.cs" />
+    <Compile Include="Handlers.cs" />
     <Compile Include="HashMapper.cs" />
     <Compile Include="RedisArgs.cs" />
     <Compile Include="RedisClientAsync.cs" />
