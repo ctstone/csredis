@@ -11,18 +11,36 @@ namespace ctstone.Redis.RedisCommands
 
         private static Dictionary<string, string>[] ParseStream(Stream stream)
         {
-            object[] result = RedisReader.ReadMultiBulk(stream);
-            Dictionary<string, string>[] dicts = new Dictionary<string, string>[result.Length];
-            for (int i = 0; i < result.Length; i++)
+            object[] response = RedisReader.ReadMultiBulk(stream);
+
+            Dictionary<string, string>[] dicts = new Dictionary<string, string>[response.Length];
+            for (int i = 0; i < response.Length; i++)
             {
-                object[] array = result[i] as object[];
-                dicts[i] = new Dictionary<string, string>();
-                for (int j = 0; j < array.Length; j += 2)
-                {
-                    dicts[i][array[j].ToString()] = array[j + 1].ToString();
-                }
+                object[] hash = response[i] as object[];
+                dicts[i] = HashMapper.GetDict(hash);
             }
             return dicts;
+        }
+    }
+
+    class RedisHashes<T> : RedisCommand<T[]>
+        where T : new()
+    {
+        public RedisHashes(string command, params object[] args)
+            : base(ParseStream, command, args)
+        { }
+
+        private static T[] ParseStream(Stream stream)
+        {
+            object[] response = RedisReader.ReadMultiBulk(stream);
+
+            T[] objs = new T[response.Length];
+            for (int i = 0; i < response.Length; i++)
+            {
+                object[] hash = response[i] as object[];
+                objs[i] = HashMapper.ReflectHash<T>(hash);
+            }
+            return objs;
         }
     }
 }

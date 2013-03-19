@@ -183,10 +183,10 @@ namespace ctstone.Redis
         {
             return new RedisString("HGET", key, field);
         }
-        public static RedisHashCommand<T> HGetAll<T>(string key)
+        public static RedisHash<T> HGetAll<T>(string key)
             where T : new()
         {
-            return new RedisHashCommand<T>("HGETALL", key);
+            return new RedisHash<T>("HGETALL", key);
         }
         public static RedisHash HGetAll(string key)
         {
@@ -850,17 +850,17 @@ namespace ctstone.Redis
         #endregion
 
         #region Sentinel
-        public static RedisHashes Sentinels(string masterName)
+        public static RedisHashes<RedisSentinelInfo> Sentinels(string masterName)
         {
-            return new RedisHashes("SENTINEL", "sentinels", masterName);
+            return new RedisHashes<RedisSentinelInfo>("SENTINEL", "sentinels", masterName);
         }
-        public static RedisObject Masters()
+        public static RedisHashes<RedisMasterInfo> Masters()
         {
-            return new RedisObject("SENTINEL", "masters");
+            return new RedisHashes<RedisMasterInfo>("SENTINEL", "masters");
         }
-        public static RedisHashes Slaves(string masterName)
+        public static RedisHashes<RedisSlaveInfo> Slaves(string masterName)
         {
-            return new RedisHashes("SENTINEL", "slaves", masterName);
+            return new RedisHashes<RedisSlaveInfo>("SENTINEL", "slaves", masterName);
         }
         public static RedisStrings IsMasterDownByAddr(string ip, int port)
         {

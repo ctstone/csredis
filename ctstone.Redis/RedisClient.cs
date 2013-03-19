@@ -5,6 +5,151 @@ using System.Text;
 
 namespace ctstone.Redis
 {
+    class RedisSubscriptionHandler
+    {
+        private readonly RedisConnection _connection;
+
+        public bool IsSubscribed { get; private set; }
+        public long Count { get; private set; }
+
+        /// <summary>
+        /// Occurs when a subscription message has been received
+        /// </summary>
+        public event EventHandler<RedisSubscriptionReceivedEventArgs> SubscriptionReceived;
+
+        /// <summary>
+        /// Occurs when a subsciption channel is opened or closed
+        /// </summary>
+        public event EventHandler<RedisSubscriptionChangedEventArgs> SubscriptionChanged;
+
+        public RedisSubscriptionHandler(RedisConnection connection)
+        {
+            _connection = connection;
+        }
+
+        public void HandleSubscription(RedisSubscription command)
+        {
+            _connection.Write(command.Command, command.Arguments);
+            if (!IsSubscribed)
+            {
+                IsSubscribed = true;
+                while (true)
+                {
+                    var resp = _connection.Read(command.Parser);
+                    switch (resp.Type)
+                    {
+                        case RedisSubscriptionResponseType.Subscribe:
+                        case RedisSubscriptionResponseType.PSubscribe:
+                        case RedisSubscriptionResponseType.Unsubscribe:
+                        case RedisSubscriptionResponseType.PUnsubscribe:
+                            Count = resp.Count;
+                            if (SubscriptionChanged != null)
+                                SubscriptionChanged(this, new RedisSubscriptionChangedEventArgs(resp));
+                            break;
+
+                        case RedisSubscriptionResponseType.Message:
+                        case RedisSubscriptionResponseType.PMessage:
+                            if (SubscriptionReceived != null)
+                                SubscriptionReceived(this, new RedisSubscriptionReceivedEventArgs(resp.Message));
+                            break;
+                    }
+                    if (Count == 0)
+                        break;
+                }
+                IsSubscribed = false;
+            }
+        }
+    }
+
+    class RedisPipelineHandler
+    {
+        private readonly RedisConnection _connection;
+        private long _pipelineCounter;
+
+        public bool Active { get; private set; }
+
+        public RedisPipelineHandler(RedisConnection connection)
+        {
+            _connection = connection;
+        }
+
+        public void Start()
+        {
+            if (Active)
+                throw new InvalidOperationException("Already in pipeline mode");
+            Active = true;
+        }
+
+        public object[] End()
+        {
+            return End(false);
+        }
+
+        public object[] End(bool ignoreResults)
+        {
+            if (!Active)
+                throw new InvalidOperationException("Not in pipeline mode");
+
+            object[] results = null;
+
+            if (!ignoreResults)
+                results = new object[_pipelineCounter];
+
+            for (int i = 0; i < _pipelineCounter; i++)
+            {
+                object result = _connection.Read();
+                if (!ignoreResults)
+                    results[i] = result;
+            }
+
+            Active = false;
+            _pipelineCounter = 0;
+            return results;
+        }
+
+        public void Write(string command, params object[] arguments)
+        {
+            _pipelineCounter++;
+            _connection.WriteAsync(command, arguments);
+        }
+    }
+
+    class RedisMonitorHandler
+    {
+        private readonly RedisConnection _connection;
+
+        /// <summary>
+        /// Occurs when a monitor response is received
+        /// </summary>
+        public event EventHandler<RedisMonitorEventArgs> MonitorReceived;
+
+        public RedisMonitorHandler(RedisConnection connection)
+        {
+            _connection = connection;
+        }
+
+        public string Monitor()
+        {
+            string status = _connection.Call(RedisReader.ReadStatus, "MONITOR");
+            while (true)
+            {
+                object message;
+                try
+                {
+                    message = _connection.Read();
+                }
+                catch (Exception e)
+                {
+                    if (_connection.Connected) throw e;
+                    return status;
+                }
+                if (MonitorReceived != null)
+                    MonitorReceived(this, new RedisMonitorEventArgs(message));
+            }
+        }
+    }
+
+
     /// <summary>
     /// Synchronous Redis client 
     /// </summary>
@@ -12,10 +157,10 @@ namespace ctstone.Redis
     {
         private static Encoding _encoding = Encoding.UTF8;
         private RedisConnection _connection;
-        private bool _isPipeline;
-        private long _pipelineCounter;
+        private RedisPipelineHandler _pipelineHandler;
+        private RedisSubscriptionHandler _subscriptionHandler;
+        private RedisMonitorHandler _monitorHandler;
         private bool _isTransaction;
-        private bool _isSubscribed;
 
         /// <summary>
         /// Get a value indicating that the RedisClient connection is open
@@ -45,24 +190,30 @@ namespace ctstone.Redis
         /// <summary>
         /// Instantiate a new instance of the RedisClient class
         /// </summary>
-        /// <param name="host">Redis host</param>
-        /// <param name="port">Redis port</param>
+        /// <param name="host">Redis server host</param>
+        /// <param name="port">Redis server port</param>
         /// <param name="timeoutMilliseconds">Connection timeout in milliseconds (0 for no timeout)</param>
         public RedisClient(string host, int port, int timeoutMilliseconds)
         {
             _connection = new RedisConnection(host, port);
             _connection.Connect(timeoutMilliseconds);
+            _pipelineHandler = new RedisPipelineHandler(_connection);
+            _subscriptionHandler = new RedisSubscriptionHandler(_connection);
+            _subscriptionHandler.SubscriptionChanged += OnSubscriptionChanged;
+            _subscriptionHandler.SubscriptionReceived += OnSubscriptionReceived;
+            _monitorHandler = new RedisMonitorHandler(_connection);
+            _monitorHandler.MonitorReceived += OnMonitorReceived;
+
         }
+
+        
 
         /// <summary>
         /// Enter pipeline mode
         /// </summary>
         public void StartPipe()
         {
-            if (_isPipeline)
-                throw new InvalidOperationException("RedisClient is already in pipeline mode");
-
-            _isPipeline = true;
+            _pipelineHandler.Start();
         }
 
         /// <summary>
@@ -71,7 +222,7 @@ namespace ctstone.Redis
         /// <returns>Array of all pipelined command results</returns>
         public object[] EndPipe()
         {
-            return EndPipe(false);
+            return _pipelineHandler.End();
         }
 
         /// <summary>
@@ -81,28 +232,11 @@ namespace ctstone.Redis
         /// <returns>Array of all pipelined command results, or null if not returning results</returns>
         public object[] EndPipe(bool ignoreResults)
         {
-            if (!_isPipeline)
-                throw new InvalidOperationException("RedisClient is not in pipeline mode");
-
-            object[] results = null;
-
-            if (!ignoreResults)
-                results = new object[_pipelineCounter];
-
-            for (int i = 0; i < _pipelineCounter; i++)
-            {
-                object result = _connection.Read();
-                if (!ignoreResults)
-                    results[i] = result;
-            }
-
-            _isPipeline = false;
-            _pipelineCounter = 0;
-            return results;
+            return _pipelineHandler.End(ignoreResults);
         }
 
         /// <summary>
-        /// Call arbitrary redis command (e.g. for a command not yet implemented in this package)
+        /// Call arbitrary Redis command (e.g. for a command not yet implemented in this library)
         /// </summary>
         /// <param name="command">The name of the command</param>
         /// <param name="args">Array of arguments to the command</param>
@@ -1305,7 +1439,8 @@ namespace ctstone.Redis
         /// <param name="channelPatterns">Patterns to subscribe</param>
         public void PSubscribe(params string[] channelPatterns)
         {
-            Write(RedisCommand.PSubscribe(channelPatterns));
+            _subscriptionHandler.HandleSubscription(RedisCommand.PSubscribe(channelPatterns));
+            //Write(RedisCommand.PSubscribe(channelPatterns));
         }
 
         /// <summary>
@@ -1325,7 +1460,8 @@ namespace ctstone.Redis
         /// <param name="channelPatterns">Patterns to unsubscribe</param>
         public void PUnsubscribe(params string[] channelPatterns)
         {
-            Write(RedisCommand.PUnsubscribe(channelPatterns));
+            _subscriptionHandler.HandleSubscription(RedisCommand.PUnsubscribe(channelPatterns));
+            //Write(RedisCommand.PUnsubscribe(channelPatterns));
         }
 
         /// <summary>
@@ -1334,7 +1470,8 @@ namespace ctstone.Redis
         /// <param name="channels">Channels to subscribe</param>
         public void Subscribe(params string[] channels)
         {
-            Write(RedisCommand.Subscribe(channels));
+            _subscriptionHandler.HandleSubscription(RedisCommand.Subscribe(channels));
+            //Write(RedisCommand.Subscribe(channels));
         }
 
         /// <summary>
@@ -1343,7 +1480,8 @@ namespace ctstone.Redis
         /// <param name="channels">Channels to unsubscribe</param>
         public void Unsubscribe(params string[] channels)
         {
-            Write(RedisCommand.Unsubscribe(channels));
+            _subscriptionHandler.HandleSubscription(RedisCommand.Unsubscribe(channels));
+            //Write(RedisCommand.Unsubscribe(channels));
         }
         
         #endregion
@@ -1835,7 +1973,7 @@ namespace ctstone.Redis
         /// <returns>Status code</returns>
         public string Monitor()
         {
-            return Write(RedisCommand.Monitor());
+            return _monitorHandler.Monitor();
         }
 
         /// <summary>
@@ -1956,29 +2094,28 @@ namespace ctstone.Redis
         }
         #endregion
 
+        
+        /// <summary>
+        /// Release resources used by the current RedisClient instance
+        /// </summary>
+        public void Dispose()
+        {
+            if (_connection != null)
+                _connection.Dispose();
+        }
+
         private T Write<T>(RedisCommand<T> command)
         {
             if (!_connection.Connected)
                 throw new InvalidOperationException("RedisClient is not connected");
 
-            if (command.Command == "MONITOR")
+            if (_subscriptionHandler.IsSubscribed)
+                throw new InvalidOperationException("RedisClient cannot accept non-subscription commands while subscribed");
+
+            if (_pipelineHandler.Active)
             {
-                T response = _connection.Call(command.Parser, command.Command, command.Arguments);
-                while (true)
-                {
-                    object message;
-                    try
-                    {
-                        message = _connection.Read();
-                    }
-                    catch (Exception e)
-                    {
-                        if (Connected) throw e;
-                        return response;
-                    }
-                    if (MonitorReceived != null)
-                        MonitorReceived(this, new RedisMonitorEventArgs(message));
-                }
+                _pipelineHandler.Write(command.Command, command.Arguments);
+                return default(T);
             }
             else if (command.Command == "MULTI")
             {
@@ -1996,68 +2133,25 @@ namespace ctstone.Redis
                 return default(T);
             }
 
-            if (command is RedisSubscription)
-            {
-                HandleSubscription(command as RedisSubscription);
-                return default(T);
-            }
-            else if (_isSubscribed)
-            {
-                throw new InvalidOperationException("RedisClient cannot accept non-subscription commands while subscribed");
-            }
-            else if (_isPipeline)
-            {
-                _pipelineCounter++;
-                _connection.WriteAsync(command.Command, command.Arguments);
-                return default(T);
-            }
-            else
-            {
-                return _connection.Call(command.Parser, command.Command, command.Arguments);
-            }
+            return _connection.Call(command.Parser, command.Command, command.Arguments);
         }
 
-        private void HandleSubscription(RedisSubscription command) 
+        private void OnSubscriptionReceived(object sender, RedisSubscriptionReceivedEventArgs e)
         {
-            _connection.Write(command.Command, command.Arguments);
-            if (!_isSubscribed)
-            {
-                _isSubscribed = true;
-                long count = 0;
-                while (true)
-                {
-                    var resp = _connection.Read(command.Parser);
-                    switch (resp.Type)
-                    {
-                        case RedisSubscriptionResponseType.Subscribe:
-                        case RedisSubscriptionResponseType.PSubscribe:
-                        case RedisSubscriptionResponseType.Unsubscribe:
-                        case RedisSubscriptionResponseType.PUnsubscribe:
-                            count = resp.Count;
-                            if (SubscriptionChanged != null)
-                                SubscriptionChanged(this, new RedisSubscriptionChangedEventArgs(resp));
-                            break;
-
-                        case RedisSubscriptionResponseType.Message:
-                        case RedisSubscriptionResponseType.PMessage:
-                            if (SubscriptionReceived != null)
-                                SubscriptionReceived(this, new RedisSubscriptionReceivedEventArgs(resp.Message));
-                            break;
-                    }
-                    if (count == 0)
-                        break;
-                }
-                _isSubscribed = false;
-            }
+            if (SubscriptionReceived != null)
+                SubscriptionReceived(this, e);
         }
 
-        /// <summary>
-        /// Release resources used by the current RedisClient instance
-        /// </summary>
-        public void Dispose()
+        private void OnSubscriptionChanged(object sender, RedisSubscriptionChangedEventArgs e)
         {
-            if (_connection != null)
-                _connection.Dispose();
+            if (SubscriptionChanged != null)
+                SubscriptionChanged(this, e);
+        }
+
+        private void OnMonitorReceived(object sender, RedisMonitorEventArgs e)
+        {
+            if (MonitorReceived != null)
+                MonitorReceived(this, e);
         }
     }
 }
