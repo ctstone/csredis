@@ -14,9 +14,19 @@ namespace ctstone.Redis
         private bool _isTransaction;
 
         /// <summary>
-        /// Get a value indicating that the RedisClient connection is open
+        /// Get a value indicating that the RedisClientAsync connection is open
         /// </summary>
         public bool Connected { get { return _connection.Connected; } }
+
+        /// <summary>
+        /// Get host that the current RedisClientAsync is connected to
+        /// </summary>
+        public string Host { get { return _connection.Host; } }
+
+        /// <summary>
+        /// Get the port that the current RedisClientAsync is connected to
+        /// </summary>
+        public int Port { get { return _connection.Port; } }
 
         /// <summary>
         /// Occurs when a transaction command has been received

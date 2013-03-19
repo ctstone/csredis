@@ -28,6 +28,16 @@ namespace ctstone.Redis
         public bool Connected { get { return _connection.Connected; } }
 
         /// <summary>
+        /// Get host that the current RedisSentinelClient is connected to
+        /// </summary>
+        public string Host { get { return _connection.Host; } }
+
+        /// <summary>
+        /// Get the port that the current RedisSentinelClient is connected to
+        /// </summary>
+        public int Port { get { return _connection.Port; } }
+
+        /// <summary>
         /// Instantiate a new instance of the RedisSentinelClient class
         /// </summary>
         /// <param name="host">Sentinel server hostname or IP</param>
@@ -102,21 +112,37 @@ namespace ctstone.Redis
             return Write(RedisCommand.GetMasterAddrByName(masterName));
         }
 
+        /// <summary>
+        /// Open one or more subscription channels to Redis Sentinel server
+        /// </summary>
+        /// <param name="channels">Name of channels to open (refer to http://redis.io/ for channel names)</param>
         public void Subscribe(params string[] channels)
         {
             _subscriptionHandler.HandleSubscription(RedisCommand.Subscribe(channels));
         }
 
+        /// <summary>
+        /// Close one or more subscription channels to Redis Sentinel server
+        /// </summary>
+        /// <param name="channels">Name of channels to close</param>
         public void Unsubscribe(params string[] channels)
         {
             _subscriptionHandler.HandleSubscription(RedisCommand.Unsubscribe(channels));
         }
 
+        /// <summary>
+        /// Open one or more subscription channels to Redis Sentinel server
+        /// </summary>
+        /// <param name="channelPatterns">Pattern of channels to open (refer to http://redis.io/ for channel names)</param>
         public void PSubscribe(params string[] channelPatterns)
         {
             _subscriptionHandler.HandleSubscription(RedisCommand.PSubscribe(channelPatterns));
         }
 
+        /// <summary>
+        /// Close one or more subscription channels to Redis Sentinel server
+        /// </summary>
+        /// <param name="channelPatterns">Pattern of channels to close</param>
         public void PUnsubscribe(params string[] channelPatterns)
         {
             _subscriptionHandler.HandleSubscription(RedisCommand.PUnsubscribe(channelPatterns));
@@ -179,7 +205,7 @@ namespace ctstone.Redis
     }
 
     /// <summary>
-    /// Represents a Redis sentinel node as reported by a Redis Sentinel
+    /// Represents a Redis Sentinel node as reported by a Redis Sentinel
     /// </summary>
     public class RedisSentinelInfo : RedisServerInfo
     {

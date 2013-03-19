@@ -23,6 +23,16 @@ namespace ctstone.Redis
         public bool Connected { get { return _connection.Connected; } }
 
         /// <summary>
+        /// Get host that the current RedisSentinelClient is connected to
+        /// </summary>
+        public string Host { get { return _connection.Host; } }
+
+        /// <summary>
+        /// Get the port that the current RedisSentinelClient is connected to
+        /// </summary>
+        public int Port { get { return _connection.Port; } }
+
+        /// <summary>
         /// Occurs when a subscription message has been received
         /// </summary>
         public event EventHandler<RedisSubscriptionReceivedEventArgs> SubscriptionReceived;
@@ -58,7 +68,6 @@ namespace ctstone.Redis
             _subscriptionHandler.SubscriptionReceived += OnSubscriptionReceived;
             _monitorHandler = new RedisMonitorHandler(_connection);
             _monitorHandler.MonitorReceived += OnMonitorReceived;
-
         }
 
         /// <summary>
