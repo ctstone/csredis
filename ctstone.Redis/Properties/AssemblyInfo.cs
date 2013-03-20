@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ctstone.Redis")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("csredis")]
+[assembly: AssemblyDescription("csredis is a .NET client for Redis and Redis Sentinel (2.6). Includes both synchronous and asynchronous clients.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ctstone.Redis")]
+[assembly: AssemblyCompany("Chris Stone")]
+[assembly: AssemblyProduct("csredis")]
 [assembly: AssemblyCopyright("Copyright ©  2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
