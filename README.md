@@ -36,6 +36,13 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 }
 ```
 
+##Benchmarks
+Test case: 5000 pipelined/async INCR iterations on the same key, then waiting for a single GET. All times averaged over 5 attempts to the same Redis server on the Internet. Measured using Diagnostics.Stopwatch.
+* **csredis (async)** 274.4ms
+* **csredis** 277.4ms
+* **booksleeve** 315.2ms
+* **servicestack** 497.4ms
+
 ##Authentication
 Password authentication is handled just like the native API:
 ```csharp
