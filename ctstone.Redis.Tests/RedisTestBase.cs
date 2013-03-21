@@ -17,7 +17,7 @@ namespace ctstone.Redis.Tests
             Host = ConfigurationManager.AppSettings["host"];
             Port = Int32.Parse(ConfigurationManager.AppSettings["port"]);
             Password = ConfigurationManager.AppSettings["password"];
-            _redis = new RedisClient(Host, Port, 3000);
+            _redis = new RedisClient(Host, Port, 0);
             _redis.Auth(Password);
         }
 
