@@ -32,6 +32,11 @@ namespace ctstone.Redis
         /// </summary>
         public bool Connected { get { return _socket.Connected; } }
 
+        /// <summary>
+        /// Occurs when a background task raises an exception
+        /// </summary>
+        public event UnhandledExceptionEventHandler TaskReadExceptionOccurred;
+
         private const char Error = (char)RedisMessage.Error;
         private const char Status = (char)RedisMessage.Status;
         private const char Bulk = (char)RedisMessage.Bulk;
@@ -173,7 +178,14 @@ namespace ctstone.Redis
 
             if (_asyncReader != null)
             {
-                _asyncReader.Wait();
+                try
+                {
+                    _asyncReader.Wait();
+                }
+                catch (AggregateException ae)
+                {
+                    throw ae;
+                }
                 _asyncReader.Dispose();
                 _asyncReader = null;
             }
@@ -183,7 +195,6 @@ namespace ctstone.Redis
                 _asyncTaskQueue.Dispose();
                 _asyncTaskQueue = null;
             }
-
 
             if (_stream != null)
                 _stream.Dispose();
@@ -196,9 +207,26 @@ namespace ctstone.Redis
         {
             foreach (var parserTask in _asyncTaskQueue.GetConsumingEnumerable())
             {
-                parserTask.Start();
-                parserTask.Wait();
+                parserTask.RunSynchronously();
+                if (parserTask.Exception != null)
+                {
+                    bool is_fatal = !CanHandleException(parserTask.Exception);
+                    if (TaskReadExceptionOccurred != null)
+                        TaskReadExceptionOccurred(parserTask, new UnhandledExceptionEventArgs(parserTask.Exception, is_fatal));
+                    if (is_fatal)
+                        throw parserTask.Exception;
+                }
             }
+        }
+
+        private bool CanHandleException(AggregateException ex)
+        {
+            foreach (var inner in ex.InnerExceptions)
+            {
+                if (!(inner is RedisProtocolException || inner is RedisException))
+                    return false;
+            }
+            return true;
         }
 
         private static string CreateMessage(string command, params object[] args)

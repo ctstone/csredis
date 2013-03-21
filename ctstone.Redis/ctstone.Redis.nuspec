@@ -6,6 +6,7 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
     <projectUrl>https://github.com/ctstone/csredis</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>

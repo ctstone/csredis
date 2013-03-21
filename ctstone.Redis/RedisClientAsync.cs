@@ -33,6 +33,8 @@ namespace ctstone.Redis
         /// </summary>
         public event EventHandler<RedisTransactionQueuedEventArgs> TransactionQueued;
 
+        public event UnhandledExceptionEventHandler ExceptionOccurred;
+
         /// <summary>
         /// Instantiate a new instance of the RedisClientAsync class
         /// </summary>
@@ -42,6 +44,7 @@ namespace ctstone.Redis
         public RedisClientAsync(string host, int port, int timeoutMilliseconds)
         {
             _connection = new RedisConnection(host, port);
+            _connection.TaskReadExceptionOccurred += OnAsyncExceptionOccurred;
             _connection.Connect(timeoutMilliseconds);
         }
 
@@ -983,6 +986,12 @@ namespace ctstone.Redis
             }
 
             return _connection.CallAsync(command.Parser, command.Command, command.Arguments);
+        }
+
+        private void OnAsyncExceptionOccurred(object sender, UnhandledExceptionEventArgs e)
+        {
+            if (ExceptionOccurred != null)
+                ExceptionOccurred(sender, e);
         }
 
         /// <summary>
