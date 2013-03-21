@@ -66,7 +66,25 @@ namespace ctstone.Redis
             stream.ReadByte(); // \n
             return bulk;
         }
+        public static void ReadBulk(Stream stream, Stream destination, int bufferSize, bool checkType)
+        {
+            if (checkType)
+                ExpectType(stream, RedisMessage.Bulk);
+            int size = (int)ReadInt(stream, false);
+            if (size == -1)
+                return;
 
+            byte[] buffer = new byte[bufferSize];
+            long bytes_read = 0;
+            int bytes_buffered;
+            while (bytes_read < size) 
+            {
+                bytes_read += bytes_buffered = stream.Read(buffer, 0, buffer.Length);
+                destination.Write(buffer, 0, bytes_buffered);
+            }
+            stream.ReadByte(); // \r
+            stream.ReadByte(); // \n
+        }
 
         // redis type == MULTIBULK
         public static string[] ReadMultiBulkUTF8(Stream stream)

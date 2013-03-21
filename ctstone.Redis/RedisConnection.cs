@@ -89,6 +89,24 @@ namespace ctstone.Redis
         }
 
         /// <summary>
+        /// Read response from server into a stream
+        /// </summary>
+        /// <param name="destination">The stream that will contain the contents of the server response.</param>
+        /// <param name="bufferSize">Size of internal buffer used to copy streams</param>
+        public void Read(Stream destination, int bufferSize)
+        {
+            RedisMessage type = RedisReader.ReadType(_stream);
+
+            if (type == RedisMessage.Error)
+                throw new RedisException(RedisReader.ReadStatus(_stream, false));
+
+            if (type != RedisMessage.Bulk)
+                throw new InvalidOperationException("Cannot stream from non-bulk response. Received: " + type);
+
+            RedisReader.ReadBulk(_stream, destination, bufferSize, false);
+        }
+
+        /// <summary>
         /// Read next object from Redis response
         /// </summary>
         /// <returns>Next object in response buffer</returns>

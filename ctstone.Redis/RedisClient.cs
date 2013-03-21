@@ -1,6 +1,7 @@
 ﻿using ctstone.Redis.RedisCommands;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace ctstone.Redis
@@ -16,6 +17,8 @@ namespace ctstone.Redis
         private RedisSubscriptionHandler _subscriptionHandler;
         private RedisMonitorHandler _monitorHandler;
         private bool _isTransaction;
+        private bool _isByteMode;
+
 
         /// <summary>
         /// Get a value indicating that the RedisClient connection is open
@@ -106,6 +109,21 @@ namespace ctstone.Redis
         public object Call(string command, params string[] args)
         {
             return Write(new RedisObject(command, args));
+        }
+
+        /// <summary>
+        /// Stream response from server rather than reading all at once (BULK replies only)
+        /// </summary>
+        /// <typeparam name="T">Server response type</typeparam>
+        /// <param name="destination">The stream that will contain the contents of the server response</param>
+        /// <param name="bufferSize">Size of internal buffer used to copy streams</param>
+        /// <param name="func">RedisClient command to execute</param>
+        public void StreamTo<T>(Stream destination, int bufferSize, Func<RedisClient, T> func)
+        {
+            _isByteMode = true;
+            func(this);
+            _connection.Read(destination, bufferSize);
+            _isByteMode = false;
         }
 
         #region Connection
@@ -1992,6 +2010,12 @@ namespace ctstone.Redis
                 string response = _connection.Call(RedisReader.ReadStatus, command.Command, command.Arguments);
                 if (TransactionQueued != null)
                     TransactionQueued(this, new RedisTransactionQueuedEventArgs(response));
+                return default(T);
+            }
+
+            if (_isByteMode)
+            {
+                _connection.Write(command.Command, command.Arguments);
                 return default(T);
             }
 
