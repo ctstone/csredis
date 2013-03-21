@@ -37,7 +37,7 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 ```
 
 ##Pipeline
-RedisClient supports pipelining commands to lessen the effects of network overhead (RedisClientAsync achieves this automatically due to its asynchronous nature). To enable pipelining, just wrap a group of commands between StartPipe() and EndPipe(). Note that redis-server currently has a 1GB limit on client buffers, so don't go over that :)
+RedisClient supports pipelining commands to lessen the effects of network overhead (RedisClientAsync achieves this automatically due to its asynchronous nature). To enable pipelining, just wrap a group of commands between **StartPipe()** and **EndPipe()**. Note that redis-server currently has a 1GB limit on client buffers, so don't go over that :)
 ```csharp
 redis.BeginPipe();
 redis.Echo("hello"); // returns immediately with default(string)
@@ -97,7 +97,7 @@ csredis exceptions can be split into two groups: fatal and non-fatal. Non-fatal 
 
 All other exceptions are considered fatal: something in the network stack or a bug in the implementation. These exceptions will propogate back to main thread when the RedisClientAsync is disposed.
 
-All task exceptions are passed to the **RedisClientAsync.ExceptionOccurred** event. The user may attach to this event to observe fatal and non-fatal exceptions as they are thrown, rather than waiting for Dispose() to bring the AggregateException into scope.
+All task exceptions are passed to the **RedisClientAsync.ExceptionOccurred** event. The user may attach to this event to observe fatal and non-fatal exceptions as they are thrown, rather than waiting for **Dispose()** to bring the AggregateException into scope.
 ```csharp
 using (var redis = new RedisClientAsync("localhost", 6379, 0))
 {
@@ -110,7 +110,7 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 }
 ```
 
-Of course, the canonical method for handling exceptions in the TPL is to Wait() for a task in the main thread and and then wrap it with a try/catch AggregateException. This however, requires a lot more attention for each task than the event handler documented above:
+Of course, the canonical method for handling exceptions in the TPL is to **Wait()** for a task in the main thread and and then wrap it with a try/catch AggregateException. This however, requires a lot more attention for each task than the event handler documented above:
 ```csharp
 using (var redis = new RedisClientAsync("localhost", 6379, 0))
 {
@@ -129,9 +129,9 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 ```
 
 ##Subscription model
-Because subscriptions block the active connection, subscriptions are not supported in RedisClientAsync.
+Because subscriptions block the active connection, subscriptions are supported only in RedisClient, not RedisClientAsync. You will need two open connections if you require read/write acess to the Redis server: 1 RedisClient for reading subscriptions; 1 RedisClient (or RedisClientAsync) for everything else.
 
-The subscription model is event based. Attach a handler to one or both of SubscriptionChanged/SubscriptionReceived to receive callbacks on subscription events. Pattern and non-pattern channels are handled by the same events. Opening a subscription channel blocks the main thread, so unsubscription will need to be handled by a background thread/task.
+The subscription model is event based. Attach a handler to one or both of SubscriptionChanged/SubscriptionReceived to receive callbacks on subscription events. Pattern and non-pattern channels are handled by the same events. Opening a subscription channel blocks the main thread, so unsubscription (and new subscriptions) will need to be handled by a background thread/task.
 
 **SubscriptionChanged**: Occurs when a subsciption channel is opened or closed  
 **RedisSubscriptionReceived**: Occurs when a subscription message has been received
@@ -150,11 +150,11 @@ redis.PSubscribe("*");
 ```
 
 ##Future-proof
-All clients support the generic Call() method to send arbitrary commands to the Redis or Sentinel servers. Use this command to easily implement future Redis commands before they are included in csredis. Or use this command to work with bare-metal responses or if you renamed a command in your redis.conf.
+All csredis clients support a basic **Call()** method that sends arbitrary commands to the Redis server. Use this command to easily implement future Redis commands before they are included in csredis. This can also be used to work with "bare-metal" server responses or if a command has been renamed in redis.conf.
 ```csharp
 object resp = redis.Call("ANYTHING", "arg1", "arg2", "arg3");
 ```
-Note that the response object will need to be cast according to the Redis unified protocol: status (System.String), integer (System.Int32), bulk (System.String), multi-bulk (System.Object[])
+Note that the response object will need to be cast according to the Redis unified protocol: status (System.String), integer (System.Int32), bulk (System.String), multi-bulk (System.Object[]).
 
 ##Sentinel
 Sentinel is the monitoring/high-availability server packaged with Redis server. Sentinel is not yet widely documented, but csredis supports the specification as closely as possible.
