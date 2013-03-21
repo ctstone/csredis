@@ -128,6 +128,23 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 }
 ```
 
+##Transactions
+Transactions are handled using the API calls MULTI/EXEC/DISCARD. Transactions are available using RedisClientAsync, but they are not thread safe. Use cauation with async transactions.
+
+Since transacted commands return a status code (QUEUED) instead of their usual type, transacted commands in csredis will return with value of default(T). To see the server status response, attach to the **TransactionQueued** event.
+```csharp
+redis.TransactionQueued += (s, a) =>
+{
+  Console.WriteLine("Transaction status: {0}", a.Status);
+}
+redis.Multi();
+redis.Set("test1", "hello"); // returns default(String)
+redis.Set("test2", "world"); // returns default(String)
+redis.Time(); // returns default(DateTime)
+object[] resp = redis.Exec();
+```
+resp is an array of Redis unified messages. See note under Future-proof.
+
 ##Subscription model
 Because subscriptions block the active connection, subscriptions are supported only in RedisClient, not RedisClientAsync. You will need two open connections if you require read/write acess to the Redis server: 1 RedisClient for reading subscriptions; 1 RedisClient (or RedisClientAsync) for everything else.
 
@@ -155,6 +172,17 @@ All csredis clients support a basic **Call()** method that sends arbitrary comma
 object resp = redis.Call("ANYTHING", "arg1", "arg2", "arg3");
 ```
 Note that the response object will need to be cast according to the Redis unified protocol: status (System.String), integer (System.Int32), bulk (System.String), multi-bulk (System.Object[]).
+
+##Streaming responses
+For large result sizes, it may be preferred to stream the raw bytes from the server rather than allocating large chunks of memory in place. This can be achieved with **RedisClient.StreamTo()**. Note that this only applies to BULK responses (e.g. GET, HGET, LINDEX, etc). Attempting to stream any other response will result in a InvalidOperationException. Here is an example that stores the response in a MemoryStream 64 bytes at a time. A more useful example might use a FileStream and a larger buffer size.
+```csharp
+redis.Set("test", "a-few-megabytes-here");
+using (var ms = new MemoryStream())
+{
+  redis.StreamTo(ms, 64, r => r.Get("test"));
+  byte[] bytes = ms.ToArray(); // get the bytes if needed
+}
+```
 
 ##Sentinel
 Sentinel is the monitoring/high-availability server packaged with Redis server. Sentinel is not yet widely documented, but csredis supports the specification as closely as possible.
