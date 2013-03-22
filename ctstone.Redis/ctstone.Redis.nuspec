@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/ctstone/csredis</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Added exception event handler to RedisClientAsync</releaseNotes>
+    <releaseNotes>NOTICE: This package has moved to 'csredis'. No additional updates will be pushed to 'ctstone.Redis'.</releaseNotes>
     <copyright>Copyright 2013</copyright>
     <tags>Redis Sentinel Async NoSQL</tags>
   </metadata>
