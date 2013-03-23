@@ -8,7 +8,7 @@ namespace ctstone.Redis.RedisCommands
             : base(ParseStream, command, args)
         { }
 
-        private static RedisSubscriptionResponse ParseStream(Stream stream)
+        public static RedisSubscriptionResponse ParseStream(Stream stream)
         {
             return RedisSubscriptionResponse.ReadResponse(RedisReader.ReadMultiBulk(stream));
         }

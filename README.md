@@ -3,7 +3,9 @@
 csredis is a .NET client for Redis and Redis Sentinel (2.6). Includes both synchronous and asynchronous implementations.
 
 The easiest way to install csredis is from [NuGet](https://nuget.org/packages/csredis) via the [Package Manager Console](http://docs.nuget.org/docs/start-here/using-the-package-manager-console):  
+
 **PM> Install-Package csredis**
+
 
 ## Basic usage
 Here are some simple commands using the **synchronous** client. Whenever possible, server responses are mapped to the appropriate CLR type.
@@ -39,7 +41,10 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 }
 ```
 
-##Pipeline
+Blocking or otherwise non-thread-safe commands are not directly available from RedisClientAsync. See below for notes on opening a dedicated connection from RedisClientAsync for use with subscriptions, transactions, and blocking list pops.
+
+
+##Pipelining
 RedisClient supports pipelining commands to lessen the effects of network overhead (RedisClientAsync achieves this automatically due to its asynchronous nature). To enable pipelining, just wrap a group of commands between **StartPipe()** and **EndPipe()**. Note that redis-server currently has a 1GB limit on client buffers, so don't go over that :)
 ```csharp
 redis.BeginPipe();
@@ -49,8 +54,14 @@ object[] result = redis.EndPipe(); // get the server response for processing
 redis.EndPipe(true); // ignore results (fire-and-forget). This also keeps memory overhead low for large batches.
 ```
 
+
 ##Why csredis?
 There are a handful of .NET redis clients out in the wild, but none perfectly suited my needs: clean interface of the native Redis API; Sentinel support; easy-to-use pipelining/async. csredis is probably missing a few niche features supported by other projects. For intance, if you need atomic database selection with every command, csredis may not be for you.
+
+
+##Is csredis stable?
+Not yet. RedisClient (synchronous) has a near-full test suite, all of which must pass before committing/push. RedisClientAsync currently has no tests (coming soon!) and as such should be considered unstable.
+
 
 ##Benchmarks
 Test case: 5000 pipelined/async INCR iterations on the same key, then waiting for a single GET. All times averaged over 5 attempts to the same Redis server on the Internet. Measured using Diagnostics.Stopwatch.
@@ -58,6 +69,7 @@ Test case: 5000 pipelined/async INCR iterations on the same key, then waiting fo
 * **csredis** 277.4ms
 * **booksleeve** 315.2ms
 * **servicestack** 497.4ms
+
 
 ##Authentication
 Password authentication is handled according to the native API (i.e. not in the connection constructor):
@@ -95,6 +107,7 @@ Or use the native API:
 redis.HMSet("myhash", new[] { "F1", "string", "F2", "true", "F3", DateTime.Now.ToString() });
 ```
 
+
 ##Async exception handling
 csredis exceptions can be split into two groups: fatal and non-fatal. Non-fatal exceptions are raised when the Redis server responds with an error message (e.g. when trying to increment a string by 1) or if there is a protocol violoation (e.g. we expected a bulk reply but ended up with something else). These exceptions are **RedisException** and **RedisProtocolException**, respectively. The assumption is that these errors are isloated to a single Redis command request and should not necessarily affect subsequent requests.
 
@@ -131,10 +144,11 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 }
 ```
 
-##Transactions
-Transactions are handled using the API calls MULTI/EXEC/DISCARD. Transactions are available using RedisClientAsync, but they are not thread safe. Use cauation with async transactions.
 
-Since transacted commands return a status code (QUEUED) instead of their usual type, transacted commands in csredis will return with value of default(T). To see the server status response, attach to the **TransactionQueued** event.
+##Transactions
+Synchronous transactions are handled using the API calls MULTI/EXEC/DISCARD. Asynchronous transactions should be handled using the Clone() method (see below).
+
+Since transacted commands return a status code (QUEUED) instead of their usual type, transacted commands in csredis will return with a value of default(T). To observe the server status response, attach to the **TransactionQueued** event.
 ```csharp
 redis.TransactionQueued += (s, a) =>
 {
@@ -144,14 +158,37 @@ redis.Multi();
 redis.Set("test1", "hello"); // returns default(String)
 redis.Set("test2", "world"); // returns default(String)
 redis.Time(); // returns default(DateTime)
-object[] resp = redis.Exec();
+object[] resp = redis.Exec(); // returns array of Redis unified responses
 ```
-resp is an array of Redis unified messages. See note under Future-proof.
+
+**Asynchronous transactions** affect all commands on the current connection, so a new connection must be opened to ensure thread-safety. Use **Clone()** to open a single-threaded connection to the current redis server. **Clone** may also be used to execute blocking commands against the current Redis server without blocking other async operations.
+```csharp
+using (var redis = new RedisClientAsync("localhost", 6379, 0))
+{
+  using (var tr = redis.Clone()) // use tr only on a single thread
+  {
+    tr.StartPipe(); // tr is synchronous; consider piping commands for faster results (optional)
+    tr.Multi();
+    tr.Set("test1", "hello");
+    tr.Set("test2", "world");
+    tr.Exec();
+    var resp = tr.EndPipe(); // optional pipeline results
+  }
+  
+  // continue to use redis object asyncronously on multiple threads
+  redis.Set("hello", "world");
+  
+  // use Clone() to execute a blocking command on the current Redis server
+  using (var blocking = redis.Clone())
+  {
+    var value = blocking.BLPop(1000, "my-list"); // block cloned connection for up to 1 second
+  }
+}
+```
+
 
 ##Subscription model
-Because subscriptions block the active connection, subscriptions are supported only in RedisClient, not RedisClientAsync. You will need two open connections if you require read/write acess to the Redis server: 1 RedisClient for reading subscriptions; 1 RedisClient (or RedisClientAsync) for everything else.
-
-The subscription model is event based. Attach a handler to one or both of SubscriptionChanged/SubscriptionReceived to receive callbacks on subscription events. Pattern and non-pattern channels are handled by the same events. Opening a subscription channel blocks the main thread, so unsubscription (and new subscriptions) will need to be handled by a background thread/task.
+The subscription model is event based. Attach a handler to one or both of SubscriptionChanged/SubscriptionReceived to receive callbacks on subscription events. When using the syncronous RedisClient, opening the first subscription channel blocks the main thread, so unsubscription (and new subscriptions) will need to be handled by a background thread/task. See below for thread-safe usage.
 
 **SubscriptionChanged**: Occurs when a subsciption channel is opened or closed  
 **RedisSubscriptionReceived**: Occurs when a subscription message has been received
@@ -169,6 +206,37 @@ redis.SubscriptionReceived += (s, ev) =>
 redis.PSubscribe("*");
 ```
 
+**Non-blocking, thread-safe subscription client**  
+Use the non-blocking subscription client if you prefer not to block your RedisClient instance.
+```csharp
+using (var sub = new RedisSubscriptionClient("localhost", "6379", "my-password"))
+{
+  sub.SubscriptionReceived += (s, a) => Console.WriteLine(a.Message.Body); // global message handler
+  sub.Subscribe("channel 1");
+  sub.Subscribe(x => Console.WriteLine(x.Body), "channel 2"); // with callback just for "channel 2"
+  
+  // keep thread alive
+  Thread.Sleep(10000);
+}
+```
+
+To use **subscriptions with RedisClientAsync**, a new dedicated connection can be opened to the Redis server. To access the shared, thread-safe subscription channel, use GetSubscriptionClient():
+```csharp
+using (var redis = new RedisClientAsync("localhost", 6379, 0))
+{
+  redis.GetSubscriptionChannel().SubscriptionChanged += (s, a) => Console.WriteLine(a.Message.Body); // global message handler
+  redis.GetSubscriptionChannel().Subscribe(x => Console.WriteLine(x.Body), "channel 1"); // with callback just for "channel 1"
+  redis.GetSubscriptionChannel().Subscribe("channel 1"); // no channel-specific callback
+  
+  // keep thread alive
+  Thread.Sleep(10000);
+  
+  // close subscription channel when all threads are finished with it
+  redis.CloseSubscriptionChannel()
+}
+```
+
+
 ##Future-proof
 All csredis clients support a basic **Call()** method that sends arbitrary commands to the Redis server. Use this command to easily implement future Redis commands before they are included in csredis. This can also be used to work with "bare-metal" server responses or if a command has been renamed in redis.conf.
 ```csharp
@@ -176,16 +244,18 @@ object resp = redis.Call("ANYTHING", "arg1", "arg2", "arg3");
 ```
 Note that the response object will need to be cast according to the Redis unified protocol: status (System.String), integer (System.Int32), bulk (System.String), multi-bulk (System.Object[]).
 
+
 ##Streaming responses
-For large result sizes, it may be preferred to stream the raw bytes from the server rather than allocating large chunks of memory in place. This can be achieved with **RedisClient.StreamTo()**. Note that this only applies to BULK responses (e.g. GET, HGET, LINDEX, etc). Attempting to stream any other response will result in a InvalidOperationException. Here is an example that stores the response in a MemoryStream 64 bytes at a time. A more useful example might use a FileStream and a larger buffer size.
+For large result sizes, it may be preferred to stream the raw bytes from the server rather than allocating large chunks of memory in place. This can be achieved with **RedisClient.StreamTo()**. Note that this only applies to BULK responses (e.g. GET, HGET, LINDEX, etc). Attempting to stream any other response will result in an InvalidOperationException. Here is an example that stores the response in a MemoryStream 64 bytes at a time. A more useful example might use a FileStream and a larger buffer size.
 ```csharp
 redis.Set("test", "a-few-megabytes-here");
 using (var ms = new MemoryStream())
 {
-  redis.StreamTo(ms, 64, r => r.Get("test"));
-  byte[] bytes = ms.ToArray(); // get the bytes if needed
+  redis.StreamTo(ms, 64, r => r.Get("test")); // small buffer size used for demo
+  byte[] bytes = ms.ToArray(); // optional: get the bytes if needed
 }
 ```
+
 
 ##Sentinel
 Sentinel is the monitoring/high-availability server packaged with Redis server. Sentinel is not yet widely documented, but csredis supports the specification as closely as possible.

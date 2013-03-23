@@ -1,6 +1,9 @@
 ﻿using ctstone.Redis.RedisCommands;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ctstone.Redis
@@ -10,8 +13,9 @@ namespace ctstone.Redis
     /// </summary>
     public class RedisClientAsync : IDisposable
     {
-        private RedisConnection _connection;
-        private bool _isTransaction;
+        private readonly RedisConnection _connection;
+        private string _password;
+        private Lazy<RedisSubscriptionClient> _subscriptionClient;
 
         /// <summary>
         /// Get a value indicating that the RedisClientAsync connection is open
@@ -29,10 +33,8 @@ namespace ctstone.Redis
         public int Port { get { return _connection.Port; } }
 
         /// <summary>
-        /// Occurs when a transaction command has been received
+        /// Occurs when a Task exception is thrown
         /// </summary>
-        public event EventHandler<RedisTransactionQueuedEventArgs> TransactionQueued;
-
         public event UnhandledExceptionEventHandler ExceptionOccurred;
 
         /// <summary>
@@ -46,6 +48,39 @@ namespace ctstone.Redis
             _connection = new RedisConnection(host, port);
             _connection.TaskReadExceptionOccurred += OnAsyncExceptionOccurred;
             _connection.Connect(timeoutMilliseconds);
+            _subscriptionClient = new Lazy<RedisSubscriptionClient>(() => new RedisSubscriptionClient(Host, Port, _password));
+        }
+
+        /// <summary>
+        /// Get a synchronous RedisClient for blocking calls (e.g. BLPop, Subscriptions, Transactions, etc)
+        /// </summary>
+        /// <returns>RedisClient to be used in single thread context</returns>
+        public RedisClient Clone()
+        {
+            RedisClient client = new RedisClient(Host, Port, 0);
+            if (_password != null)
+                client.Auth(_password);
+            return client;
+        }
+
+        /// <summary>
+        /// Get a thread-safe, reusable subscription channel.
+        /// </summary>
+        /// <returns>A reusable subscription channel</returns>
+        public RedisSubscriptionClient GetSubscriptionChannel()
+        {
+            if (!_subscriptionClient.Value.Connected)
+                throw new InvalidOperationException("RedisSubscriptionClient has already been disposed");
+            return _subscriptionClient.Value;
+        }
+
+        /// <summary>
+        /// Close the subscription channel if it is not already Disposed. The channel will be made unusable for the remainder of the current RedisClientAsync.
+        /// </summary>
+        public void CloseSubscriptionChannel()
+        {
+            if (_subscriptionClient.IsValueCreated)
+                _subscriptionClient.Value.Dispose();
         }
 
         /// <summary>
@@ -72,7 +107,6 @@ namespace ctstone.Redis
             return task.Result;
         }
 
-
         #region Connection
         /// <summary>
         /// Authenticate to the server
@@ -81,6 +115,7 @@ namespace ctstone.Redis
         /// <returns>Task associated with status message</returns>
         public Task<string> Auth(string password)
         {
+            _password = password;
             return Write(RedisCommand.Auth(password));
         }
 
@@ -485,46 +520,6 @@ namespace ctstone.Redis
         #endregion
 
         #region Lists
-        public Task<Tuple<string,string>> BLPopWithKey(int timeout, params string[] keys)
-        {
-            return Write(RedisCommand.BLPopWithKey(timeout, keys));
-        }
-        public Task<Tuple<string, string>> BLPopWithKey(TimeSpan timeout, params string[] keys)
-        {
-            return Write(RedisCommand.BLPopWithKey(timeout, keys));
-        }
-        public Task<Tuple<string, string>> BRPopWithKey(int timeout, params string[] keys)
-        {
-            return Write(RedisCommand.BRPopWithKey(timeout, keys));
-        }
-        public Task<Tuple<string, string>> BRPopWithKey(TimeSpan timeout, params string[] keys)
-        {
-            return Write(RedisCommand.BRPopWithKey(timeout, keys));
-        }
-        public Task<string> BLPop(int timeout, params string[] keys)
-        {
-            return Write(RedisCommand.BLPop(timeout, keys));
-        }
-        public Task<string> BLPop(TimeSpan timeout, params string[] keys)
-        {
-            return Write(RedisCommand.BLPop(timeout, keys));
-        }
-        public Task<string> BRPop(int timeout, params string[] keys)
-        {
-            return Write(RedisCommand.BRPop(timeout, keys));
-        }
-        public Task<string> BRPop(TimeSpan timeout, params string[] keys)
-        {
-            return Write(RedisCommand.BRPop(timeout, keys));
-        }
-        public Task<string> BRPopLPush(string source, string destination, int timeout)
-        {
-            return Write(RedisCommand.BRPopLPush(source, destination, timeout));
-        }
-        public Task<string> BRPopLPush(string source, string destination, TimeSpan timeout)
-        {
-            return Write(RedisCommand.BRPopLPush(source, destination, timeout));
-        }
         public Task<string> LIndex(string key, long index)
         {
             return Write(RedisCommand.LIndex(key, index));
@@ -714,6 +709,13 @@ namespace ctstone.Redis
         public Task<long> ZUnionStore(string destination, double[] weights = null, RedisAggregate? aggregate = null, params string[] keys)
         {
             return Write(RedisCommand.ZUnionStore(destination, weights, aggregate, keys));
+        }
+        #endregion
+
+        #region Pub/Sub
+        public Task<long> Publish(string channel, string message)
+        {
+            return Write(RedisCommand.Publish(channel, message));
         }
         #endregion
 
@@ -938,52 +940,10 @@ namespace ctstone.Redis
         }
         #endregion
 
-        #region Transactions
-        public Task<string> Discard()
-        {
-            return Write(RedisCommand.Discard());
-        }
-        public Task<object[]> Exec()
-        {
-            return Write(RedisCommand.Exec());
-        }
-        public Task<string> Multi()
-        {
-            return Write(RedisCommand.Multi());
-        }
-        public Task<string> Unwatch()
-        {
-            return Write(RedisCommand.Unwatch());
-        }
-        public Task<string> Watch(params string[] keys)
-        {
-            return Write(RedisCommand.Watch());
-        }
-        #endregion
-
         private Task<T> Write<T>(RedisCommand<T> command)
         {
             if (!_connection.Connected)
                 throw new InvalidOperationException("RedisClientAsync is not connected");
-
-            if (command.Command == "MULTI")
-            {
-                _isTransaction = true;
-            }
-            else if (command.Command == "EXEC" || command.Command == "DISCARD")
-            {
-                _isTransaction = false;
-            }
-            else if (_isTransaction)
-            {
-                return _connection.CallAsync(RedisReader.ReadStatus, command.Command, command.Arguments)
-                    .ContinueWith(t =>
-                    {
-                        if (TransactionQueued != null)
-                            TransactionQueued(this, new RedisTransactionQueuedEventArgs(t.Result));
-                        return default(T);
-                    });
-            }
 
             return _connection.CallAsync(command.Parser, command.Command, command.Arguments);
         }
@@ -1001,6 +961,9 @@ namespace ctstone.Redis
         {
             if (_connection != null)
                 _connection.Dispose();
+
+            if (_subscriptionClient.IsValueCreated)
+                _subscriptionClient.Value.Dispose();
         }
     }
 }

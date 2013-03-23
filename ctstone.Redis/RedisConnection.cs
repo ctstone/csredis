@@ -68,9 +68,10 @@ namespace ctstone.Redis
         /// </summary>
         /// <param name="millisecondsTimeout">Timeout to wait for connection (0 for no timeout)</param>
         /// <returns>True if connected</returns>
-        public bool Connect(int millisecondsTimeout)
+        public bool Connect(int millisecondsTimeout, int readTimeout = 0)
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            
             if (millisecondsTimeout > 0)
             {
                 IAsyncResult ar = _socket.BeginConnect(Host, Port, null, null);
@@ -80,10 +81,17 @@ namespace ctstone.Redis
             {
                 _socket.Connect(Host, Port);
             }
+            
             if (_socket.Connected)
+            {
                 _stream = new NetworkStream(_socket);
+                if (readTimeout > 0)
+                    _stream.ReadTimeout = readTimeout;
+            }
             else
+            {
                 _socket.Close();
+            }
 
             return _socket.Connected;
         }
@@ -116,7 +124,7 @@ namespace ctstone.Redis
         }
 
         /// <summary>
-        /// Read next strongly-typed object form the Redis server
+        /// Read next strongly-typed object from the Redis server
         /// </summary>
         /// <typeparam name="T">Type of object that will be read</typeparam>
         /// <param name="parser">Redis parser method</param>

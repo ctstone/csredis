@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/ctstone/csredis</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>NOTICE: This package has moved to 'csredis'. No additional updates will be pushed to 'ctstone.Redis'.</releaseNotes>
+    <releaseNotes>Added async subscriptions and transactions</releaseNotes>
     <copyright>Copyright 2013</copyright>
     <tags>Redis Sentinel Async NoSQL</tags>
   </metadata>
