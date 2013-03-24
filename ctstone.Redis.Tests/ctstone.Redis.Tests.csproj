@@ -65,6 +65,7 @@
     <Compile Include="RedisSetTests.cs" />
     <Compile Include="RedisServerTests.cs" />
     <Compile Include="RedisTestKeys.cs" />
+    <Compile Include="AsyncTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ctstone.Redis\ctstone.Redis.csproj">

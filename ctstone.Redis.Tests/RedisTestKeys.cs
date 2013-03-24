@@ -10,6 +10,7 @@ namespace ctstone.Redis.Tests
     class RedisTestKeys : IDisposable
     {
         private RedisClient _redis;
+        private RedisClientAsync _async;
         private string[] _keys;
 
         public RedisTestKeys(RedisClient redis, params string[] keys)
@@ -19,9 +20,19 @@ namespace ctstone.Redis.Tests
             _redis.Del(keys);
         }
 
+        public RedisTestKeys(RedisClientAsync async, params string[] keys)
+        {
+            _async = async;
+            _keys = keys;
+            _async.Del(keys).Wait();
+        }
+
         public void Dispose()
         {
-            _redis.Del(_keys);
+            if (_redis != null)
+                _redis.Del(_keys);
+            if (_async != null)
+                _async.Del(_keys).Wait();
         }
     }
 }

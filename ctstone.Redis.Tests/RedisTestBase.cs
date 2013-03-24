@@ -10,6 +10,7 @@ namespace ctstone.Redis.Tests
         protected int Port;
         protected string Password;
         protected RedisClient _redis;
+        protected RedisClientAsync _async;
 
         [TestInitialize]
         public void Initialize()
@@ -19,6 +20,9 @@ namespace ctstone.Redis.Tests
             Password = ConfigurationManager.AppSettings["password"];
             _redis = new RedisClient(Host, Port, 0);
             _redis.Auth(Password);
+
+            _async = new RedisClientAsync(Host, Port, 0);
+            _async.Auth(Password).Wait();
         }
 
         [TestCleanup]
