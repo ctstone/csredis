@@ -7,33 +7,60 @@ namespace ctstone.Redis.Tests
     [TestClass]
     public class RedisConnectionTests : RedisTestBase
     {
-        [TestMethod, TestCategory("Connection")]
+        [TestMethod, TestCategory("Connection"), TestCategory("RedisClient")]
         public void TestAuth()
         {
-            using (var redis = new RedisClient(Host, Port, 500))
+            using (var redis = new RedisClient(Host, Port, 0))
             {
-                string result = redis.Auth(Password);
-                Assert.AreEqual("OK", result);
+                Assert.AreEqual("OK", redis.Auth(Password));
             }
         }
 
-        [TestMethod, TestCategory("Connection")]
+        [TestMethod, TestCategory("Connection"), TestCategory("RedisClient")]
         public void TestEcho()
         {
             string echo = Guid.NewGuid().ToString();
-            string result = _redis.Echo(echo);
-            Assert.AreEqual(echo, result);
+            Assert.AreEqual(echo, _redis.Echo(echo));
         }
 
-        [TestMethod, TestCategory("Connection")]
+        [TestMethod, TestCategory("Connection"), TestCategory("RedisClient")]
         public void TestPing()
         {
-            string result = _redis.Ping();
-            Assert.AreEqual("PONG", result);
+            Assert.AreEqual("PONG", _redis.Ping());
         }
 
-        // QUIT
+        [TestMethod, TestCategory("Connection"), TestCategory("RedisClient")]
+        public void TestQuit()
+        {
+            using (var redis = new RedisClient(Host, Port, 0))
+            {
+                Assert.AreEqual("OK", redis.Quit());
+                Assert.IsFalse(redis.Connected);
+                try
+                {
+                    redis.Ping();
+                }
+                catch (Exception e)
+                {
+                    Assert.IsInstanceOfType(e, typeof(InvalidOperationException));
+                }
+            }
+        }
 
-        // SELECT
+        [TestMethod, TestCategory("Connection"), TestCategory("RedisClient")]
+        public void TestSelect()
+        {
+            string test_key = Guid.NewGuid().ToString();
+            string test_value = "1";
+            using (new RedisTestKeys(_redis, test_key))
+            {
+                _redis.Set(test_key, test_value);
+                Assert.AreEqual(test_value, _redis.Get(test_key));
+                Assert.AreEqual("OK", _redis.Select(1));
+                Assert.IsNull(_redis.Get(test_key));
+                Assert.AreEqual("OK", _redis.Select(0));
+                Assert.AreEqual(test_value, _redis.Get(test_key));
+            }
+        }
     }
 }
