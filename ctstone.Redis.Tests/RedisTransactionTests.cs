@@ -55,7 +55,7 @@ namespace ctstone.Redis.Tests
             {
                 _redis.Watch("test1");
                 _redis.Multi();
-                using (var otherClient = new RedisClient(Host, Port, 500))
+                using (var otherClient = new RedisClient(Host, Port, 0))
                 {
                     otherClient.Auth(Password);
                     otherClient.Set("test1", "other");
@@ -73,7 +73,7 @@ namespace ctstone.Redis.Tests
                 _redis.Watch("test1");
                 Assert.AreEqual("OK", _redis.Unwatch());
                 _redis.Multi();
-                using (var otherClient = new RedisClient(Host, Port, 500))
+                using (var otherClient = new RedisClient(Host, Port, 0))
                 {
                     otherClient.Auth(Password);
                     otherClient.Set("test1", "other");
