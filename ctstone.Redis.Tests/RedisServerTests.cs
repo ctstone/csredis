@@ -6,7 +6,7 @@ namespace ctstone.Redis.Tests
     [TestClass]
     public class RedisServerTests : RedisTestBase
     {
-        [TestMethod, TestCategory("Server")]
+        [TestMethod, TestCategory("Server"), TestCategory("RedisClient")]
         public void None()
         {
         }
