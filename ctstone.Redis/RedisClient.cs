@@ -11,7 +11,6 @@ namespace ctstone.Redis
     /// </summary>
     public class RedisClient : IDisposable
     {
-        private static Encoding _encoding = Encoding.UTF8;
         private RedisConnection _connection;
         private RedisPipelineHandler _pipelineHandler;
         private RedisSubscriptionHandler _subscriptionHandler;
