@@ -60,10 +60,15 @@ namespace ctstone.Redis
             int size = (int)ReadInt(stream, false);
             if (size == -1)
                 return null;
+
             byte[] bulk = new byte[size];
-            stream.Read(bulk, 0, size);
-            stream.ReadByte(); // \r
-            stream.ReadByte(); // \n
+
+            int bytes_read = 0;
+            while (bytes_read < size)
+                bytes_read += stream.Read(bulk, 0, size - bytes_read);
+            if (bytes_read != size)
+                throw new RedisProtocolException(String.Format("Expecting {0} bytes; got {1} bytes", size, bytes_read));
+            ReadCRLF(stream);
             return bulk;
         }
         public static void ReadBulk(Stream stream, Stream destination, int bufferSize, bool checkType)
@@ -73,7 +78,7 @@ namespace ctstone.Redis
             int size = (int)ReadInt(stream, false);
             if (size == -1)
                 return;
-
+            
             byte[] buffer = new byte[bufferSize];
             long bytes_read = 0;
             int bytes_buffered;
@@ -82,8 +87,7 @@ namespace ctstone.Redis
                 bytes_read += bytes_buffered = stream.Read(buffer, 0, buffer.Length);
                 destination.Write(buffer, 0, bytes_buffered);
             }
-            stream.ReadByte(); // \r
-            stream.ReadByte(); // \n
+            ReadCRLF(stream);
         }
 
         // redis type == MULTIBULK
@@ -170,6 +174,14 @@ namespace ctstone.Redis
                 }
             }
             return sb.ToString();
+        }
+
+        private static void ReadCRLF(Stream stream)
+        {
+            var r = stream.ReadByte();
+            var n = stream.ReadByte();
+            if (r != (byte)13 && n != (byte)10)
+                throw new RedisProtocolException(String.Format("Expecting CRLF; got bytes: {0}, {1}", r, n));
         }
     }
 }

@@ -172,15 +172,22 @@ namespace ctstone.Redis
         {
             byte[] buffer = _encoding.GetBytes(CreateMessage(command, arguments));
             Task<T> task = new Task<T>(() => parser(_stream));
+            //Console.WriteLine("Created task {0}", task.Id);
 
             lock (_asyncLock)
             {
+                //Console.WriteLine("Begin lock: task {0}", task.Id);
                 //_stream.WriteAsync(buffer, 0, buffer.Length); // .NET 4.5
                 _stream.BeginWrite(buffer, 0, buffer.Length, null, null);
                 _asyncTaskQueue.Add(task);
+                _ms.Write(buffer, 0, buffer.Length);
+                _ms.Write(Encoding.UTF8.GetBytes("|"), 0, 1);
+                //Console.WriteLine("End lock: task {0}", task.Id);
             }
             return task;
         }
+        private MemoryStream _ms = new MemoryStream();
+        public string Temp { get { return Encoding.UTF8.GetString(_ms.ToArray()); } }
 
         /// <summary>
         /// Asyncronously write command to Redis request buffer
@@ -233,6 +240,7 @@ namespace ctstone.Redis
         {
             foreach (var parserTask in _asyncTaskQueue.GetConsumingEnumerable())
             {
+                Console.WriteLine("Running task {0} ({1})", parserTask.Id, _asyncTaskQueue.Count);
                 parserTask.RunSynchronously();
                 if (parserTask.Exception != null)
                 {
@@ -242,6 +250,7 @@ namespace ctstone.Redis
                     if (is_fatal)
                         throw parserTask.Exception;
                 }
+                Console.WriteLine("Completed task {0} ({1})", parserTask.Id, _asyncTaskQueue.Count);
             }
         }
 
