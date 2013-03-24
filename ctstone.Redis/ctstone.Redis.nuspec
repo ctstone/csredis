@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/ctstone/csredis</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Fixed bug when reading large amounts of data concurrently</releaseNotes>
+    <releaseNotes>Fixed byte streaming bug in RedisClient</releaseNotes>
     <copyright>Copyright 2013</copyright>
     <tags>Redis Sentinel Async NoSQL</tags>
   </metadata>

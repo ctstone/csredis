@@ -84,7 +84,7 @@ namespace ctstone.Redis
             int bytes_buffered;
             while (bytes_read < size) 
             {
-                bytes_read += bytes_buffered = stream.Read(buffer, 0, buffer.Length);
+                bytes_read += bytes_buffered = stream.Read(buffer, 0, (int)Math.Min(buffer.Length, size - bytes_read));
                 destination.Write(buffer, 0, bytes_buffered);
             }
             ReadCRLF(stream);
@@ -176,7 +176,7 @@ namespace ctstone.Redis
             return sb.ToString();
         }
 
-        private static void ReadCRLF(Stream stream)
+        public static void ReadCRLF(Stream stream)
         {
             var r = stream.ReadByte();
             var n = stream.ReadByte();
