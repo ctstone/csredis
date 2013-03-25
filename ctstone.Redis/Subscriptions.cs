@@ -215,9 +215,9 @@ namespace ctstone.Redis
                         if (SubscriptionReceived != null)
                             SubscriptionReceived(this, new RedisSubscriptionReceivedEventArgs(message));
 
-                        if (message.Pattern != null && _callbackDispatchers.ContainsKey(message.Pattern))
+                        if (message.Pattern != null && _callbackDispatchers.ContainsKey(message.Pattern) && _callbackDispatchers[message.Pattern] != null)
                             _callbackDispatchers[message.Pattern].OnMsgReceived(message);
-                        else if (_callbackDispatchers.ContainsKey(message.Channel))
+                        else if (_callbackDispatchers.ContainsKey(message.Channel) && _callbackDispatchers[message.Channel] != null)
                             _callbackDispatchers[message.Channel].OnMsgReceived(message);
                         break;
                 }
