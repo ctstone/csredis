@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace ctstone.Redis.Tests
+namespace ctstone.Redis.Tests.RedisClientTests
 {
     [TestClass]
     public class RedisScriptingTests : RedisTestBase

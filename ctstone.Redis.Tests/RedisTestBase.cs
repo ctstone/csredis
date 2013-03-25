@@ -2,7 +2,7 @@
 using System;
 using System.Configuration;
 
-namespace ctstone.Redis.Tests
+namespace ctstone.Redis.Tests.RedisClientTests
 {
     public abstract class RedisTestBase
     {

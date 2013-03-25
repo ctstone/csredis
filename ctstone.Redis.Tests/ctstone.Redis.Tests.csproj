@@ -51,22 +51,23 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="RedisSortedSetTests.cs" />
-    <Compile Include="RedisScriptingTests.cs" />
-    <Compile Include="RedisTransactionTests.cs" />
-    <Compile Include="RedisPubSubTests.cs" />
-    <Compile Include="RedisConnectionTests.cs" />
+    <Compile Include="RedisClientAsyncTests\PubSubTests.cs" />
+    <Compile Include="RedisClientTests\RedisSortedSetTests.cs" />
+    <Compile Include="RedisClientTests\RedisScriptingTests.cs" />
+    <Compile Include="RedisClientTests\RedisTransactionTests.cs" />
+    <Compile Include="RedisClientTests\RedisPubSubTests.cs" />
+    <Compile Include="RedisClientTests\RedisConnectionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RedisHashTests.cs" />
-    <Compile Include="RedisKeyTests.cs" />
+    <Compile Include="RedisClientTests\RedisHashTests.cs" />
+    <Compile Include="RedisClientTests\RedisKeyTests.cs" />
     <Compile Include="RedisTestBase.cs" />
-    <Compile Include="RedisStringTests.cs" />
-    <Compile Include="RedisListTests.cs" />
-    <Compile Include="RedisSetTests.cs" />
-    <Compile Include="RedisServerTests.cs" />
+    <Compile Include="RedisClientTests\RedisStringTests.cs" />
+    <Compile Include="RedisClientTests\RedisListTests.cs" />
+    <Compile Include="RedisClientTests\RedisSetTests.cs" />
+    <Compile Include="RedisClientTests\RedisServerTests.cs" />
     <Compile Include="RedisTestKeys.cs" />
-    <Compile Include="AsyncTests.cs" />
-    <Compile Include="SyncTests.cs" />
+    <Compile Include="RedisClientAsyncTests\GeneralTests.cs" />
+    <Compile Include="RedisClientTests\GeneralTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ctstone.Redis\ctstone.Redis.csproj">
@@ -77,6 +78,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

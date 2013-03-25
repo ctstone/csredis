@@ -4,12 +4,12 @@ using ctstone.Redis;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace ctstone.Redis.Tests
+namespace ctstone.Redis.Tests.RedisClientTests
 {
     [TestClass]
     public class RedisPubSubTests : RedisTestBase
     {
-        [TestMethod, TestCategory("PubSub")]
+        [TestMethod, TestCategory("PubSub"), TestCategory("RedisClient")]
         public void TestSubscribe()
         {
             int change_count = 0;
@@ -56,7 +56,7 @@ namespace ctstone.Redis.Tests
             }
         }
 
-        [TestMethod, TestCategory("PubSub")]
+        [TestMethod, TestCategory("PubSub"), TestCategory("RedisClient")]
         public void TestPSubscribe()
         {
             int change_count = 0;

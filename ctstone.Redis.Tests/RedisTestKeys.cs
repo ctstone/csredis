@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ctstone.Redis.Tests
+namespace ctstone.Redis.Tests.RedisClientTests
 {
     class RedisTestKeys : IDisposable
     {

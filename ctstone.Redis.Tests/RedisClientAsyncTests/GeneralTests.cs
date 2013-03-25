@@ -1,11 +1,11 @@
-﻿using System;
+﻿using ctstone.Redis.Tests.RedisClientTests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 
-namespace ctstone.Redis.Tests
+namespace ctstone.Redis.Tests.RedisClientAsyncTests
 {
     [TestClass]
-    public class AsyncTests : RedisTestBase
+    public class GeneralTests : RedisTestBase
     {
         [TestMethod, TestCategory("RedisClientAsync")]
         public void TestWait()

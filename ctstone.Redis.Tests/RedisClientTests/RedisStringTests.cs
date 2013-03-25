@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ctstone.Redis;
 using System.Collections.Generic;
 
-namespace ctstone.Redis.Tests
+namespace ctstone.Redis.Tests.RedisClientTests
 {
     [TestClass]
     public class RedisStringTests : RedisTestBase

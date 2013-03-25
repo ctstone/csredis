@@ -2,7 +2,7 @@
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace ctstone.Redis.Tests
+namespace ctstone.Redis.Tests.RedisClientTests
 {
     [TestClass]
     public class RedisSetTests : RedisTestBase

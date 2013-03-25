@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ctstone.Redis;
 
-namespace ctstone.Redis.Tests
+namespace ctstone.Redis.Tests.RedisClientTests
 {
     [TestClass]
     public class RedisHashTests : RedisTestBase

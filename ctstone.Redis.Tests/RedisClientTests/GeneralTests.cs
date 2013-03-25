@@ -3,10 +3,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Text;
 
-namespace ctstone.Redis.Tests
+namespace ctstone.Redis.Tests.RedisClientTests
 {
     [TestClass]
-    public class SyncTests : RedisTestBase
+    public class GeneralTests : RedisTestBase
     {
         [TestMethod, TestCategory("RedisClient")]
         public void TestStreaming()
