@@ -30,7 +30,7 @@ namespace ctstone.Redis
         public string Host { get { return _connection.Host; } }
 
         /// <summary>
-        /// Get the port that the current RedisSentinelClient is connected to
+        /// Get the port that the current RedisClient is connected to
         /// </summary>
         public int Port { get { return _connection.Port; } }
 
