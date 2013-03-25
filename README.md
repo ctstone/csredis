@@ -248,11 +248,23 @@ Note that the response object will need to be cast according to the Redis unifie
 ##Streaming responses
 For large result sizes, it may be preferred to stream the raw bytes from the server rather than allocating large chunks of memory in place. This can be achieved with **RedisClient.StreamTo()**. Note that this only applies to BULK responses (e.g. GET, HGET, LINDEX, etc). Attempting to stream any other response will result in an InvalidOperationException. Here is an example that stores the response in a MemoryStream 64 bytes at a time. A more useful example might use a FileStream and a larger buffer size.
 ```csharp
-redis.Set("test", "a-few-megabytes-here");
+redis.Set("test", "lots-of-data-here");
 using (var ms = new MemoryStream())
 {
   redis.StreamTo(ms, 64, r => r.Get("test")); // small buffer size used for demo
   byte[] bytes = ms.ToArray(); // optional: get the bytes if needed
+}
+```
+
+To access the raw bytes from a server response, use **RedisClient.BufferFor()** with **RedisClient.Read()**. Together, these two methods allow you to read any BULK server response a few bytes at a time. Note that the buffer *MUST* be emptied fully before issuing another command. The read buffer is considered empty when **Read()** returns 0 bytes read. Failing to empty the buffer before executing a new Redis command will result in an InvalidOperationException. Example:
+```csharp
+redis.Set("test", "lots-of-data-here");
+redis.BufferFor(r => r.Get("test"));
+byte[] buffer = new byte[64];
+int bytes_read;
+while ((bytes_read = redis.Read(buffer, 0, buffer.Length)) > 0)
+{
+  Console.WriteLine("Read {0} bytes : {1}", bytes_read, Encoding.UTF8.GetString(buffer, 0, bytes_read));
 }
 ```
 

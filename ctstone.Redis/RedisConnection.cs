@@ -33,6 +33,12 @@ namespace ctstone.Redis
         public bool Connected { get { return _socket.Connected; } }
 
         /// <summary>
+        /// Get or set the value indicating that the current connection is in read-buffering mode
+        /// </summary>
+        public bool Buffering { get; set; }
+
+
+        /// <summary>
         /// Occurs when a background task raises an exception
         /// </summary>
         public event UnhandledExceptionEventHandler TaskReadExceptionOccurred;
@@ -48,6 +54,7 @@ namespace ctstone.Redis
         private BlockingCollection<Task> _asyncTaskQueue;
         private Task _asyncReader;
         private readonly object _asyncLock;
+        private long _bytesRemaining;
         
         /// <summary>
         /// Instantiate new instance of RedisConnection
@@ -112,6 +119,57 @@ namespace ctstone.Redis
                 throw new InvalidOperationException("Cannot stream from non-bulk response. Received: " + type);
 
             RedisReader.ReadBulk(_stream, destination, bufferSize, false);
+        }
+
+        /// <summary>
+        /// Read server response bytes into buffer and advance the server response stream (requires Buffering=true)
+        /// </summary>
+        /// <param name="buffer">An array of bytes. When this method returns, the buffer contains the specified byte array with the values between offset and (offset + count - 1) replaced by the bytes read from the current source.</param>
+        /// <param name="offset">The zero-based byte offset in buffer at which to begin storing the data read from the current stream.</param>
+        /// <param name="count">The maximum number of bytes to be read from the current stream.</param>
+        /// <returns>The total number of bytes read into the buffer. This can be less than the number of bytes requested if that many bytes are not currently available, or zero (0) if the end of the stream has been reached.</returns>
+        public int Read(byte[] buffer, int offset, int count)
+        {
+            if (offset > buffer.Length || count > buffer.Length)
+                throw new InvalidOperationException("Buffer offset or count is larger than buffer");
+
+            if (!Buffering)
+            {
+                for (int i = offset; i < count; i++)
+                    buffer[i] = 0;
+                return 0;
+            }
+
+            if (_bytesRemaining == 0)
+            {
+                RedisMessage type = RedisReader.ReadType(_stream);
+
+                if (type == RedisMessage.Error)
+                    throw new RedisException(RedisReader.ReadStatus(_stream, false));
+
+                if (type != RedisMessage.Bulk)
+                    throw new InvalidOperationException("Cannot buffer from non-bulk response. Received: " + type);
+
+                _bytesRemaining = RedisReader.ReadInt(_stream, false);
+            }
+
+            int bytes_to_read = count;
+            if (bytes_to_read > _bytesRemaining)
+                bytes_to_read = (int)_bytesRemaining;
+
+            int bytes_read = 0;
+            while (bytes_read < bytes_to_read)
+                bytes_read += _stream.Read(buffer, offset + bytes_read, bytes_to_read - bytes_read);
+
+            _bytesRemaining -= bytes_read;
+
+            if (_bytesRemaining == 0)
+            {
+                RedisReader.ReadCRLF(_stream);
+                Buffering = false;
+            }
+
+            return bytes_read;
         }
 
         /// <summary>

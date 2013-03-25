@@ -16,7 +16,7 @@ namespace ctstone.Redis
         private RedisSubscriptionHandler _subscriptionHandler;
         private RedisMonitorHandler _monitorHandler;
         private bool _isTransaction;
-        private bool _isByteMode;
+        private bool _isStreamMode;
 
 
         /// <summary>
@@ -119,10 +119,35 @@ namespace ctstone.Redis
         /// <param name="func">RedisClient command to execute</param>
         public void StreamTo<T>(Stream destination, int bufferSize, Func<RedisClient, T> func)
         {
-            _isByteMode = true;
+            _isStreamMode = true;
             func(this);
             _connection.Read(destination, bufferSize);
-            _isByteMode = false;
+            _isStreamMode = false;
+        }
+
+        /// <summary>
+        /// Execute the specified command in buffered-read mode. The buffer MUST be emptied with Read() before any other commands are issued.
+        /// </summary>
+        /// <typeparam name="T">Server response type</typeparam>
+        /// <param name="func">RedisClient command to execute</param>
+        public void BufferFor<T>(Func<RedisClient, T> func)
+        {
+            _isStreamMode = true;
+            func(this);
+            _isStreamMode = false;
+            _connection.Buffering = true;
+        }
+
+        /// <summary>
+        /// Read server response bytes into buffer and advance the server response stream (requires BufferFor())
+        /// </summary>
+        /// <param name="buffer">An array of bytes. When this method returns, the buffer contains the specified byte array with the values between offset and (offset + count - 1) replaced by the bytes read from the current source.</param>
+        /// <param name="offset">The zero-based byte offset in buffer at which to begin storing the data read from the current stream.</param>
+        /// <param name="count">The maximum number of bytes to be read from the current stream.</param>
+        /// <returns>The total number of bytes read into the buffer. This can be less than the number of bytes requested if that many bytes are not currently available, or zero (0) if the end of the stream has been reached.</returns>
+        public int Read(byte[] buffer, int offset, int count)
+        {
+            return _connection.Read(buffer, offset, count);
         }
 
         #region Connection
@@ -1988,6 +2013,9 @@ namespace ctstone.Redis
             if (!_connection.Connected)
                 throw new InvalidOperationException("RedisClient is not connected");
 
+            if (_connection.Buffering)
+                throw new InvalidOperationException("Cannot execute '" + command.Command + "' command while in buffer-mode. Empty the current buffer with Read().");
+
             if (_subscriptionHandler.IsSubscribed)
                 throw new InvalidOperationException("RedisClient cannot accept non-subscription commands while subscribed");
 
@@ -2012,7 +2040,7 @@ namespace ctstone.Redis
                 return default(T);
             }
 
-            if (_isByteMode)
+            if (_isStreamMode)
             {
                 _connection.Write(command.Command, command.Arguments);
                 return default(T);
