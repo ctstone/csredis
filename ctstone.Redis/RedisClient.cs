@@ -25,7 +25,7 @@ namespace ctstone.Redis
         public bool Connected { get { return _connection.Connected; } }
 
         /// <summary>
-        /// Get host that the current RedisSentinelClient is connected to
+        /// Get host that the current RedisClient is connected to
         /// </summary>
         public string Host { get { return _connection.Host; } }
 
