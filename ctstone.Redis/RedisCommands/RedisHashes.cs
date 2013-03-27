@@ -23,6 +23,31 @@ namespace ctstone.Redis.RedisCommands
         }
     }
 
+    class RedisStringHashes : RedisCommand<Dictionary<string, string>[]>
+    {
+        private string[] _fields;
+
+        public RedisStringHashes(string command, string[] fields, params object[] args)
+            : base(x => ParseStream(x, fields), command, args)
+        {
+            _fields = fields;
+        }
+
+        private static Dictionary<string, string>[] ParseStream(Stream stream, string[] fields)
+        {
+            string[] response = RedisReader.ReadMultiBulkUTF8(stream);
+
+            Dictionary<string, string>[] dicts = new Dictionary<string, string>[response.Length / fields.Length];
+            for (int i = 0; i < response.Length; i += fields.Length)
+            {
+                dicts[i / fields.Length] = new Dictionary<string, string>();
+                for (int j = 0; j < fields.Length; j++)
+                    dicts[i / fields.Length][fields[j]] = response[i + j];
+            }
+            return dicts;
+        }
+    }
+
     class RedisHashes<T> : RedisCommand<T[]>
         where T : new()
     {
