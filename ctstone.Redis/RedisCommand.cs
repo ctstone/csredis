@@ -126,6 +126,22 @@ namespace ctstone.Redis
         {
             return new RedisStatus("RESTORE", key, ttl, serializedValue);
         }
+        public static RedisStringHashes Sort(string key, long? offset = null, long? count = null, string by = null, RedisSortDir? dir = null, bool? isAlpha = null, bool? isHash = null, params string[] get)
+        {
+            List<string> args = new List<string>();
+            args.Add(key);
+            if (by != null)
+                args.AddRange(new[] { "BY", by });
+            if (offset.HasValue && count.HasValue)
+                args.AddRange(new[] { "LIMIT", offset.Value.ToString(), count.Value.ToString() });
+            foreach (var pattern in get)
+                args.AddRange(new[] { "GET", pattern });
+            if (dir.HasValue)
+                args.Add(dir.ToString().ToUpper());
+            if (isAlpha.HasValue && isAlpha.Value)
+                args.Add("ALPHA");
+            return new RedisStringHashes("SORT",get,  args.ToArray());
+        }
         public static RedisStrings Sort(string key, long? offset = null, long? count = null, string by = null, RedisSortDir? dir = null, bool? isAlpha = null, params string[] get)
         {
             List<string> args = new List<string>();
