@@ -298,7 +298,6 @@ namespace ctstone.Redis
         {
             foreach (var parserTask in _asyncTaskQueue.GetConsumingEnumerable())
             {
-                Console.WriteLine("Running task {0} ({1})", parserTask.Id, _asyncTaskQueue.Count);
                 parserTask.RunSynchronously();
                 if (parserTask.Exception != null)
                 {
@@ -308,7 +307,6 @@ namespace ctstone.Redis
                     if (is_fatal)
                         throw parserTask.Exception;
                 }
-                Console.WriteLine("Completed task {0} ({1})", parserTask.Id, _asyncTaskQueue.Count);
             }
         }
 
