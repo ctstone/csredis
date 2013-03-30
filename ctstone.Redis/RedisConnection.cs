@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -323,6 +324,7 @@ namespace ctstone.Redis
         private static string CreateMessage(string command, params object[] args)
         {
             string[] cmd = RedisArgs.Concat(command.ToString().Split(' '), args);
+            Trace.WriteLine(String.Format("Executing: {0} {1}", command, String.Join(" ", args)));
 
             StringBuilder cmd_builder = new StringBuilder();
 

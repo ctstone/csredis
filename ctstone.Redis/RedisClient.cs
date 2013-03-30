@@ -1661,6 +1661,45 @@ namespace ctstone.Redis
         }
 
         /// <summary>
+        /// Set the string value of a key with atomic expiration and existence condition
+        /// </summary>
+        /// <param name="key">Key to modify</param>
+        /// <param name="value">Value to set</param>
+        /// <param name="expiration">Set expiration to nearest millisecond</param>
+        /// <param name="condition">Set key if existence condition</param>
+        /// <returns>Status code, or null if condition not met</returns>
+        public string Set(string key, object value, TimeSpan expiration, RedisExistence? condition = null)
+        {
+            return Write(RedisCommand.Set(key, value, expiration, condition));
+        }
+
+        /// <summary>
+        /// Set the string value of a key with atomic expiration and existence condition
+        /// </summary>
+        /// <param name="key">Key to modify</param>
+        /// <param name="value">Value to set</param>
+        /// <param name="expirationSeconds">Set expiration to nearest second</param>
+        /// <param name="condition">Set key if existence condition</param>
+        /// <returns>Status code, or null if condition not met</returns>
+        public string Set(string key, object value, int? expirationSeconds = null, RedisExistence? condition = null)
+        {
+            return Write(RedisCommand.Set(key, value, expirationSeconds, condition));
+        }
+
+        /// <summary>
+        /// Set the string value of a key with atomic expiration and existence condition
+        /// </summary>
+        /// <param name="key">Key to modify</param>
+        /// <param name="value">Value to set</param>
+        /// <param name="expirationMilliseconds">Set expiration to nearest millisecond</param>
+        /// <param name="condition">Set key if existence condition</param>
+        /// <returns>Status code, or null if condition not met</returns>
+        public string Set(string key, object value, long? expirationMilliseconds = null, RedisExistence? condition = null)
+        {
+            return Write(RedisCommand.Set(key, value, expirationMilliseconds, condition));
+        }
+
+        /// <summary>
         /// Sets or clears the bit at offset in the string value stored at key
         /// </summary>
         /// <param name="key">Key to modify</param>

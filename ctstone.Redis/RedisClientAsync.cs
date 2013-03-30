@@ -823,6 +823,18 @@ namespace ctstone.Redis
         {
             return Write(RedisCommand.Set(key, value));
         }
+        public Task<string> Set(string key, object value, TimeSpan expiration, RedisExistence? condition = null)
+        {
+            return Write(RedisCommand.Set(key, value, expiration, condition));
+        }
+        public Task<string> Set(string key, object value, int? expirationSeconds = null, RedisExistence? condition = null)
+        {
+            return Write(RedisCommand.Set(key, value, expirationSeconds, condition));
+        }
+        public Task<string> Set(string key, object value, long? expirationMilliseconds = null, RedisExistence? condition = null)
+        {
+            return Write(RedisCommand.Set(key, value, expirationMilliseconds, condition));
+        }
         public Task<bool> SetBit(string key, uint offset, bool value)
         {
             return Write(RedisCommand.SetBit(key, offset, value));

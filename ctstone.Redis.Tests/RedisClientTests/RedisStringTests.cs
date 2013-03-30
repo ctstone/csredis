@@ -257,12 +257,51 @@ namespace ctstone.Redis.Tests.RedisClientTests
         [TestMethod, TestCategory("Strings")]
         public void TestSet()
         {
-            _redis.Del("test");
+            using (new RedisTestKeys(_redis, "test"))
+            {
+                Assert.AreEqual("OK", _redis.Set("test", 1));
+                Assert.AreEqual("1", _redis.Get("test"));
+            }
 
-            Assert.AreEqual("OK", _redis.Set("test", 1));
-            Assert.AreEqual("1", _redis.Get("test"));
+            using (new RedisTestKeys(_redis, "test"))
+            {
+                Assert.AreEqual("OK", _redis.Set("test", 1, 10));
+                var pttl = _redis.PTtl("test");
+                Assert.IsTrue(pttl > 0);
+                Assert.IsTrue(pttl <= 10000L);
+            }
 
-            _redis.Del("test");
+            using (new RedisTestKeys(_redis, "test"))
+            {
+                Assert.AreEqual("OK", _redis.Set("test", 1, 10000L));
+                var ttl = _redis.Ttl("test");
+                Assert.IsTrue(ttl > 0);
+                Assert.IsTrue(ttl <= 10);
+            }
+
+            using (new RedisTestKeys(_redis, "test"))
+            {
+                Assert.AreEqual("OK", _redis.Set("test", 1, null, RedisExistence.Nx));
+                Assert.IsNull(_redis.Set("test", 2, null, RedisExistence.Nx));
+                Assert.AreEqual("1", _redis.Get("test"));
+            }
+
+            using (new RedisTestKeys(_redis, "test"))
+            {
+                Assert.IsNull(_redis.Set("test", 1, null, RedisExistence.Xx));
+                Assert.AreEqual("OK", _redis.Set("test", 2, null, RedisExistence.Nx));
+                Assert.AreEqual("2", _redis.Get("test"));
+            }
+
+            using (new RedisTestKeys(_redis, "test"))
+            {
+                Assert.AreEqual("OK", _redis.Set("test", 1, TimeSpan.FromSeconds(10), RedisExistence.Nx));
+                Assert.IsNull(_redis.Set("test", 2, null, RedisExistence.Nx));
+                Assert.AreEqual("1", _redis.Get("test"));
+                var pttl = _redis.PTtl("test");
+                Assert.IsTrue(pttl > 0);
+                Assert.IsTrue(pttl <= 10000L);
+            }
         }
 
         [TestMethod, TestCategory("Strings")]

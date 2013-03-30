@@ -711,6 +711,29 @@ namespace ctstone.Redis
         {
             return new RedisStatus("SET", key, value);
         }
+        public static RedisStatusNull Set(string key, object value, TimeSpan expiration, RedisExistence? condition = null) 
+        {
+            return Set(key, value, (long)expiration.TotalMilliseconds, condition);
+        }
+        public static RedisStatusNull Set(string key, object value, int? expirationSeconds = null, RedisExistence? condition = null)
+        {
+            return Set(key, value, expirationSeconds, null, condition);
+        }
+        public static RedisStatusNull Set(string key, object value, long? expirationMilliseconds = null, RedisExistence? condition = null)
+        {
+            return Set(key, value, null, expirationMilliseconds, condition);
+        }
+        private static RedisStatusNull Set(string key, object value, int? expirationSeconds = null, long? expirationMilliseconds = null, RedisExistence? exists = null)
+        {
+            var args = new List<string> { key, value.ToString() };
+            if (expirationSeconds != null)
+                args.AddRange(new[] { "EX", expirationSeconds.ToString() });
+            if (expirationMilliseconds != null)
+                args.AddRange(new[] { "PX", expirationMilliseconds.ToString() });
+            if (exists != null)
+                args.AddRange(new[] { exists.ToString().ToUpper() });
+            return new RedisStatusNull("SET", args.ToArray());
+        }
         public static RedisBool SetBit(string key, uint offset, bool value)
         {
             return new RedisBool("SETBIT", key, offset, value ? "1" : "0");

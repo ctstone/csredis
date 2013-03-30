@@ -8,7 +8,10 @@ namespace ctstone.Redis
     {
         public static RedisMessage ReadType(Stream stream)
         {
-            return (RedisMessage)stream.ReadByte();
+            RedisMessage type = (RedisMessage)stream.ReadByte();
+            if (type == RedisMessage.Error)
+                throw new RedisException(ReadStatus(stream, false));
+            return type;
         }
 
         // redis type = STATUS
@@ -149,9 +152,7 @@ namespace ctstone.Redis
         private static void ExpectType(Stream stream, RedisMessage expectedType)
         {
             RedisMessage type = ReadType(stream);
-            if (type == RedisMessage.Error)
-                throw new RedisException(ReadStatus(stream, false));
-            else if (type != expectedType)
+            if (type != expectedType)
                 throw new RedisProtocolException(String.Format("Unexpected response type: {0} (expecting {1})", type, expectedType));
         }
 
