@@ -103,20 +103,16 @@ namespace ctstone.Redis.Tests.RedisClientTests
         [TestMethod, TestCategory("Keys")]
         public void TestKeys()
         {
-            _redis.Del("test:test", "test:tast", "test:tost", "test:tist", "test:tust");
+            string prefix = Guid.NewGuid().ToString();
+            string[] keys = new[] { "test:" + prefix + ":1", "test:" + prefix + ":2", "test:" + prefix + ":3" };
+            using (new RedisTestKeys(_redis, keys))
+            {
+                _redis.Del(keys);
+                foreach (var key in keys)
+                    _redis.Set(key, 1);
 
-            _redis.MSet("test:test", "1", "test:tast", "1", "test:tost", "1", "test:tist", "1", "test:tust", "1");
-
-            var res1 = _redis.Keys("test:*");
-            Assert.AreEqual(5, res1.Length);
-
-            var res2 = _redis.Keys("test:t?st");
-            Assert.AreEqual(5, res2.Length);
-
-            var res3 = _redis.Keys("test:t[ae]st");
-            Assert.AreEqual(2, res3.Length);
-
-            _redis.Del("test:test", "test:tast", "test:tost", "test:tist", "test:tust");
+                Assert.AreEqual(keys.Length, _redis.Keys("test:" + prefix + ":*").Length);
+            }
         }
 
         // MIGRATE
