@@ -1,3 +1,6 @@
+##csredis 1.4.2.0
+Added XML inline documentation
+
 ##csredis 1.4.1.0
 Added support for extended SET command introduced in Redis 2.6.12
 
