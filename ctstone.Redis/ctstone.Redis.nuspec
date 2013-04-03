@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/ctstone/csredis</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Fix for null keys/values in hashes</releaseNotes>
+    <releaseNotes>Fix for non-existent hashes now returns null</releaseNotes>
     <copyright>Copyright 2013</copyright>
     <tags>Redis Sentinel Async NoSQL</tags>
   </metadata>

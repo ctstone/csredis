@@ -1,3 +1,6 @@
+##csredis 1.4.4.0
+Fix for non-existent hashes now returns null
+
 ##csredis 1.4.3.0
 Fix for null keys/values in hashes
 

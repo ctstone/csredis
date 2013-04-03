@@ -35,6 +35,11 @@ namespace ctstone.Redis.Tests.RedisClientTests
                 Assert.AreEqual(my_obj.DateTimeField.ToString(), redis_obj.DateTimeField.ToString());
                 Assert.AreEqual(my_obj.DateTimeOffsetField.ToString(), redis_obj.DateTimeOffsetField.ToString());
             }
+
+            using (new RedisTestKeys(_redis, "test"))
+            {
+                Assert.IsNull(_redis.HGetAll<RedisGenericTest>("test"));
+            }
         }
 
         [TestMethod, TestCategory("Hash")]

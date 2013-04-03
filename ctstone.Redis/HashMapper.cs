@@ -39,7 +39,7 @@ namespace ctstone.Redis
         {
             T obj = Activator.CreateInstance<T>();
             if (fieldValues.Length == 0)
-                return obj;
+                return default(T);
             TypeConverter conv;
             PropertyInfo prop;
             string field, value;
