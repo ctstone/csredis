@@ -1,3 +1,6 @@
+##csredis 1.4.3.0
+Fix for null keys/values in hashes
+
 ##csredis 1.4.2.0
 Added XML inline documentation
 

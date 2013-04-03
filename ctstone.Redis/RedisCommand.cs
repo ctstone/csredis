@@ -231,28 +231,35 @@ namespace ctstone.Redis
         }
         public static RedisStatus HMSet(string key, Dictionary<string, string> dict)
         {
-            List<object> args = new List<object>();
-            args.Add(key);
+            List<object> args = new List<object> { key };
             foreach (var keyValue in dict)
-                args.AddRange(new[] { keyValue.Key, keyValue.Value });
+            {
+                if (keyValue.Key != null && keyValue.Value != null)
+                    args.AddRange(new[] { keyValue.Key, keyValue.Value });
+            }
             return new RedisStatus("HMSET", args.ToArray());
         }
         public static RedisStatus HMSet<T>(string key, T obj)
         {
-            List<object> args = new List<object>();
-            args.Add(key);
+            List<object> args = new List<object> { key };
             PropertyInfo[] props = typeof(T).GetProperties();
             foreach (var prop in props)
             {
-                if (prop.CanRead)
+                object value = prop.GetValue(obj, null);
+                if (prop.CanRead && value != null)
                     args.AddRange(new[] { prop.Name, prop.GetValue(obj, null) });
             }
             return new RedisStatus("HMSET", args.ToArray());
         }
         public static RedisStatus HMSet(string key, params string[] keyValues)
         {
-            object[] args = RedisArgs.Concat(key, keyValues);
-            return new RedisStatus("HMSET", args);
+            List<object> args = new List<object> { key };
+            for (int i = 0; i < keyValues.Length; i += 2)
+            {
+                if (keyValues[i] != null && keyValues[i + 1] != null)
+                    args.AddRange(new[] { keyValues[i], keyValues[i + 1] });
+            }
+            return new RedisStatus("HMSET", args.ToArray());
         }
         public static RedisBool HSet(string key, string field, object value)
         {

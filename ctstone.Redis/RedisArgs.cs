@@ -27,7 +27,8 @@ namespace ctstone.Redis
             {
                 for (int j = 0; j < arrays[i].Length; j++)
                 {
-                    output[pos++] = arrays[i][j].ToString();
+                    object obj = arrays[i][j];
+                    output[pos++] = obj == null ? String.Empty : obj.ToString();
                 }
             }
             return output;

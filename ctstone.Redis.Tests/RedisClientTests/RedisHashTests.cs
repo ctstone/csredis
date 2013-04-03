@@ -12,69 +12,70 @@ namespace ctstone.Redis.Tests.RedisClientTests
         [TestMethod, TestCategory("Hash")]
         public void TestHashCreate_Generic()
         {
-            _redis.Del("test");
+            using (new RedisTestKeys(_redis, "test"))
+            {
+                var my_obj = RedisGenericTest.Create();
+                Assert.AreEqual("OK", _redis.HMSet("test", my_obj));
 
-            RedisGenericTest my_obj = RedisGenericTest.Create();
-            string result = _redis.HMSet("test", my_obj);
-            Assert.AreEqual("OK", result);
-
-            RedisGenericTest redis_obj = _redis.HGetAll<RedisGenericTest>("test");
-            Assert.AreEqual(my_obj.StringField, redis_obj.StringField);
-            Assert.AreEqual(my_obj.IntField, redis_obj.IntField);
-            Assert.AreEqual(my_obj.UIntField, redis_obj.UIntField);
-            Assert.AreEqual(my_obj.DoubleField, redis_obj.DoubleField);
-            Assert.AreEqual(my_obj.FloatField, redis_obj.FloatField);
-            Assert.AreEqual(my_obj.BoolField, redis_obj.BoolField);
-            Assert.AreEqual(my_obj.LongField, redis_obj.LongField);
-            Assert.AreEqual(my_obj.ULongField, redis_obj.ULongField);
-            Assert.AreEqual(my_obj.ShortField, redis_obj.ShortField);
-            Assert.AreEqual(my_obj.UShortField, redis_obj.UShortField);
-            Assert.AreEqual(my_obj.ByteField, redis_obj.ByteField);
-            Assert.AreEqual(my_obj.SByteField, redis_obj.SByteField);
-            Assert.AreEqual(my_obj.CharField, redis_obj.CharField);
-
-            Assert.AreEqual(my_obj.DateTimeField.ToString(), redis_obj.DateTimeField.ToString());
-            Assert.AreEqual(my_obj.DateTimeOffsetField.ToString(), redis_obj.DateTimeOffsetField.ToString());
-
-            _redis.Del("test");
+                var redis_obj = _redis.HGetAll<RedisGenericTest>("test");
+                Assert.AreEqual(my_obj.StringField, redis_obj.StringField);
+                Assert.AreEqual(my_obj.IntField, redis_obj.IntField);
+                Assert.AreEqual(my_obj.UIntField, redis_obj.UIntField);
+                Assert.AreEqual(my_obj.DoubleField, redis_obj.DoubleField);
+                Assert.AreEqual(my_obj.FloatField, redis_obj.FloatField);
+                Assert.AreEqual(my_obj.BoolField, redis_obj.BoolField);
+                Assert.AreEqual(my_obj.LongField, redis_obj.LongField);
+                Assert.AreEqual(my_obj.ULongField, redis_obj.ULongField);
+                Assert.AreEqual(my_obj.ShortField, redis_obj.ShortField);
+                Assert.AreEqual(my_obj.UShortField, redis_obj.UShortField);
+                Assert.AreEqual(my_obj.ByteField, redis_obj.ByteField);
+                Assert.AreEqual(my_obj.SByteField, redis_obj.SByteField);
+                Assert.AreEqual(my_obj.CharField, redis_obj.CharField);
+                Assert.IsNull(redis_obj.NullField);
+                Assert.AreEqual(my_obj.DateTimeField.ToString(), redis_obj.DateTimeField.ToString());
+                Assert.AreEqual(my_obj.DateTimeOffsetField.ToString(), redis_obj.DateTimeOffsetField.ToString());
+            }
         }
 
         [TestMethod, TestCategory("Hash")]
         public void TestHashCreate_Dict()
         {
-            _redis.Del("test");
-
-            var my_dict = new Dictionary<string, string>
+            using (new RedisTestKeys(_redis, "test"))
             {
-                { "key1", "value1" },
-                { "key2", "value2" },
-            };
-            string result = _redis.HMSet("test", my_dict);
-            Assert.AreEqual("OK", result);
+                Assert.AreEqual("OK", _redis.HMSet("test", new Dictionary<string, string>
+                {
+                    { "key1", "value1" },
+                    { "key2", "value2" },
+                    { "key3", null },
+                }));
 
-            var redis_dict = _redis.HGetAll("test");
-            Assert.AreEqual(my_dict.Count, redis_dict.Count);
-            foreach (var kvp in my_dict)
-                Assert.AreEqual(my_dict[kvp.Key], redis_dict[kvp.Key]);
-
-            _redis.Del("test");
+                var redis_hash = _redis.HGetAll("test");
+                Assert.AreEqual("value1", redis_hash["key1"]);
+                Assert.AreEqual("value2", redis_hash["key2"]);
+                Assert.IsFalse(redis_hash.ContainsKey("key3"));
+            }
         }
 
         [TestMethod, TestCategory("Hash")]
         public void TestHashCreate_KeyValues()
         {
-            _redis.Del("test");
+            using (new RedisTestKeys(_redis, "test"))
+            {
+                Assert.AreEqual("OK", _redis.HMSet("test", new[] 
+                {
+                    "key1", 
+                    "value1", 
+                    "key2", 
+                    "value2",
+                    "key3",
+                    null,
+                }));
 
-            string[] my_key_values = new[] { "key1", "value1", "key2", "value2" };
-            string result = _redis.HMSet("test", my_key_values);
-            Assert.AreEqual("OK", result);
-
-            var redis_dict = _redis.HGetAll("test");
-            Assert.AreEqual(my_key_values.Length / 2, redis_dict.Count);
-            for (int i = 0; i < my_key_values.Length; i += 2)
-                Assert.AreEqual(my_key_values[i + 1], redis_dict[my_key_values[i]]);
-
-            _redis.Del("test");
+                var redis_hash = _redis.HGetAll("test");
+                Assert.AreEqual("value1", redis_hash["key1"]);
+                Assert.AreEqual("value2", redis_hash["key2"]);
+                Assert.IsFalse(redis_hash.ContainsKey("key3"));
+            }
         }
 
         [TestMethod, TestCategory("Hash")]
@@ -301,6 +302,7 @@ namespace ctstone.Redis.Tests.RedisClientTests
             public char CharField { get; set; }
             public DateTime DateTimeField { get; set; }
             public DateTimeOffset DateTimeOffsetField { get; set; }
+            public string NullField { get; set; }
 
             public static RedisGenericTest Create()
             {
@@ -321,6 +323,7 @@ namespace ctstone.Redis.Tests.RedisClientTests
                     CharField = 'a',
                     DateTimeField = DateTime.UtcNow,
                     DateTimeOffsetField = DateTimeOffset.UtcNow,
+                    NullField = null,
                 };
             }
         }
