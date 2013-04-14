@@ -642,7 +642,7 @@ namespace ctstone.Redis
         #endregion
 
         #region Sorted Sets
-        public Task<long> ZAdd(string key, params Tuple<double, string>[] memberScores)
+        public Task<long> ZAdd<TScore, TMember>(string key, params Tuple<TScore, TMember>[] memberScores)
         {
             return Write(RedisCommand.ZAdd(key, memberScores));
         }

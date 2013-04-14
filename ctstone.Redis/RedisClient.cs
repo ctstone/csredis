@@ -1127,7 +1127,7 @@ namespace ctstone.Redis
         /// <param name="key">Sorted set key</param>
         /// <param name="memberScores">Array of member scores to add to sorted set</param>
         /// <returns>Number of elements added to the sorted set (not including member updates)</returns>
-        public long ZAdd(string key, params Tuple<double, string>[] memberScores)
+        public long ZAdd<TScore, TMember>(string key, params Tuple<TScore, TMember>[] memberScores)
         {
             return Write(RedisCommand.ZAdd(key, memberScores));
         }

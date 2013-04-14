@@ -450,7 +450,7 @@ namespace ctstone.Redis
         #endregion
 
         #region Sorted Sets
-        public static RedisInt ZAdd(string key, params Tuple<double, string>[] memberScores)
+        public static RedisInt ZAdd<TScore, TMember>(string key, params Tuple<TScore, TMember>[] memberScores)
         {
             object[] args = RedisArgs.Concat(key, RedisArgs.GetTupleArgs(memberScores));
             return new RedisInt("ZADD", args);

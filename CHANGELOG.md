@@ -1,4 +1,7 @@
 ##csredis 1.4.4.0
+Better handling of sorted set scores in ZADD
+
+##csredis 1.4.4.0
 Fix for non-existent hashes now returns null
 
 ##csredis 1.4.3.0

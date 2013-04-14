@@ -11,13 +11,18 @@ namespace ctstone.Redis.Tests.RedisClientTests
         [TestMethod, TestCategory("Sorted Sets")]
         public void TestZAdd()
         {
-            using (new RedisTestKeys(_redis, "test1", "test2"))
+            using (new RedisTestKeys(_redis, "test1", "test2", "test3"))
             {
                 Assert.AreEqual(2, _redis.ZAdd("test1", "1", "one", "2", "two"));
                 Assert.AreEqual(2, _redis.ZAdd("test2", new[] 
                 { 
                     Tuple.Create(1.5, "one"),
                     Tuple.Create(2.5, "two"),
+                }));
+                Assert.AreEqual(2, _redis.ZAdd("test3", new[] 
+                { 
+                    Tuple.Create(10, "one"),
+                    Tuple.Create(20, "two"),
                 }));
             }
         }
