@@ -1,4 +1,7 @@
-##csredis 1.4.4.0
+##csredis 1.4.6.0
+Better handling of sorted set members in ZREM
+
+##csredis 1.4.5.0
 Better handling of sorted set scores in ZADD
 
 ##csredis 1.4.4.0

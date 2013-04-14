@@ -1239,7 +1239,7 @@ namespace ctstone.Redis
         /// <param name="key">Sorted set key</param>
         /// <param name="members">Members to remove</param>
         /// <returns>Number of elements removed</returns>
-        public long ZRem(string key, params string[] members)
+        public long ZRem(string key, params object[] members)
         {
             return Write(RedisCommand.ZRem(key, members));
         }

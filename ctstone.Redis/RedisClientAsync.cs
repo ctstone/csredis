@@ -678,7 +678,7 @@ namespace ctstone.Redis
         {
             return Write(RedisCommand.ZRank(key, member));
         }
-        public Task<long> ZRem(string key, params string[] members)
+        public Task<long> ZRem(string key, params object[] members)
         {
             return Write(RedisCommand.ZRem(key, members));
         }

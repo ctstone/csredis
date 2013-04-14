@@ -518,7 +518,7 @@ namespace ctstone.Redis
         {
             return new RedisIntNull("ZRANK", key, member);
         }
-        public static RedisInt ZRem(string key, params string[] members) 
+        public static RedisInt ZRem(string key, params object[] members) 
         {
             string[] args = RedisArgs.Concat(new[] { key }, members);
             return new RedisInt("ZREM", args);
