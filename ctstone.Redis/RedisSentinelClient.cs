@@ -11,6 +11,7 @@ namespace ctstone.Redis
     {
         private RedisConnection _connection;
         private RedisSubscriptionHandler _subscriptionHandler;
+        private ActivityTracer _activity;
 
         /// <summary>
         /// Occurs when a subscription message has been received
@@ -45,6 +46,7 @@ namespace ctstone.Redis
         /// <param name="timeout">Connection timeout in milliseconds (0 for no timeout)</param>
         public RedisSentinelClient(string host, int port, int timeout)
         {
+            _activity = new ActivityTracer("New Redis Sentinel client");
             _connection = new RedisConnection(host, port);
             _connection.Connect(timeout);
             _subscriptionHandler = new RedisSubscriptionHandler(_connection);
@@ -155,6 +157,9 @@ namespace ctstone.Redis
         {
             if (_connection != null)
                 _connection.Dispose();
+            if (_activity != null)
+                _activity.Dispose();
+            _activity = null;
         }
 
         private T Write<T>(RedisCommand<T> command)

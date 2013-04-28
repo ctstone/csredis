@@ -20,13 +20,13 @@ namespace ctstone.Redis.Tests.RedisClientTests
         public void TestEcho()
         {
             string echo = Guid.NewGuid().ToString();
-            Assert.AreEqual(echo, _redis.Echo(echo));
+            Assert.AreEqual(echo, Redis.Echo(echo));
         }
 
         [TestMethod, TestCategory("Connection"), TestCategory("RedisClient")]
         public void TestPing()
         {
-            Assert.AreEqual("PONG", _redis.Ping());
+            Assert.AreEqual("PONG", Redis.Ping());
         }
 
         [TestMethod, TestCategory("Connection"), TestCategory("RedisClient")]
@@ -52,14 +52,14 @@ namespace ctstone.Redis.Tests.RedisClientTests
         {
             string test_key = Guid.NewGuid().ToString();
             string test_value = "1";
-            using (new RedisTestKeys(_redis, test_key))
+            using (new RedisTestKeys(Redis, test_key))
             {
-                _redis.Set(test_key, test_value);
-                Assert.AreEqual(test_value, _redis.Get(test_key));
-                Assert.AreEqual("OK", _redis.Select(1));
-                Assert.IsNull(_redis.Get(test_key));
-                Assert.AreEqual("OK", _redis.Select(0));
-                Assert.AreEqual(test_value, _redis.Get(test_key));
+                Redis.Set(test_key, test_value);
+                Assert.AreEqual(test_value, Redis.Get(test_key));
+                Assert.AreEqual("OK", Redis.Select(1));
+                Assert.IsNull(Redis.Get(test_key));
+                Assert.AreEqual("OK", Redis.Select(0));
+                Assert.AreEqual(test_value, Redis.Get(test_key));
             }
         }
     }

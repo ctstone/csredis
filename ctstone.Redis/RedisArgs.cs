@@ -69,9 +69,9 @@ namespace ctstone.Redis
         /// <returns>String representing Redis score/range notation</returns>
         public static string GetScore(double score, bool isExclusive)
         {
-            if (score == Double.MinValue)
+            if (Double.IsNegativeInfinity(score) || score == Double.MinValue)
                 return "-inf";
-            else if (score == Double.MaxValue)
+            else if (Double.IsPositiveInfinity(score) || score == Double.MaxValue)
                 return "+inf";
             else if (isExclusive)
                 return '(' + score.ToString();

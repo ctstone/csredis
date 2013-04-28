@@ -17,7 +17,7 @@ namespace ctstone.Redis
         private RedisMonitorHandler _monitorHandler;
         private bool _isTransaction;
         private bool _isStreamMode;
-
+        private ActivityTracer _activity;
 
         /// <summary>
         /// Get a value indicating that the RedisClient connection is open
@@ -62,6 +62,7 @@ namespace ctstone.Redis
         /// <param name="timeoutMilliseconds">Connection timeout in milliseconds (0 for no timeout)</param>
         public RedisClient(string host, int port, int timeoutMilliseconds)
         {
+            _activity = new ActivityTracer("New Redis client");
             _connection = new RedisConnection(host, port);
             _connection.Connect(timeoutMilliseconds);
             _pipelineHandler = new RedisPipelineHandler(_connection);
@@ -2045,47 +2046,55 @@ namespace ctstone.Redis
         {
             if (_connection != null)
                 _connection.Dispose();
+            _activity.Dispose();
+            _activity = null;
         }
 
         private T Write<T>(RedisCommand<T> command)
         {
-            if (!_connection.Connected)
-                throw new InvalidOperationException("RedisClient is not connected");
-
-            if (_connection.Buffering)
-                throw new InvalidOperationException("Cannot execute '" + command.Command + "' command while in buffer-mode. Empty the current buffer with Read().");
-
-            if (_subscriptionHandler.IsSubscribed)
-                throw new InvalidOperationException("RedisClient cannot accept non-subscription commands while subscribed");
-
-            if (_pipelineHandler.Active)
+            using (new ActivityTracer("Write command"))
             {
-                _pipelineHandler.Write(command.Command, command.Arguments);
-                return default(T);
-            }
-            else if (command.Command == "MULTI")
-            {
-                _isTransaction = true;
-            }
-            else if (command.Command == "EXEC" || command.Command == "DISCARD")
-            {
-                _isTransaction = false;
-            }
-            else if (_isTransaction)
-            {
-                string response = _connection.Call(RedisReader.ReadStatus, command.Command, command.Arguments);
-                if (TransactionQueued != null)
-                    TransactionQueued(this, new RedisTransactionQueuedEventArgs(response));
-                return default(T);
-            }
+                if (!_connection.Connected)
+                    throw new InvalidOperationException("RedisClient is not connected");
 
-            if (_isStreamMode)
-            {
-                _connection.Write(command.Command, command.Arguments);
-                return default(T);
-            }
+                if (_connection.Buffering)
+                    throw new InvalidOperationException("Cannot execute '" + command.Command + "' command while in buffer-mode. Empty the current buffer with Read().");
 
-            return _connection.Call(command.Parser, command.Command, command.Arguments);
+                if (_subscriptionHandler.IsSubscribed)
+                    throw new InvalidOperationException("RedisClient cannot accept non-subscription commands while subscribed");
+
+                if (_pipelineHandler.Active)
+                {
+                    _pipelineHandler.Write(command.Command, command.Arguments);
+                    return default(T);
+                }
+                else if (command.Command == "MULTI")
+                {
+                    ActivityTracer.Verbose("Begin MULTI/EXEC");
+                    _isTransaction = true;
+                }
+                else if (command.Command == "EXEC" || command.Command == "DISCARD")
+                {
+                    ActivityTracer.Verbose("End MULTI/EXEC ({0})", command.Command);
+                    _isTransaction = false;
+                }
+                else if (_isTransaction)
+                {
+                    ActivityTracer.Verbose("Sending transaction command");
+                    string response = _connection.Call(RedisReader.ReadStatus, command.Command, command.Arguments);
+                    if (TransactionQueued != null)
+                        TransactionQueued(this, new RedisTransactionQueuedEventArgs(response));
+                    return default(T);
+                }
+
+                if (_isStreamMode)
+                {
+                    _connection.Write(command.Command, command.Arguments);
+                    return default(T);
+                }
+
+                return _connection.Call(command.Parser, command.Command, command.Arguments);
+            }
         }
 
         private void OnSubscriptionReceived(object sender, RedisSubscriptionReceivedEventArgs e)

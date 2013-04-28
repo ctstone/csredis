@@ -11,8 +11,8 @@ namespace ctstone.Redis.Tests.RedisClientTests
         [TestMethod, TestCategory("Keys")]
         public void TestDel()
         {
-            _redis.Del("test", "test1", "test2", "test3", "test4", "test5");
-            _redis.MSet(new[] 
+            Redis.Del("test", "test1", "test2", "test3", "test4", "test5");
+            Redis.MSet(new[] 
             {
                 Tuple.Create("test", "t"),
                 Tuple.Create("test1", "t1"),
@@ -21,19 +21,19 @@ namespace ctstone.Redis.Tests.RedisClientTests
                 Tuple.Create("test4", "t4"),
             });
 
-            var del1 = _redis.Del("test", "test1", "test2");
+            var del1 = Redis.Del("test", "test1", "test2");
             Assert.AreEqual(3, del1);
 
-            var del2 = _redis.Del("test3", "test4", "test5");
+            var del2 = Redis.Del("test3", "test4", "test5");
             Assert.AreEqual(2, del2);
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestDump()
         {
-            _redis.Del("test");
-            _redis.Set("test", 10);
-            var res = _redis.Dump("test");
+            Redis.Del("test");
+            Redis.Set("test", 10);
+            var res = Redis.Dump("test");
             byte[] expected = new byte[] 
             {
                 0x0, 0xC0, 0xA, 0x06, 0x0, 0xF8, 0x72, 0x3F, 0xC5, 0xFB, 0xFB, 0x5F, 0x28
@@ -42,62 +42,62 @@ namespace ctstone.Redis.Tests.RedisClientTests
             for (int i = 0; i < res.Length; i++)
                 Assert.AreEqual(expected[i], res[i]);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestExists()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            var res1 = _redis.Exists("test");
+            var res1 = Redis.Exists("test");
             Assert.IsFalse(res1);
 
-            _redis.Set("test", 1);
+            Redis.Set("test", 1);
             
-            var res2 = _redis.Exists("test");
+            var res2 = Redis.Exists("test");
             Assert.IsTrue(res2);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestExpire()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            var res1 = _redis.Expire("test", 10);
+            var res1 = Redis.Expire("test", 10);
             Assert.IsFalse(res1);
 
-            _redis.Set("test", "t1");
-            var res2 = _redis.Expire("test", 10);
+            Redis.Set("test", "t1");
+            var res2 = Redis.Expire("test", 10);
             Assert.IsTrue(res2);
 
-            var res3 = _redis.Ttl("test");
+            var res3 = Redis.Ttl("test");
             Assert.IsTrue(res3 > 0);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestExpireAt()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            var server_time = _redis.Time();
+            var server_time = Redis.Time();
 
-            var res1 = _redis.ExpireAt("test", server_time + TimeSpan.FromSeconds(10));
+            var res1 = Redis.ExpireAt("test", server_time + TimeSpan.FromSeconds(10));
             Assert.IsFalse(res1);
 
-            _redis.Set("test", 1);
+            Redis.Set("test", 1);
 
-            var res2 = _redis.ExpireAt("test", server_time + TimeSpan.FromSeconds(10));
+            var res2 = Redis.ExpireAt("test", server_time + TimeSpan.FromSeconds(10));
             Assert.IsTrue(res2);
 
-            var res3 = _redis.Ttl("test");
+            var res3 = Redis.Ttl("test");
             Assert.IsTrue(res3 > 0);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Keys")]
@@ -105,13 +105,13 @@ namespace ctstone.Redis.Tests.RedisClientTests
         {
             string prefix = Guid.NewGuid().ToString();
             string[] keys = new[] { "test:" + prefix + ":1", "test:" + prefix + ":2", "test:" + prefix + ":3" };
-            using (new RedisTestKeys(_redis, keys))
+            using (new RedisTestKeys(Redis, keys))
             {
-                _redis.Del(keys);
+                Redis.Del(keys);
                 foreach (var key in keys)
-                    _redis.Set(key, 1);
+                    Redis.Set(key, 1);
 
-                Assert.AreEqual(keys.Length, _redis.Keys("test:" + prefix + ":*").Length);
+                Assert.AreEqual(keys.Length, Redis.Keys("test:" + prefix + ":*").Length);
             }
         }
 
@@ -124,112 +124,112 @@ namespace ctstone.Redis.Tests.RedisClientTests
         [TestMethod, TestCategory("Keys")]
         public void TestPersist()
         {
-            _redis.Del("test");
+            Redis.Del("test");
             
-            _redis.Set("test", "t1");
-            _redis.Expire("test", 10);
+            Redis.Set("test", "t1");
+            Redis.Expire("test", 10);
 
-            var res1 = _redis.Ttl("test");
+            var res1 = Redis.Ttl("test");
             Assert.IsTrue(res1 > 0);
 
-            var res2 = _redis.Persist("test");
+            var res2 = Redis.Persist("test");
             Assert.IsTrue(res2);
 
-            var res3 = _redis.Ttl("test");
+            var res3 = Redis.Ttl("test");
             Assert.AreEqual(-1, res3);
 
-            _redis.Del("test");
+            Redis.Del("test");
 
-            var res4 = _redis.Persist("test");
+            var res4 = Redis.Persist("test");
             Assert.IsFalse(res4);
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestPExpire()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            var res1 = _redis.PExpire("test", 10000);
+            var res1 = Redis.PExpire("test", 10000);
             Assert.IsFalse(res1);
 
-            _redis.Set("test", "t1");
-            var res2 = _redis.PExpire("test", 10000);
+            Redis.Set("test", "t1");
+            var res2 = Redis.PExpire("test", 10000);
             Assert.IsTrue(res2);
 
-            var res3 = _redis.PTtl("test");
+            var res3 = Redis.PTtl("test");
             Assert.IsTrue(res3 > 0);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestPExpireAt()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            var server_time = _redis.Time();
+            var server_time = Redis.Time();
 
-            var res1 = _redis.PExpireAt("test", server_time + TimeSpan.FromMilliseconds(10000));
+            var res1 = Redis.PExpireAt("test", server_time + TimeSpan.FromMilliseconds(10000));
             Assert.IsFalse(res1);
 
-            _redis.Set("test", 1);
+            Redis.Set("test", 1);
 
-            var res2 = _redis.PExpireAt("test", server_time + TimeSpan.FromMilliseconds(10000));
+            var res2 = Redis.PExpireAt("test", server_time + TimeSpan.FromMilliseconds(10000));
             Assert.IsTrue(res2);
 
-            var res3 = _redis.PTtl("test");
+            var res3 = Redis.PTtl("test");
             Assert.IsTrue(res3 > 0);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestRandomKey()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", 1);
-            var res = _redis.RandomKey();
+            Redis.Set("test", 1);
+            var res = Redis.RandomKey();
             Assert.IsNotNull(res);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestRename()
         {
-            _redis.Del("test", "test2");
+            Redis.Del("test", "test2");
 
             string guid = Guid.NewGuid().ToString();
-            _redis.Set("test", guid);
-            var resp1 = _redis.Rename("test", "test2");
+            Redis.Set("test", guid);
+            var resp1 = Redis.Rename("test", "test2");
             Assert.AreEqual("OK", resp1);
 
-            var resp2 = _redis.Exists("test");
+            var resp2 = Redis.Exists("test");
             Assert.IsFalse(resp2);
 
-            var resp3 = _redis.Get("test2");
+            var resp3 = Redis.Get("test2");
             Assert.AreEqual(guid, resp3);
 
-            _redis.Del("test", "test2");
+            Redis.Del("test", "test2");
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestRenameX()
         {
-            _redis.Del("test", "test2", "test3");
+            Redis.Del("test", "test2", "test3");
 
             string guid = Guid.NewGuid().ToString();
-            _redis.Set("test", guid);
-            _redis.Set("test2", 1);
+            Redis.Set("test", guid);
+            Redis.Set("test2", 1);
 
-            var resp1 = _redis.RenameNx("test", "test2");
+            var resp1 = Redis.RenameNx("test", "test2");
             Assert.IsFalse(resp1);
 
-            var resp2 = _redis.RenameNx("test", "test3");
+            var resp2 = Redis.RenameNx("test", "test3");
             Assert.IsTrue(resp2);
 
-            _redis.Del("test", "test2", "test3");
+            Redis.Del("test", "test2", "test3");
         }
 
         // RESTORE
@@ -237,13 +237,13 @@ namespace ctstone.Redis.Tests.RedisClientTests
         [TestMethod, TestCategory("Keys")]
         public void TestSort()
         {
-            _redis.Del("test", "test2", "test:weight_0", "test:weight_1", "test:weight_6", "test:weight_9", "test:weight_11", "test:obj_0", "test:obj_1", "test:obj_6", "test:obj_9", "test:obj_11");
+            Redis.Del("test", "test2", "test:weight_0", "test:weight_1", "test:weight_6", "test:weight_9", "test:weight_11", "test:obj_0", "test:obj_1", "test:obj_6", "test:obj_9", "test:obj_11");
 
             var list = new object[] { 6, 1, 9, 0, 11 };
-            _redis.RPush("test", list);
+            Redis.RPush("test", list);
             
             // simple
-            var resp1 = _redis.Sort("test");
+            var resp1 = Redis.Sort("test");
             Assert.AreEqual("0", resp1[0]);
             Assert.AreEqual("1", resp1[1]);
             Assert.AreEqual("6", resp1[2]);
@@ -251,7 +251,7 @@ namespace ctstone.Redis.Tests.RedisClientTests
             Assert.AreEqual("11", resp1[4]);
 
             // desc
-            var resp2 = _redis.Sort("test", dir: RedisSortDir.Desc);
+            var resp2 = Redis.Sort("test", dir: RedisSortDir.Desc);
             Assert.AreEqual("11", resp2[0]);
             Assert.AreEqual("9", resp2[1]);
             Assert.AreEqual("6", resp2[2]);
@@ -259,12 +259,12 @@ namespace ctstone.Redis.Tests.RedisClientTests
             Assert.AreEqual("0", resp2[4]);
 
             // by external key
-            _redis.Set("test:weight_6", 0);
-            _redis.Set("test:weight_1", 5);
-            _redis.Set("test:weight_9", 1);
-            _redis.Set("test:weight_0", 11);
-            _redis.Set("test:weight_11", 9);
-            var resp3 = _redis.Sort("test", by: "test:weight_*");
+            Redis.Set("test:weight_6", 0);
+            Redis.Set("test:weight_1", 5);
+            Redis.Set("test:weight_9", 1);
+            Redis.Set("test:weight_0", 11);
+            Redis.Set("test:weight_11", 9);
+            var resp3 = Redis.Sort("test", by: "test:weight_*");
             Assert.AreEqual("6", resp3[0]);
             Assert.AreEqual("9", resp3[1]);
             Assert.AreEqual("1", resp3[2]);
@@ -272,12 +272,12 @@ namespace ctstone.Redis.Tests.RedisClientTests
             Assert.AreEqual("0", resp3[4]);
 
             // by external key, with external key
-            _redis.Set("test:obj_6", "abc");
-            _redis.Set("test:obj_1", "def");
-            _redis.Set("test:obj_9", "ghi");
-            _redis.Set("test:obj_0", "jkl");
-            _redis.Set("test:obj_11", "mno");
-            var resp4 = _redis.Sort("test", by: "test:weight_*", get: new[] { "test:obj_*" });
+            Redis.Set("test:obj_6", "abc");
+            Redis.Set("test:obj_1", "def");
+            Redis.Set("test:obj_9", "ghi");
+            Redis.Set("test:obj_0", "jkl");
+            Redis.Set("test:obj_11", "mno");
+            var resp4 = Redis.Sort("test", by: "test:weight_*", get: new[] { "test:obj_*" });
             Assert.AreEqual("abc", resp4[0]);
             Assert.AreEqual("ghi", resp4[1]);
             Assert.AreEqual("def", resp4[2]);
@@ -285,7 +285,7 @@ namespace ctstone.Redis.Tests.RedisClientTests
             Assert.AreEqual("jkl", resp4[4]);
 
             // legographically
-            var resp5 = _redis.Sort("test", isAlpha: true);
+            var resp5 = Redis.Sort("test", isAlpha: true);
             Assert.AreEqual("0", resp5[0]);
             Assert.AreEqual("1", resp5[1]);
             Assert.AreEqual("11", resp5[2]);
@@ -293,27 +293,27 @@ namespace ctstone.Redis.Tests.RedisClientTests
             Assert.AreEqual("9", resp5[4]);
 
             // limit
-            var resp6 = _redis.Sort("test", offset: 1, count: 2);
+            var resp6 = Redis.Sort("test", offset: 1, count: 2);
             Assert.AreEqual("1", resp6[0]);
             Assert.AreEqual("6", resp6[1]);
 
             // store
-            var resp7 = _redis.SortAndStore("test", "test2");
+            var resp7 = Redis.SortAndStore("test", "test2");
             Assert.AreEqual(list.Length, resp7);
 
-            _redis.Del("test", "test2", "test:weight_0", "test:weight_1", "test:weight_6", "test:weight_9", "test:weight_11", "test:obj_0", "test:obj_1", "test:obj_6", "test:obj_9", "test:obj_11");
+            Redis.Del("test", "test2", "test:weight_0", "test:weight_1", "test:weight_6", "test:weight_9", "test:weight_11", "test:obj_0", "test:obj_1", "test:obj_6", "test:obj_9", "test:obj_11");
         }
 
         [TestMethod, TestCategory("Keys")]
         public void TestType()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", 1);
-            var resp1 = _redis.Type("test");
+            Redis.Set("test", 1);
+            var resp1 = Redis.Type("test");
             Assert.AreEqual("string", resp1);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
     }
 }

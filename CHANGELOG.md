@@ -1,4 +1,7 @@
 ##csredis 1.4.6.0
+Added tracing
+
+##csredis 1.4.6.0
 Better handling of sorted set members in ZREM
 
 ##csredis 1.4.5.0

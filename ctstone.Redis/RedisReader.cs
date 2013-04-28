@@ -9,6 +9,7 @@ namespace ctstone.Redis
         public static RedisMessage ReadType(Stream stream)
         {
             RedisMessage type = (RedisMessage)stream.ReadByte();
+            ActivityTracer.Verbose("Received response type: {0}", type);
             if (type == RedisMessage.Error)
                 throw new RedisException(ReadStatus(stream, false));
             return type;

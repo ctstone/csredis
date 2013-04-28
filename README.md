@@ -268,6 +268,30 @@ while ((bytes_read = redis.Read(buffer, 0, buffer.Length)) > 0)
 }
 ```
 
+##Tracing
+csredis supports the .NET tracing model in order to debug production instances. To enable csredis traces in your application, add the following section to your app.config or web.config:
+```xml
+<system.diagnostics>
+  <trace autoflush="true" />
+  <sources>
+    <source name="csredis" switchValue="Verbose">
+      <listeners>
+        <add
+          name="csredis.XmlWriterTraceListener"
+          type="System.Diagnostics.XmlWriterTraceListener"
+          initializeData="csredis.svclog"
+          traceOutputOptions="LogicalOperationStack,Callstack"/>
+      </listeners>
+    </source>
+  </sources>
+</system.diagnostics>
+```
+In this example, I am writing at a verbose level to an XML listener. Output includes the operation stack and the callstack for each trace. Read more about switchLevel, listeners, and traceOutputOptions at [MSDN](http://msdn.microsoft.com/en-us/library/zs6s4h68.aspx).  Other trace listeners exist for logging to console, flat file, or event log.
+
+The csredis tracing implementation is experimental and is subject to change. Do not enable without first taking note of the significant performance cost.
+
+csredis tracing output includes information on each opened/closed connection; exact comand output sent to server (readable text plus unified protocol); and response types received.
+
 
 ##Sentinel
 Sentinel is the monitoring/high-availability server packaged with Redis server. Sentinel is not yet widely documented, but csredis supports the specification as closely as possible.

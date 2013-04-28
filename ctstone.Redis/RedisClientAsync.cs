@@ -16,6 +16,7 @@ namespace ctstone.Redis
         private readonly RedisConnection _connection;
         private string _password;
         private Lazy<RedisSubscriptionClient> _subscriptionClient;
+        private ActivityTracer _activity;
 
         /// <summary>
         /// Get a value indicating that the RedisClientAsync connection is open
@@ -45,6 +46,7 @@ namespace ctstone.Redis
         /// <param name="timeoutMilliseconds">Connection timeout in milliseconds (0 for no timeout)</param>
         public RedisClientAsync(string host, int port, int timeoutMilliseconds)
         {
+            _activity = new ActivityTracer("New Redis async client");
             _connection = new RedisConnection(host, port);
             _connection.TaskReadExceptionOccurred += OnAsyncExceptionOccurred;
             _connection.Connect(timeoutMilliseconds);
@@ -57,6 +59,7 @@ namespace ctstone.Redis
         /// <returns>RedisClient to be used in single thread context</returns>
         public RedisClient Clone()
         {
+            ActivityTracer.Verbose("Cloning client");
             RedisClient client = new RedisClient(Host, Port, 0);
             if (_password != null)
                 client.Auth(_password);
@@ -954,10 +957,13 @@ namespace ctstone.Redis
 
         private Task<T> Write<T>(RedisCommand<T> command)
         {
-            if (!_connection.Connected)
-                throw new InvalidOperationException("RedisClientAsync is not connected");
+            using (new ActivityTracer("Write command async"))
+            {
+                if (!_connection.Connected)
+                    throw new InvalidOperationException("RedisClientAsync is not connected");
 
-            return _connection.CallAsync(command.Parser, command.Command, command.Arguments);
+                return _connection.CallAsync(command.Parser, command.Command, command.Arguments);
+            }
         }
 
         private void OnAsyncExceptionOccurred(object sender, UnhandledExceptionEventArgs e)
@@ -976,6 +982,10 @@ namespace ctstone.Redis
 
             if (_subscriptionClient.IsValueCreated)
                 _subscriptionClient.Value.Dispose();
+
+            if (_activity != null)
+                _activity.Dispose();
+            _activity = null;
         }
     }
 }

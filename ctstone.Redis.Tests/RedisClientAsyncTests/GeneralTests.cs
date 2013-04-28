@@ -10,10 +10,10 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
         [TestMethod, TestCategory("RedisClientAsync")]
         public void TestWait()
         {
-            using (new RedisTestKeys(_async, "test1"))
+            using (new RedisTestKeys(Async, "test1"))
             {
-                Assert.AreEqual("OK", _async.Wait(x => x.Set("test1", "hello world")));
-                Assert.AreEqual("hello world", _async.Wait(x => x.Get("test1")));
+                Assert.AreEqual("OK", Async.Wait(x => x.Set("test1", "hello world")));
+                Assert.AreEqual("hello world", Async.Wait(x => x.Get("test1")));
             }
         }
 
@@ -28,7 +28,7 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
             for (int i = 0; i < keys.Length; i++)
                 keys[i] = "test" + i;
 
-            using (new RedisTestKeys(_async, keys))
+            using (new RedisTestKeys(Async, keys))
             {
                 for (int i = 0; i < tasks.Length; i++)
                 {
@@ -38,12 +38,12 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
                         for (int j = 0; j < incr_count + task_id; j++)
                         {
                             int expected = j + 1;
-                            _async.Incr(keys[task_id]).ContinueWith(t =>
+                            Async.Incr(keys[task_id]).ContinueWith(t =>
                             {
                                 Assert.AreEqual(expected, t.Result);
                             });
 
-                            _async.Echo(keys[task_id]).ContinueWith(t =>
+                            Async.Echo(keys[task_id]).ContinueWith(t =>
                             {
                                 Assert.AreEqual(keys[task_id], t.Result);
                             });
@@ -55,7 +55,7 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
 
                 for (int i = 0; i < tasks.Length; i++)
                 {
-                    Assert.AreEqual((incr_count + i).ToString(), _async.Wait(x => x.Get(keys[i])));
+                    Assert.AreEqual((incr_count + i).ToString(), Async.Wait(x => x.Get(keys[i])));
                 }
 
                 Task.WaitAll(tasks);

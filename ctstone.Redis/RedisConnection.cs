@@ -56,6 +56,7 @@ namespace ctstone.Redis
         private Task _asyncReader;
         private readonly object _asyncLock;
         private long _bytesRemaining;
+        private ActivityTracer _activity;
         
         /// <summary>
         /// Instantiate new instance of RedisConnection
@@ -64,6 +65,7 @@ namespace ctstone.Redis
         /// <param name="port">Redis server port</param>
         public RedisConnection(string host, int port)
         {
+            _activity = new ActivityTracer("New Redis connection");
             Host = host;
             Port = port;
             _asyncLock = new object();
@@ -75,29 +77,30 @@ namespace ctstone.Redis
         /// Open connection to the Redis server
         /// </summary>
         /// <param name="millisecondsTimeout">Timeout to wait for connection (0 for no timeout)</param>
+        /// <param name="readTimeout">Time to wait for reading (0 for no timeout)</param>
         /// <returns>True if connected</returns>
         public bool Connect(int millisecondsTimeout, int readTimeout = 0)
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            
+
+            ActivityTracer.Verbose("Opening connection with {0} ms timeout", millisecondsTimeout);
             if (millisecondsTimeout > 0)
-            {
-                IAsyncResult ar = _socket.BeginConnect(Host, Port, null, null);
-                ar.AsyncWaitHandle.WaitOne(millisecondsTimeout, true);
-            }
+                _socket
+                    .BeginConnect(Host, Port, null, null)
+                    .AsyncWaitHandle.WaitOne(millisecondsTimeout, true);
             else
-            {
                 _socket.Connect(Host, Port);
-            }
-            
+
             if (_socket.Connected)
             {
+                ActivityTracer.Info("Connected. Read timeout is {0}", readTimeout);
                 _stream = new NetworkStream(_socket);
                 if (readTimeout > 0)
                     _stream.ReadTimeout = readTimeout;
             }
             else
             {
+                ActivityTracer.Info("Connection timed out");
                 _socket.Close();
             }
 
@@ -111,15 +114,19 @@ namespace ctstone.Redis
         /// <param name="bufferSize">Size of internal buffer used to copy streams</param>
         public void Read(Stream destination, int bufferSize)
         {
-            RedisMessage type = RedisReader.ReadType(_stream);
+            using (new ActivityTracer("Read response to stream"))
+            {
+                ActivityTracer.Verbose("Buffer size is {0}", bufferSize);
+                RedisMessage type = RedisReader.ReadType(_stream);
 
-            if (type == RedisMessage.Error)
-                throw new RedisException(RedisReader.ReadStatus(_stream, false));
+                if (type == RedisMessage.Error)
+                    throw new RedisException(RedisReader.ReadStatus(_stream, false));
 
-            if (type != RedisMessage.Bulk)
-                throw new InvalidOperationException("Cannot stream from non-bulk response. Received: " + type);
+                if (type != RedisMessage.Bulk)
+                    throw new InvalidOperationException("Cannot stream from non-bulk response. Received: " + type);
 
-            RedisReader.ReadBulk(_stream, destination, bufferSize, false);
+                RedisReader.ReadBulk(_stream, destination, bufferSize, false);
+            }
         }
 
         /// <summary>
@@ -131,46 +138,53 @@ namespace ctstone.Redis
         /// <returns>The total number of bytes read into the buffer. This can be less than the number of bytes requested if that many bytes are not currently available, or zero (0) if the end of the stream has been reached.</returns>
         public int Read(byte[] buffer, int offset, int count)
         {
-            if (offset > buffer.Length || count > buffer.Length)
-                throw new InvalidOperationException("Buffer offset or count is larger than buffer");
-
-            if (!Buffering)
+            using (new ActivityTracer("Read response to buffer"))
             {
-                for (int i = offset; i < count; i++)
-                    buffer[i] = 0;
-                return 0;
+                ActivityTracer.Verbose("Offset={0}; Count={1}", offset, count);
+                if (offset > buffer.Length || count > buffer.Length)
+                    throw new InvalidOperationException("Buffer offset or count is larger than buffer");
+
+                if (!Buffering)
+                {
+                    ActivityTracer.Verbose("Not buffering; zeroing out buffer");
+                    for (int i = offset; i < count; i++)
+                        buffer[i] = 0;
+                    return 0;
+                }
+
+                if (_bytesRemaining == 0)
+                {
+                    RedisMessage type = RedisReader.ReadType(_stream);
+
+                    if (type == RedisMessage.Error)
+                        throw new RedisException(RedisReader.ReadStatus(_stream, false));
+
+                    if (type != RedisMessage.Bulk)
+                        throw new InvalidOperationException("Cannot buffer from non-bulk response. Received: " + type);
+
+                    _bytesRemaining = RedisReader.ReadInt(_stream, false);
+                }
+
+                ActivityTracer.Verbose("Bytes remaining: {0}", _bytesRemaining);
+
+                int bytes_to_read = count;
+                if (bytes_to_read > _bytesRemaining)
+                    bytes_to_read = (int)_bytesRemaining;
+
+                int bytes_read = 0;
+                while (bytes_read < bytes_to_read)
+                    bytes_read += _stream.Read(buffer, offset + bytes_read, bytes_to_read - bytes_read);
+
+                _bytesRemaining -= bytes_read;
+
+                if (_bytesRemaining == 0)
+                {
+                    RedisReader.ReadCRLF(_stream);
+                    Buffering = false;
+                }
+
+                return bytes_read;
             }
-
-            if (_bytesRemaining == 0)
-            {
-                RedisMessage type = RedisReader.ReadType(_stream);
-
-                if (type == RedisMessage.Error)
-                    throw new RedisException(RedisReader.ReadStatus(_stream, false));
-
-                if (type != RedisMessage.Bulk)
-                    throw new InvalidOperationException("Cannot buffer from non-bulk response. Received: " + type);
-
-                _bytesRemaining = RedisReader.ReadInt(_stream, false);
-            }
-
-            int bytes_to_read = count;
-            if (bytes_to_read > _bytesRemaining)
-                bytes_to_read = (int)_bytesRemaining;
-
-            int bytes_read = 0;
-            while (bytes_read < bytes_to_read)
-                bytes_read += _stream.Read(buffer, offset + bytes_read, bytes_to_read - bytes_read);
-
-            _bytesRemaining -= bytes_read;
-
-            if (_bytesRemaining == 0)
-            {
-                RedisReader.ReadCRLF(_stream);
-                Buffering = false;
-            }
-
-            return bytes_read;
         }
 
         /// <summary>
@@ -231,22 +245,15 @@ namespace ctstone.Redis
         {
             byte[] buffer = _encoding.GetBytes(CreateMessage(command, arguments));
             Task<T> task = new Task<T>(() => parser(_stream));
-            //Console.WriteLine("Created task {0}", task.Id);
 
             lock (_asyncLock)
             {
-                //Console.WriteLine("Begin lock: task {0}", task.Id);
                 //_stream.WriteAsync(buffer, 0, buffer.Length); // .NET 4.5
                 _stream.BeginWrite(buffer, 0, buffer.Length, null, null);
                 _asyncTaskQueue.Add(task);
-                _ms.Write(buffer, 0, buffer.Length);
-                _ms.Write(Encoding.UTF8.GetBytes("|"), 0, 1);
-                //Console.WriteLine("End lock: task {0}", task.Id);
             }
             return task;
         }
-        private MemoryStream _ms = new MemoryStream();
-        public string Temp { get { return Encoding.UTF8.GetString(_ms.ToArray()); } }
 
         /// <summary>
         /// Asyncronously write command to Redis request buffer
@@ -288,25 +295,41 @@ namespace ctstone.Redis
                 _asyncTaskQueue = null;
             }
 
+            ActivityTracer.Verbose("Closing connection stream");
             if (_stream != null)
                 _stream.Dispose();
 
+            ActivityTracer.Info("Closing connection");
             if (_socket != null)
                 _socket.Dispose();
+
+            if (_activity != null)
+                _activity.Dispose();
+            _activity = null;
         }
 
         private void Read_Task()
         {
-            foreach (var parserTask in _asyncTaskQueue.GetConsumingEnumerable())
+            using (new ActivityTracer("Read async"))
             {
-                parserTask.RunSynchronously();
-                if (parserTask.Exception != null)
+                foreach (var parserTask in _asyncTaskQueue.GetConsumingEnumerable())
                 {
-                    bool is_fatal = !CanHandleException(parserTask.Exception);
-                    if (TaskReadExceptionOccurred != null)
-                        TaskReadExceptionOccurred(parserTask, new UnhandledExceptionEventArgs(parserTask.Exception, is_fatal));
-                    if (is_fatal)
-                        throw parserTask.Exception;
+                    parserTask.RunSynchronously();
+                    if (parserTask.Exception != null)
+                    {
+                        bool is_fatal = !CanHandleException(parserTask.Exception);
+                        if (TaskReadExceptionOccurred != null)
+                            TaskReadExceptionOccurred(parserTask, new UnhandledExceptionEventArgs(parserTask.Exception, is_fatal));
+                        if (is_fatal)
+                        {
+                            ActivityTracer.Error(parserTask.Exception);
+                            throw parserTask.Exception;
+                        }
+                        else
+                        {
+                            ActivityTracer.Warn(parserTask.Exception);
+                        }
+                    }
                 }
             }
         }
@@ -321,30 +344,35 @@ namespace ctstone.Redis
             return true;
         }
 
-        private static string CreateMessage(string command, params object[] args)
+        private string CreateMessage(string command, params object[] args)
         {
-            string[] cmd = RedisArgs.Concat(command.ToString().Split(' '), args);
-            Trace.WriteLine(String.Format("Executing: {0} {1}", command, String.Join(" ", args)));
-
-            StringBuilder cmd_builder = new StringBuilder();
-
-            cmd_builder
-                .Append(MultiBulk)
-                .Append(cmd.Length)
-                .Append(EOL);
-
-            foreach (var arg in cmd)
+            using (new ActivityTracer("Create message"))
             {
-                cmd_builder
-                    .Append(Bulk)
-                    .Append(arg.Length)
-                    .Append(EOL);
-                cmd_builder
-                    .Append(arg)
-                    .Append(EOL);
-            }
+                string[] cmd = RedisArgs.Concat(command.ToString().Split(' '), args);
+                ActivityTracer.Source.TraceEvent(TraceEventType.Information, 0, "Command: {0} {1}", command, String.Join(" ", args));
 
-            return cmd_builder.ToString();
+                StringBuilder cmd_builder = new StringBuilder();
+
+                cmd_builder
+                    .Append(MultiBulk)
+                    .Append(cmd.Length)
+                    .Append(EOL);
+
+                foreach (var arg in cmd)
+                {
+                    cmd_builder
+                        .Append(Bulk)
+                        .Append(arg.Length)
+                        .Append(EOL);
+                    cmd_builder
+                        .Append(arg)
+                        .Append(EOL);
+                }
+
+                string cmd_protocol = cmd_builder.ToString();
+                ActivityTracer.Source.TraceEvent(TraceEventType.Verbose, 0, "Unified command: {0}", cmd_protocol);
+                return cmd_protocol;
+            }
         }
     }
 }

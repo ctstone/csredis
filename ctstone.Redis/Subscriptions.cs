@@ -28,6 +28,7 @@ namespace ctstone.Redis
         private readonly Task _reader;
         private readonly CancellationTokenSource _readCancel;
         private readonly Dictionary<string, RedisSubscriptionDispatcher> _callbackDispatchers;
+        private ActivityTracer _activity;
         private long _count;
 
         /// <summary>
@@ -58,6 +59,7 @@ namespace ctstone.Redis
         /// <param name="password">Redis server password</param>
         public RedisSubscriptionClient(string host, int port, string password = null)
         {
+            _activity = new ActivityTracer("New Redis subscription client");
             _connection = new RedisConnection(host, port);
             _connection.Connect(0, 1000);
             if (!String.IsNullOrEmpty(password))
@@ -156,6 +158,10 @@ namespace ctstone.Redis
                 _callbackDispatchers.Clear();
 
             _count = 0;
+
+            if (_activity != null)
+                _activity.Dispose();
+            _activity = null;
         }
 
         private void AddCallback(Action<RedisSubscriptionMessage> callback, params string[] channels)
@@ -188,38 +194,41 @@ namespace ctstone.Redis
         private void Read_Task()
         {
             RedisSubscriptionResponse response;
-            while (true)
+            using (new ActivityTracer("Handle subscriptions"))
             {
-                if (_readCancel.IsCancellationRequested)
-                    break;
-
-                response = TryReadResponse();
-                if (response == null)
-                    continue;
-
-                switch (response.Type)
+                while (true)
                 {
-                    case RedisSubscriptionResponseType.Subscribe:
-                    case RedisSubscriptionResponseType.PSubscribe:
-                    case RedisSubscriptionResponseType.Unsubscribe:
-                    case RedisSubscriptionResponseType.PUnsubscribe:
-                        RedisSubscriptionChannel channel = response as RedisSubscriptionChannel;
-                        Interlocked.Exchange(ref _count, channel.Count);
-                        if (SubscriptionChanged != null)
-                            SubscriptionChanged(this, new RedisSubscriptionChangedEventArgs(channel));
+                    if (_readCancel.IsCancellationRequested)
                         break;
 
-                    case RedisSubscriptionResponseType.Message:
-                    case RedisSubscriptionResponseType.PMessage:
-                        RedisSubscriptionMessage message = response as RedisSubscriptionMessage;
-                        if (SubscriptionReceived != null)
-                            SubscriptionReceived(this, new RedisSubscriptionReceivedEventArgs(message));
+                    response = TryReadResponse();
+                    if (response == null)
+                        continue;
 
-                        if (message.Pattern != null && _callbackDispatchers.ContainsKey(message.Pattern) && _callbackDispatchers[message.Pattern] != null)
-                            _callbackDispatchers[message.Pattern].OnMsgReceived(message);
-                        else if (_callbackDispatchers.ContainsKey(message.Channel) && _callbackDispatchers[message.Channel] != null)
-                            _callbackDispatchers[message.Channel].OnMsgReceived(message);
-                        break;
+                    switch (response.Type)
+                    {
+                        case RedisSubscriptionResponseType.Subscribe:
+                        case RedisSubscriptionResponseType.PSubscribe:
+                        case RedisSubscriptionResponseType.Unsubscribe:
+                        case RedisSubscriptionResponseType.PUnsubscribe:
+                            RedisSubscriptionChannel channel = response as RedisSubscriptionChannel;
+                            Interlocked.Exchange(ref _count, channel.Count);
+                            if (SubscriptionChanged != null)
+                                SubscriptionChanged(this, new RedisSubscriptionChangedEventArgs(channel));
+                            break;
+
+                        case RedisSubscriptionResponseType.Message:
+                        case RedisSubscriptionResponseType.PMessage:
+                            RedisSubscriptionMessage message = response as RedisSubscriptionMessage;
+                            if (SubscriptionReceived != null)
+                                SubscriptionReceived(this, new RedisSubscriptionReceivedEventArgs(message));
+
+                            if (message.Pattern != null && _callbackDispatchers.ContainsKey(message.Pattern) && _callbackDispatchers[message.Pattern] != null)
+                                _callbackDispatchers[message.Pattern].OnMsgReceived(message);
+                            else if (_callbackDispatchers.ContainsKey(message.Channel) && _callbackDispatchers[message.Channel] != null)
+                                _callbackDispatchers[message.Channel].OnMsgReceived(message);
+                            break;
+                    }
                 }
             }
         }
@@ -327,6 +336,7 @@ namespace ctstone.Redis
                     break;
             }
             Count = (long)response[2];
+            ActivityTracer.Info("Subscription response: type={0}; channel={1}; pattern={2}; count={3}", Type, Channel, Pattern, Count);
         }
     }
 
@@ -360,6 +370,8 @@ namespace ctstone.Redis
                     Body = response[3] as String;
                     break;
             }
+
+            ActivityTracer.Info("Subscription message: type={0}; channel={1}; pattern={2}; body={3}", Type, Channel, Pattern, Body);
         }
     }
 }

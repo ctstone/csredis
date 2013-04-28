@@ -30,33 +30,36 @@ namespace ctstone.Redis
             _connection.Write(command.Command, command.Arguments);
             if (!IsSubscribed)
             {
-                IsSubscribed = true;
-                while (true)
+                using (new ActivityTracer("Handle subscriptions"))
                 {
-                    var resp = _connection.Read(command.Parser);
-                    switch (resp.Type)
+                    IsSubscribed = true;
+                    while (true)
                     {
-                        case RedisSubscriptionResponseType.Subscribe:
-                        case RedisSubscriptionResponseType.PSubscribe:
-                        case RedisSubscriptionResponseType.Unsubscribe:
-                        case RedisSubscriptionResponseType.PUnsubscribe:
-                            RedisSubscriptionChannel channel = resp as RedisSubscriptionChannel;
-                            Count = channel.Count;
-                            if (SubscriptionChanged != null)
-                                SubscriptionChanged(this, new RedisSubscriptionChangedEventArgs(channel));
-                            break;
+                        var resp = _connection.Read(command.Parser);
+                        switch (resp.Type)
+                        {
+                            case RedisSubscriptionResponseType.Subscribe:
+                            case RedisSubscriptionResponseType.PSubscribe:
+                            case RedisSubscriptionResponseType.Unsubscribe:
+                            case RedisSubscriptionResponseType.PUnsubscribe:
+                                RedisSubscriptionChannel channel = resp as RedisSubscriptionChannel;
+                                Count = channel.Count;
+                                if (SubscriptionChanged != null)
+                                    SubscriptionChanged(this, new RedisSubscriptionChangedEventArgs(channel));
+                                break;
 
-                        case RedisSubscriptionResponseType.Message:
-                        case RedisSubscriptionResponseType.PMessage:
-                            RedisSubscriptionMessage message = resp as RedisSubscriptionMessage;
-                            if (SubscriptionReceived != null)
-                                SubscriptionReceived(this, new RedisSubscriptionReceivedEventArgs(message));
+                            case RedisSubscriptionResponseType.Message:
+                            case RedisSubscriptionResponseType.PMessage:
+                                RedisSubscriptionMessage message = resp as RedisSubscriptionMessage;
+                                if (SubscriptionReceived != null)
+                                    SubscriptionReceived(this, new RedisSubscriptionReceivedEventArgs(message));
+                                break;
+                        }
+                        if (Count == 0)
                             break;
                     }
-                    if (Count == 0)
-                        break;
+                    IsSubscribed = false;
                 }
-                IsSubscribed = false;
             }
         }
     }
@@ -65,6 +68,7 @@ namespace ctstone.Redis
     {
         private readonly RedisConnection _connection;
         private long _pipelineCounter;
+        private ActivityTracer _activity;
 
         public bool Active { get; private set; }
 
@@ -75,6 +79,7 @@ namespace ctstone.Redis
 
         public void Start()
         {
+            _activity = new ActivityTracer("Begin pipeline");
             if (Active)
                 throw new InvalidOperationException("Already in pipeline mode");
             Active = true;
@@ -95,6 +100,8 @@ namespace ctstone.Redis
             if (!ignoreResults)
                 results = new object[_pipelineCounter];
 
+            ActivityTracer.Verbose("Processing {0} pipelined commands; ignoreResults={1}", _pipelineCounter, ignoreResults);
+
             for (int i = 0; i < _pipelineCounter; i++)
             {
                 object result = _connection.Read();
@@ -104,6 +111,7 @@ namespace ctstone.Redis
 
             Active = false;
             _pipelineCounter = 0;
+            _activity.Dispose();
             return results;
         }
 
@@ -130,21 +138,24 @@ namespace ctstone.Redis
 
         public string Monitor()
         {
-            string status = _connection.Call(RedisReader.ReadStatus, "MONITOR");
-            while (true)
+            using (new ActivityTracer("Beging monitor"))
             {
-                object message;
-                try
+                string status = _connection.Call(RedisReader.ReadStatus, "MONITOR");
+                while (true)
                 {
-                    message = _connection.Read();
+                    object message;
+                    try
+                    {
+                        message = _connection.Read();
+                    }
+                    catch (Exception e)
+                    {
+                        if (_connection.Connected) throw e;
+                        return status;
+                    }
+                    if (MonitorReceived != null)
+                        MonitorReceived(this, new RedisMonitorEventArgs(message));
                 }
-                catch (Exception e)
-                {
-                    if (_connection.Connected) throw e;
-                    return status;
-                }
-                if (MonitorReceived != null)
-                    MonitorReceived(this, new RedisMonitorEventArgs(message));
             }
         }
     }

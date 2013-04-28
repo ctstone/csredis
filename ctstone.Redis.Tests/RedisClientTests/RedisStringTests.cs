@@ -11,294 +11,294 @@ namespace ctstone.Redis.Tests.RedisClientTests
         [TestMethod, TestCategory("Strings")]
         public void TestAppend()
         {
-            _redis.Del("test");
-            var resp1 = _redis.Append("test", "Hello");
+            Redis.Del("test");
+            var resp1 = Redis.Append("test", "Hello");
             Assert.AreEqual(5, resp1);
 
-            var resp2 = _redis.Append("test", " World");
+            var resp2 = Redis.Append("test", " World");
             Assert.AreEqual(11, resp2);
 
-            var resp3 = _redis.Get("test");
+            var resp3 = Redis.Get("test");
             Assert.AreEqual("Hello World", resp3);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestBitCount()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", "foobar");
-            var resp1 = _redis.BitCount("test");
+            Redis.Set("test", "foobar");
+            var resp1 = Redis.BitCount("test");
             Assert.AreEqual(26, resp1);
 
-            var resp2 = _redis.BitCount("test", 0, 0);
+            var resp2 = Redis.BitCount("test", 0, 0);
             Assert.AreEqual(4, resp2);
 
-            var resp3 = _redis.BitCount("test", 1, 1);
+            var resp3 = Redis.BitCount("test", 1, 1);
             Assert.AreEqual(6, resp3);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestBitOp()
         {
-            _redis.Del("test1", "test2", "test3");
+            Redis.Del("test1", "test2", "test3");
 
-            _redis.Set("test1", "foobar");
-            _redis.Set("test2", "abcdef");
+            Redis.Set("test1", "foobar");
+            Redis.Set("test2", "abcdef");
 
-            var resp1 = _redis.BitOp(RedisBitOp.And, "test3", "test1", "test2");
+            var resp1 = Redis.BitOp(RedisBitOp.And, "test3", "test1", "test2");
             Assert.AreEqual(6, resp1);
 
-            _redis.Del("test1", "test2", "test3");
+            Redis.Del("test1", "test2", "test3");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestDecr()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", 10);
-            var resp1 = _redis.Decr("test");
+            Redis.Set("test", 10);
+            var resp1 = Redis.Decr("test");
             Assert.AreEqual(9, resp1);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestDecrBy()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", 10);
-            var resp1 = _redis.DecrBy("test", 5);
+            Redis.Set("test", 10);
+            var resp1 = Redis.DecrBy("test", 5);
             Assert.AreEqual(5, resp1);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestGet()
         {
-            _redis.Del("test");
-            Assert.IsNull(_redis.Get("test"));
+            Redis.Del("test");
+            Assert.IsNull(Redis.Get("test"));
 
-            _redis.Set("test", 1);
-            Assert.AreEqual("1", _redis.Get("test"));
+            Redis.Set("test", 1);
+            Assert.AreEqual("1", Redis.Get("test"));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestGetBit()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.SetBit("test", 7, true);
-            Assert.IsFalse(_redis.GetBit("test", 0));
-            Assert.IsTrue(_redis.GetBit("test", 7));
-            Assert.IsFalse(_redis.GetBit("test", 100));
+            Redis.SetBit("test", 7, true);
+            Assert.IsFalse(Redis.GetBit("test", 0));
+            Assert.IsTrue(Redis.GetBit("test", 7));
+            Assert.IsFalse(Redis.GetBit("test", 100));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestGetRange()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", "This is a string");
-            Assert.AreEqual("This", _redis.GetRange("test", 0, 3));
-            Assert.AreEqual("ing", _redis.GetRange("test", -3, -1));
-            Assert.AreEqual("This is a string", _redis.GetRange("test", 0, -1));
-            Assert.AreEqual("string", _redis.GetRange("test", 10, 100));
+            Redis.Set("test", "This is a string");
+            Assert.AreEqual("This", Redis.GetRange("test", 0, 3));
+            Assert.AreEqual("ing", Redis.GetRange("test", -3, -1));
+            Assert.AreEqual("This is a string", Redis.GetRange("test", 0, -1));
+            Assert.AreEqual("string", Redis.GetRange("test", 10, 100));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestGetSet()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", "Hello");
-            Assert.AreEqual("Hello", _redis.GetSet("test", "World"));
-            Assert.AreEqual("World", _redis.Get("test"));
+            Redis.Set("test", "Hello");
+            Assert.AreEqual("Hello", Redis.GetSet("test", "World"));
+            Assert.AreEqual("World", Redis.Get("test"));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestIncr()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", 10);
-            Assert.AreEqual(11, _redis.Incr("test"));
+            Redis.Set("test", 10);
+            Assert.AreEqual(11, Redis.Incr("test"));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestIncrBy()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", 10);
-            Assert.AreEqual(15, _redis.IncrBy("test", 5));
+            Redis.Set("test", 10);
+            Assert.AreEqual(15, Redis.IncrBy("test", 5));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestIncrByFloat()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", 10.50);
-            Assert.AreEqual(10.6, _redis.IncrByFloat("test", 0.1));
+            Redis.Set("test", 10.50);
+            Assert.AreEqual(10.6, Redis.IncrByFloat("test", 0.1));
 
-            _redis.Set("test", "5.0e3");
-            Assert.AreEqual(5200, _redis.IncrByFloat("test", 200));
+            Redis.Set("test", "5.0e3");
+            Assert.AreEqual(5200, Redis.IncrByFloat("test", 200));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestMGet()
         {
-            _redis.Del("test1", "test2", "test3");
+            Redis.Del("test1", "test2", "test3");
 
-            _redis.Set("test1", 1);
-            _redis.Set("test2", 2);
+            Redis.Set("test1", 1);
+            Redis.Set("test2", 2);
 
-            var resp1 = _redis.MGet("test1", "test2", "test3");
+            var resp1 = Redis.MGet("test1", "test2", "test3");
             Assert.AreEqual("1", resp1[0]);
             Assert.AreEqual("2", resp1[1]);
             Assert.IsNull(resp1[2]);
 
-            _redis.Del("test1", "test2", "test3");
+            Redis.Del("test1", "test2", "test3");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestMSet()
         {
             // test array
-            _redis.Del("test1", "test2", "test3");
-            Assert.AreEqual("OK", _redis.MSet("test1", "v1", "test2", "v2", "test3", "v3"));
-            Assert.AreEqual("v1", _redis.Get("test1"));
-            Assert.AreEqual("v2", _redis.Get("test2"));
-            Assert.AreEqual("v3", _redis.Get("test3"));
+            Redis.Del("test1", "test2", "test3");
+            Assert.AreEqual("OK", Redis.MSet("test1", "v1", "test2", "v2", "test3", "v3"));
+            Assert.AreEqual("v1", Redis.Get("test1"));
+            Assert.AreEqual("v2", Redis.Get("test2"));
+            Assert.AreEqual("v3", Redis.Get("test3"));
 
             // test kvp
-            _redis.Del("test1", "test2", "test3");
-            Assert.AreEqual("OK", _redis.MSet(new[]
+            Redis.Del("test1", "test2", "test3");
+            Assert.AreEqual("OK", Redis.MSet(new[]
             {
                 Tuple.Create("test1", "v1"),
                 Tuple.Create("test2", "v2"),
                 Tuple.Create("test3", "v3"),
             }));
-            Assert.AreEqual("v1", _redis.Get("test1"));
-            Assert.AreEqual("v2", _redis.Get("test2"));
-            Assert.AreEqual("v3", _redis.Get("test3"));
+            Assert.AreEqual("v1", Redis.Get("test1"));
+            Assert.AreEqual("v2", Redis.Get("test2"));
+            Assert.AreEqual("v3", Redis.Get("test3"));
 
-            _redis.Del("test1", "test2", "test3");
+            Redis.Del("test1", "test2", "test3");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestMSetNx()
         {
             // test array
-            _redis.Del("test1", "test2");
-            Assert.IsTrue(_redis.MSetNx("test1", "v1", "test2", "v2"));
-            Assert.AreEqual("v1", _redis.Get("test1"));
-            Assert.AreEqual("v2", _redis.Get("test2"));
-            _redis.Del("test1");
-            Assert.IsFalse(_redis.MSetNx("test1", "V1", "test2", "V2"));
-            Assert.IsNull(_redis.Get("test1"));
-            Assert.AreEqual("v2", _redis.Get("test2"));
+            Redis.Del("test1", "test2");
+            Assert.IsTrue(Redis.MSetNx("test1", "v1", "test2", "v2"));
+            Assert.AreEqual("v1", Redis.Get("test1"));
+            Assert.AreEqual("v2", Redis.Get("test2"));
+            Redis.Del("test1");
+            Assert.IsFalse(Redis.MSetNx("test1", "V1", "test2", "V2"));
+            Assert.IsNull(Redis.Get("test1"));
+            Assert.AreEqual("v2", Redis.Get("test2"));
 
             // test kvp
-            _redis.Del("test1", "test2");
-            Assert.IsTrue(_redis.MSetNx(new[]
+            Redis.Del("test1", "test2");
+            Assert.IsTrue(Redis.MSetNx(new[]
             {
                 Tuple.Create("test1", "v1"),
                 Tuple.Create("test2", "v2"),
             }));
-            Assert.AreEqual("v1", _redis.Get("test1"));
-            Assert.AreEqual("v2", _redis.Get("test2"));
-            _redis.Del("test1");
-            Assert.IsFalse(_redis.MSetNx(new[]
+            Assert.AreEqual("v1", Redis.Get("test1"));
+            Assert.AreEqual("v2", Redis.Get("test2"));
+            Redis.Del("test1");
+            Assert.IsFalse(Redis.MSetNx(new[]
             {
                 Tuple.Create("test1", "v1"),
                 Tuple.Create("test2", "v2"),
             }));
-            Assert.IsNull(_redis.Get("test1"));
-            Assert.AreEqual("v2", _redis.Get("test2"));
+            Assert.IsNull(Redis.Get("test1"));
+            Assert.AreEqual("v2", Redis.Get("test2"));
 
-            _redis.Del("test1", "test2");
+            Redis.Del("test1", "test2");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestPSetEx()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            Assert.AreEqual("OK", _redis.PSetEx("test", 10000, 1));
-            Assert.AreEqual("1", _redis.Get("test"));
-            Assert.IsTrue(_redis.PTtl("test") > 0);
+            Assert.AreEqual("OK", Redis.PSetEx("test", 10000, 1));
+            Assert.AreEqual("1", Redis.Get("test"));
+            Assert.IsTrue(Redis.PTtl("test") > 0);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestSet()
         {
-            using (new RedisTestKeys(_redis, "test"))
+            using (new RedisTestKeys(Redis, "test"))
             {
-                Assert.AreEqual("OK", _redis.Set("test", 1));
-                Assert.AreEqual("1", _redis.Get("test"));
+                Assert.AreEqual("OK", Redis.Set("test", 1));
+                Assert.AreEqual("1", Redis.Get("test"));
             }
 
-            using (new RedisTestKeys(_redis, "test"))
+            using (new RedisTestKeys(Redis, "test"))
             {
-                Assert.AreEqual("OK", _redis.Set("test", 1, 10));
-                var pttl = _redis.PTtl("test");
+                Assert.AreEqual("OK", Redis.Set("test", 1, 10));
+                var pttl = Redis.PTtl("test");
                 Assert.IsTrue(pttl > 0);
                 Assert.IsTrue(pttl <= 10000L);
             }
 
-            using (new RedisTestKeys(_redis, "test"))
+            using (new RedisTestKeys(Redis, "test"))
             {
-                Assert.AreEqual("OK", _redis.Set("test", 1, 10000L));
-                var ttl = _redis.Ttl("test");
+                Assert.AreEqual("OK", Redis.Set("test", 1, 10000L));
+                var ttl = Redis.Ttl("test");
                 Assert.IsTrue(ttl > 0);
                 Assert.IsTrue(ttl <= 10);
             }
 
-            using (new RedisTestKeys(_redis, "test"))
+            using (new RedisTestKeys(Redis, "test"))
             {
-                Assert.AreEqual("OK", _redis.Set("test", 1, null, RedisExistence.Nx));
-                Assert.IsNull(_redis.Set("test", 2, null, RedisExistence.Nx));
-                Assert.AreEqual("1", _redis.Get("test"));
+                Assert.AreEqual("OK", Redis.Set("test", 1, null, RedisExistence.Nx));
+                Assert.IsNull(Redis.Set("test", 2, null, RedisExistence.Nx));
+                Assert.AreEqual("1", Redis.Get("test"));
             }
 
-            using (new RedisTestKeys(_redis, "test"))
+            using (new RedisTestKeys(Redis, "test"))
             {
-                Assert.IsNull(_redis.Set("test", 1, null, RedisExistence.Xx));
-                Assert.AreEqual("OK", _redis.Set("test", 2, null, RedisExistence.Nx));
-                Assert.AreEqual("2", _redis.Get("test"));
+                Assert.IsNull(Redis.Set("test", 1, null, RedisExistence.Xx));
+                Assert.AreEqual("OK", Redis.Set("test", 2, null, RedisExistence.Nx));
+                Assert.AreEqual("2", Redis.Get("test"));
             }
 
-            using (new RedisTestKeys(_redis, "test"))
+            using (new RedisTestKeys(Redis, "test"))
             {
-                Assert.AreEqual("OK", _redis.Set("test", 1, TimeSpan.FromSeconds(10), RedisExistence.Nx));
-                Assert.IsNull(_redis.Set("test", 2, null, RedisExistence.Nx));
-                Assert.AreEqual("1", _redis.Get("test"));
-                var pttl = _redis.PTtl("test");
+                Assert.AreEqual("OK", Redis.Set("test", 1, TimeSpan.FromSeconds(10), RedisExistence.Nx));
+                Assert.IsNull(Redis.Set("test", 2, null, RedisExistence.Nx));
+                Assert.AreEqual("1", Redis.Get("test"));
+                var pttl = Redis.PTtl("test");
                 Assert.IsTrue(pttl > 0);
                 Assert.IsTrue(pttl <= 10000L);
             }
@@ -307,61 +307,61 @@ namespace ctstone.Redis.Tests.RedisClientTests
         [TestMethod, TestCategory("Strings")]
         public void TestSetBit()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            Assert.IsFalse(_redis.SetBit("test", 7, true));
-            Assert.IsTrue(_redis.SetBit("test", 7, false));
-            Assert.AreEqual("\0", _redis.Get("test"));
+            Assert.IsFalse(Redis.SetBit("test", 7, true));
+            Assert.IsTrue(Redis.SetBit("test", 7, false));
+            Assert.AreEqual("\0", Redis.Get("test"));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestSetEx()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            Assert.AreEqual("OK", _redis.SetEx("test", 10, 1));
-            Assert.AreEqual("1", _redis.Get("test"));
-            Assert.IsTrue(_redis.Ttl("test") > 0);
+            Assert.AreEqual("OK", Redis.SetEx("test", 10, 1));
+            Assert.AreEqual("1", Redis.Get("test"));
+            Assert.IsTrue(Redis.Ttl("test") > 0);
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestSetNx()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            Assert.IsTrue(_redis.SetNx("test", "Hello"));
-            Assert.IsFalse(_redis.SetNx("test", "World"));
-            Assert.AreEqual("Hello", _redis.Get("test"));
+            Assert.IsTrue(Redis.SetNx("test", "Hello"));
+            Assert.IsFalse(Redis.SetNx("test", "World"));
+            Assert.AreEqual("Hello", Redis.Get("test"));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestSetRange()
         {
-            _redis.Del("test");
+            Redis.Del("test");
 
-            _redis.Set("test", "Hello World");
-            Assert.AreEqual(11, _redis.SetRange("test", 6, "Redis"));
-            Assert.AreEqual("Hello Redis", _redis.Get("test"));
+            Redis.Set("test", "Hello World");
+            Assert.AreEqual(11, Redis.SetRange("test", 6, "Redis"));
+            Assert.AreEqual("Hello Redis", Redis.Get("test"));
 
-            _redis.Del("test");
+            Redis.Del("test");
         }
 
         [TestMethod, TestCategory("Strings")]
         public void TestStrLen()
         {
-            _redis.Del("test1", "test2");
+            Redis.Del("test1", "test2");
 
-            _redis.Set("test1", "Hello World");
-            Assert.AreEqual(11, _redis.StrLen("test1"));
-            Assert.AreEqual(0, _redis.StrLen("test2"));
+            Redis.Set("test1", "Hello World");
+            Assert.AreEqual(11, Redis.StrLen("test1"));
+            Assert.AreEqual(0, Redis.StrLen("test2"));
 
-            _redis.Del("test1", "test2");
+            Redis.Del("test1", "test2");
         }
     }
 }

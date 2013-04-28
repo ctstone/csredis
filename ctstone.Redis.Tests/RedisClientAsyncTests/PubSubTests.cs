@@ -12,7 +12,7 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
         [TestMethod, TestCategory("PubSub"), TestCategory("RedisClientAsync")]
         public void TestSubscribe() 
         {
-            using (var channel = _async.GetSubscriptionChannel())
+            using (var channel = Async.GetSubscriptionChannel())
             {
                 int change_count = 0;
                 int message_count = 0;
@@ -46,7 +46,7 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
                 while (change_count == 0)
                     Thread.Sleep(10); // waiting for subscribe to complete
 
-                Assert.AreEqual(1, _async.Wait(r => r.Publish("test1", "hello world")));
+                Assert.AreEqual(1, Async.Wait(r => r.Publish("test1", "hello world")));
 
                 while (message_count == 0)
                     Thread.Sleep(10); // wait for message received
@@ -69,11 +69,11 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
         {
             int change_count = 0;
             int message_count = 0;
-            _async.GetSubscriptionChannel().SubscriptionChanged += (s, a) =>
+            Async.GetSubscriptionChannel().SubscriptionChanged += (s, a) =>
             {
                 change_count++;
             };
-            _async.GetSubscriptionChannel().SubscriptionReceived += (s, a) =>
+            Async.GetSubscriptionChannel().SubscriptionReceived += (s, a) =>
             {
                 message_count++;
             };
@@ -85,7 +85,7 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
                 tasks[i_] = Task.Factory.StartNew(() =>
                 {
                     int task_message_count = 0;
-                    _async.GetSubscriptionChannel().Subscribe(x => 
+                    Async.GetSubscriptionChannel().Subscribe(x => 
                     { 
                         Assert.AreEqual("test" + i, x.Channel);
                         Assert.AreEqual("message" + i, x.Body);
@@ -96,7 +96,7 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
                         Thread.Sleep(10); // wait for message 
 
                     Assert.AreEqual(1, task_message_count);
-                    _async.GetSubscriptionChannel().Unsubscribe("test" + i);
+                    Async.GetSubscriptionChannel().Unsubscribe("test" + i);
                 });
             }
 
@@ -104,12 +104,12 @@ namespace ctstone.Redis.Tests.RedisClientAsyncTests
                 Thread.Sleep(10); // wait for all subscriptions
 
             for (int i = 0; i < tasks.Length; i++)
-                _async.Publish("test" + i, "message" + i);
+                Async.Publish("test" + i, "message" + i);
 
             while (change_count != tasks.Length * 2)
                 Thread.Sleep(10); // wait for all unsubscribes
 
-            _async.CloseSubscriptionChannel();
+            Async.CloseSubscriptionChannel();
 
             Assert.AreEqual(tasks.Length * 2, change_count);
             Assert.AreEqual(tasks.Length, message_count);
