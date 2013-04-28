@@ -1,4 +1,4 @@
-##csredis 1.4.6.0
+##csredis 1.4.7.0
 Added tracing
 
 ##csredis 1.4.6.0
