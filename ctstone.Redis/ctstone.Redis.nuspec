@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/ctstone/csredis</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Added tracing</releaseNotes>
+    <releaseNotes>Bugfix for tracing</releaseNotes>
     <copyright>Copyright 2013</copyright>
     <tags>Redis Sentinel Async NoSQL</tags>
   </metadata>

@@ -29,7 +29,8 @@ namespace ctstone.Redis
 
         public void Dispose()
         {
-            Trace.CorrelationManager.StopLogicalOperation();
+            if (Trace.CorrelationManager.LogicalOperationStack.Count > 0)
+                Trace.CorrelationManager.StopLogicalOperation();
             if (_oldActivityId == Guid.Empty)
                 Trace.CorrelationManager.ActivityId = _oldActivityId;
         }

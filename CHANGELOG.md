@@ -1,3 +1,6 @@
+##csredis 1.4.7.1
+Fixed bug in tracing for empty stack
+
 ##csredis 1.4.7.0
 Added tracing
 
