@@ -188,13 +188,44 @@ namespace ctstone.Redis
     /// </summary>
     public abstract class RedisServerInfo
     {
+        /// <summary>
+        /// Get or set Redis server name
+        /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// Get or set Redis server IP
+        /// </summary>
         public string Ip { get; set; }
+
+        /// <summary>
+        /// Get or set Redis server port
+        /// </summary>
         public int Port { get; set; }
+
+        /// <summary>
+        /// Get or set Redis server run ID
+        /// </summary>
         public string RunId { get; set; }
+
+        /// <summary>
+        /// Get or set Redis server flags
+        /// </summary>
         public string Flags { get; set; }
+
+        /// <summary>
+        /// Get or set number of pending Redis server commands
+        /// </summary>
         public long PendingCommands { get; set; }
+
+        /// <summary>
+        /// Get or set milliseconds since last successful ping reply
+        /// </summary>
         public long LastOkPingReply { get; set; }
+
+        /// <summary>
+        /// Get or set milliseconds since last ping reply
+        /// </summary>
         public long LastPingReply { get; set; }
     }
 
@@ -203,9 +234,24 @@ namespace ctstone.Redis
     /// </summary>
     public class RedisMasterInfo : RedisServerInfo
     {
+        /// <summary>
+        /// Get or set a timestamp(?)
+        /// </summary>
         public long InfoRefresh { get; set; }
+
+        /// <summary>
+        /// Get or set number of slaves of the current master node
+        /// </summary>
         public int NumSlaves { get; set; }
+
+        /// <summary>
+        /// Get or set number of other Sentinels
+        /// </summary>
         public int NumOtherSentinels { get; set; }
+
+        /// <summary>
+        /// Get or set Sentinel quorum count
+        /// </summary>
         public int Quorum { get; set; }
     }
 
@@ -214,7 +260,14 @@ namespace ctstone.Redis
     /// </summary>
     public class RedisSentinelInfo : RedisServerInfo
     {
+        /// <summary>
+        /// Get or set milliseconds(?) since last hello message from current Sentinel node
+        /// </summary>
         public long LastHelloMessage { get; set; }
+
+        /// <summary>
+        /// Get or set value indicating that current Sentinel is allowed to fail-over the master
+        /// </summary>
         public bool CanFailoverItsMaster { get; set; }
     }
 
@@ -223,11 +276,34 @@ namespace ctstone.Redis
     /// </summary>
     public class RedisSlaveInfo : RedisServerInfo
     {
+        /// <summary>
+        /// Get or set a timestamp(?)
+        /// </summary>
         public long InfoRefresh { get; set; }
+
+        /// <summary>
+        /// Get or set milliseconds(?) that master link has been down
+        /// </summary>
         public long MasterLinkDownTime { get; set; }
+
+        /// <summary>
+        /// Get or set status of master link
+        /// </summary>
         public string MasterLinkStatus { get; set; }
+
+        /// <summary>
+        /// Get or set the master host of the current Redis slave node
+        /// </summary>
         public string MasterHost { get; set; }
+
+        /// <summary>
+        /// Get or set the master port of the current Redis slave node
+        /// </summary>
         public int MasterPort { get; set; }
+
+        /// <summary>
+        /// Get or set the priority of the current Redis slave node
+        /// </summary>
         public int SlavePriority { get; set; }
     }
 }

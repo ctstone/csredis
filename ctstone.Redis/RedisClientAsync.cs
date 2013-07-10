@@ -193,16 +193,16 @@ namespace ctstone.Redis
         /// <param name="key">Key to modify</param>
         /// <param name="expiration">Expiration (nearest second)</param>
         /// <returns></returns>
-        public Task<bool> Expire(string key, int seconds)
+        public Task<bool> Expire(string key, int expiration)
         {
-            return Write(RedisCommand.Expire(key, seconds));
+            return Write(RedisCommand.Expire(key, expiration));
         }
 
         /// <summary>
         /// Set a key's time to live in seconds
         /// </summary>
         /// <param name="key">Key to modify</param>
-        /// <param name="seconds">Expiration in seconds</param>
+        /// <param name="expiration">Expiration in seconds</param>
         /// <returns></returns>
         public Task<bool> Expire(string key, TimeSpan expiration)
         {
@@ -248,7 +248,7 @@ namespace ctstone.Redis
         /// <param name="port">Remote Redis port</param>
         /// <param name="key">Key to migrate</param>
         /// <param name="destinationDb">Remote database ID</param>
-        /// <param name="timeoutMilliseconds">Timeout in milliseconds</param>
+        /// <param name="timeout">Timeout in milliseconds</param>
         /// <returns></returns>
         public Task<string> Migrate(string host, int port, string key, int destinationDb, int timeout)
         {
@@ -262,7 +262,7 @@ namespace ctstone.Redis
         /// <param name="port">Remote Redis port</param>
         /// <param name="key">Key to migrate</param>
         /// <param name="destinationDb">Remote database ID</param>
-        /// <param name="timeoutMilliseconds">Timeout in milliseconds</param>
+        /// <param name="timeout">Timeout in milliseconds</param>
         /// <returns></returns>
         public Task<string> Migrate(string host, int port, string key, int destinationDb, TimeSpan timeout)
         {

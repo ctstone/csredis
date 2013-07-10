@@ -345,7 +345,7 @@ namespace ctstone.Redis
         /// <param name="port">Remote Redis port</param>
         /// <param name="key">Key to migrate</param>
         /// <param name="destinationDb">Remote database ID</param>
-        /// <param name="timeoutMilliseconds">Timeout in milliseconds</param>
+        /// <param name="timeout">Timeout in milliseconds</param>
         /// <returns>Status message</returns>
         public string Migrate(string host, int port, string key, int destinationDb, TimeSpan timeout)
         {
