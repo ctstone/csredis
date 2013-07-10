@@ -1,7 +1,10 @@
 ##csredis 2.0.0.0
 Improved handling of pipeline and MULTI/EXEC result parsing.
-Breaking change: RedisClient.Multi() returns void instead of string
-Behavior change: RedisClient.End(bool) has no effect and should not be used
+Breaking change: RedisClient.Multi() returns void instead of string. MULTI server reply may be observed by attaching to TransactionStarted event
+RedisClient.StartPipe() now accepts optional boolean indicating whether or not result parsing should occur.
+RedisClient.StartPipeTransaction() added to facilitate automatic creation of transaction inside a pipeline.
+RedisClient.EndPipe(bool) has no effect and should not be used
+RedisClient constructor overloads added to handle default values for port and timeout
 
 ##csredis 1.4.7.1
 Fixed bug in tracing for empty stack

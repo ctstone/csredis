@@ -10,7 +10,7 @@ The easiest way to install csredis is from [NuGet](https://nuget.org/packages/cs
 ## Basic usage
 Here are some simple commands using the **synchronous** client. Whenever possible, server responses are mapped to the appropriate CLR type.
 ```csharp
-using (var redis = new RedisClient("localhost", 6379, 0))
+using (var redis = new RedisClient("yourhost"))
 {
   redis.Ping();
   string response = redis.Echo("hello world");
@@ -22,36 +22,48 @@ The **asynchronous** client uses the .NET task framework and requires .NET4. Her
 ```csharp
 using (var redis = new RedisClientAsync("localhost", 6379, 0))
 {
-  // fire-and-forget
+  // fire-and-forget: results are not captured
   for (int i = 0; i < 5000; i++)
   {
     redis.Incr("test1");
   }
   
-  // callback via ContinueWith
+  // callback via ContinueWith: Ping is executed asyncronously, and when a result is ready, the response is printed to screen.
   redis.Ping().ContinueWith(t => Console.WriteLine(t.Result));
   
-  // blocking helper
+  // blocking helper: built in helper to execute requests syncronously
   string result = redis.Wait(r => r.Get("test1"));
   
-  // blocking verbose
+  // blocking verbose: same as above, with more control over wait timeout
   var t = redis.Get("test1");
-  t.Wait();
+  t.Wait(TimeSpan.FromSeconds(3));
   string result = t.Result;
 }
 ```
 
-Blocking or otherwise non-thread-safe commands are not directly available from RedisClientAsync. See below for notes on opening a dedicated connection from RedisClientAsync for use with subscriptions, transactions, and blocking list pops.
+Blocking or otherwise *non-thread-safe commands are not directly available from RedisClientAsync*. See below for notes on opening a dedicated connection from RedisClientAsync for use with subscriptions, transactions, and blocking list pops.
 
 
 ##Pipelining
-RedisClient supports pipelining commands to lessen the effects of network overhead (RedisClientAsync achieves this automatically due to its asynchronous nature). To enable pipelining, just wrap a group of commands between **StartPipe()** and **EndPipe()**. Note that redis-server currently has a 1GB limit on client buffers, so don't go over that :)
+RedisClient supports pipelining commands to lessen the effects of network overhead (RedisClientAsync achieves this automatically due to its asynchronous nature). To enable pipelining, just wrap a group of commands between **StartPipe()** and **EndPipe()**. Note that redis-server currently has a 1GB limit on client buffers.
 ```csharp
-redis.BeginPipe();
+redis.StartPipe();
 redis.Echo("hello"); // returns immediately with default(string)
 redis.Time(); // returns immediately with default(DateTime)
 object[] result = redis.EndPipe(); // get the server response for processing
-redis.EndPipe(true); // ignore results (fire-and-forget). This also keeps memory overhead low for large batches.
+string item1 = result[0] as String; // cast result objects to appropriate types
+DateTime item2 = (DateTime)result[1]; 
+
+// automatic MULTI/EXEC pipeline: start a pipe that is also a MULTI/EXEC transaction
+redis.StartPipeTransaction();
+redis.Set("key", "value");
+redis.Set("key2", "value2");
+object[] result2 = redis.EndPipe(); // transaction is EXEC'd automatically if DISCARD was not called first
+
+// ignoring result parsing: use for lower memory footprint when server responses do not need to be checked.
+redis.StartPipe(false);
+// ...
+redis.EndPipe();
 ```
 
 
@@ -146,19 +158,24 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 
 
 ##Transactions
-Synchronous transactions are handled using the API calls MULTI/EXEC/DISCARD. Asynchronous transactions should be handled using the Clone() method (see below).
-
-Since transacted commands return a status code (QUEUED) instead of their usual type, transacted commands in csredis will return with a value of default(T). To observe the server status response, attach to the **TransactionQueued** event.
+Synchronous transactions are handled using the API calls MULTI/EXEC/DISCARD. Asynchronous transactions should be handled using the Clone() method (see below). Server response to MULTI is not returned directly to the caller. Attach to **RedisClient.TransactionStarted** event to observe this reply. Similarly, when inside of a transaction, command return values will be default(T). Actual server status response (i.e. "QUEUED") may be observed by attaching to the **RedisClient.TransactionQueued** event.
 ```csharp
-redis.TransactionQueued += (s, a) =>
+redis.TransactionStarted += (s, e) =>
 {
-  Console.WriteLine("Transaction status: {0}", a.Status);
-}
+    Console.WriteLine("Transaction started: {0}", e.Status);
+};
+redis.TransactionQueued += (s, e) =>
+{
+    Console.WriteLine("Transaction queued: {0}({1}) = {2}", e.Command, String.Join(", ", e.Arguments), e.Status);
+};
 redis.Multi();
 redis.Set("test1", "hello"); // returns default(String)
 redis.Set("test2", "world"); // returns default(String)
 redis.Time(); // returns default(DateTime)
-object[] resp = redis.Exec(); // returns array of Redis unified responses
+object[] result = redis.Exec();
+string item1 = result[0] as String; // cast result items to parsed tyep
+string item2 = result[1] as String;
+string item3 = (DateTime)result[2];
 ```
 
 **Asynchronous transactions** affect all commands on the current connection, so a new connection must be opened to ensure thread-safety. Use **Clone()** to open a single-threaded connection to the current redis server. **Clone** may also be used to execute blocking commands against the current Redis server without blocking other async operations.
@@ -167,12 +184,10 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 {
   using (var tr = redis.Clone()) // use tr only on a single thread
   {
-    tr.StartPipe(); // tr is synchronous; consider piping commands for faster results (optional)
-    tr.Multi();
+    tr.StartPipeTransaction(); // optional: starting transaction in pipeline mode
     tr.Set("test1", "hello");
     tr.Set("test2", "world");
-    tr.Exec();
-    var resp = tr.EndPipe(); // optional pipeline results
+    object[] result = tr.EndPipe(); // transaction is EXEC'd by EndPipe()
   }
   
   // continue to use redis object asyncronously on multiple threads
@@ -188,20 +203,20 @@ using (var redis = new RedisClientAsync("localhost", 6379, 0))
 
 
 ##Subscription model
-The subscription model is event based. Attach a handler to one or both of SubscriptionChanged/SubscriptionReceived to receive callbacks on subscription events. When using the syncronous RedisClient, opening the first subscription channel blocks the main thread, so unsubscription (and new subscriptions) will need to be handled by a background thread/task. See below for thread-safe usage.
+The subscription model is event based. Attach a handler to one or both of SubscriptionChanged/SubscriptionReceived to receive callbacks on subscription events. When using the syncronous RedisClient, opening the first subscription channel blocks the main thread, so unsubscription (and new subscriptions) must be handled by a background thread/task. See below for thread-safe usage.
 
 **SubscriptionChanged**: Occurs when a subsciption channel is opened or closed  
 **RedisSubscriptionReceived**: Occurs when a subscription message has been received
 
 Example:
 ```csharp
-redis.SubscriptionChanged += (s, ev) =>
+redis.SubscriptionChanged += (s, e) =>
 {
-  Console.WriteLine("There are now {0} open channels", ev.Response.Count);
+  Console.WriteLine("There are now {0} open channels", e.Response.Count);
 };
-redis.SubscriptionReceived += (s, ev) =>
+redis.SubscriptionReceived += (s, e) =>
 {
-  Console.WriteLine("Message received: {0}", ev.Message.Body);
+  Console.WriteLine("Message received: {0}", e.Message.Body);
 };
 redis.PSubscribe("*");
 ```
@@ -211,7 +226,7 @@ Use the non-blocking subscription client if you prefer not to block your RedisCl
 ```csharp
 using (var sub = new RedisSubscriptionClient("localhost", "6379", "my-password"))
 {
-  sub.SubscriptionReceived += (s, a) => Console.WriteLine(a.Message.Body); // global message handler
+  sub.SubscriptionReceived += (s, e) => Console.WriteLine(e.Message.Body); // global message handler
   sub.Subscribe("channel 1");
   sub.Subscribe(x => Console.WriteLine(x.Body), "channel 2"); // with callback just for "channel 2"
   
@@ -220,19 +235,16 @@ using (var sub = new RedisSubscriptionClient("localhost", "6379", "my-password")
 }
 ```
 
-To use **subscriptions with RedisClientAsync**, a new dedicated connection can be opened to the Redis server. To access the shared, thread-safe subscription channel, use GetSubscriptionClient():
+To use **subscriptions with RedisClientAsync**, a new dedicated connection must be opened to the Redis server. To access the shared, thread-safe subscription channel, use the SubscriptionClient property:
 ```csharp
 using (var redis = new RedisClientAsync("localhost", 6379, 0))
 {
-  redis.GetSubscriptionChannel().SubscriptionChanged += (s, a) => Console.WriteLine(a.Message.Body); // global message handler
-  redis.GetSubscriptionChannel().Subscribe(x => Console.WriteLine(x.Body), "channel 1"); // with callback just for "channel 1"
-  redis.GetSubscriptionChannel().Subscribe("channel 1"); // no channel-specific callback
+  redis.SubscriptionChannel.SubscriptionChanged += (s, a) => Console.WriteLine(a.Message.Body); // global message handler
+  redis.SubscriptionChannel.Subscribe(x => Console.WriteLine(x.Body), "channel 1"); // with callback just for "channel 1"
+  redis.SubscriptionChannel.Subscribe("channel 1"); // no channel-specific callback
   
   // keep thread alive
   Thread.Sleep(10000);
-  
-  // close subscription channel when all threads are finished with it
-  redis.CloseSubscriptionChannel()
 }
 ```
 

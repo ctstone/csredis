@@ -106,13 +106,20 @@ namespace ctstone.Redis
         /// <summary>
         /// Enter pipeline mode
         /// </summary>
-        /// <param name="asTransaction">True if the pipeline should automatically start a MULTI/EXEC transaction. The transaction will be automatically EXEC'd when EndPipe() is called.</param>
-        /// <param name="captureResult">True if the pipeline should skip result parsing.</param>
-        public void StartPipe(bool asTransaction = false, bool captureResult = true)
+        /// <param name="captureResult">Set to false if the pipeline should skip result parsing.</param>
+        public void StartPipe(bool captureResult = true)
         {
             _pipelineHandler.Start(captureResult);
-            if (asTransaction)
-                _pipelineHandler.StartTransaction(asTransaction);
+        }
+
+        /// <summary>
+        /// Enter pipeline mode and automatically start a MULTI/EXEC transaction. The transaction will be automatically EXEC'd when EndPipe() is called.
+        /// </summary>
+        /// <param name="captureResult">Set to false if the pipeline should skip result parsing.</param>
+        public void StartPipeTransaction(bool captureResult = true)
+        {
+            _pipelineHandler.Start(captureResult);
+            _pipelineHandler.StartTransaction(true);
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 ﻿using ctstone.Redis.RedisCommands;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
@@ -32,6 +33,11 @@ namespace ctstone.Redis
         /// Get the port that the current RedisClientAsync is connected to
         /// </summary>
         public int Port { get { return _connection.Port; } }
+
+        /// <summary>
+        /// Get a thread-safe, reusable subscription channel.
+        /// </summary>
+        public RedisSubscriptionClient SubscriptionChannel { get { return _subscriptionClient.Value; } } // TODO: check _subscriptionClient.Value.Connected
 
         /// <summary>
         /// Occurs when a Task exception is thrown
@@ -70,6 +76,8 @@ namespace ctstone.Redis
         /// Get a thread-safe, reusable subscription channel.
         /// </summary>
         /// <returns>A reusable subscription channel</returns>
+        [Obsolete("Use SubscriptionClient property instead")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public RedisSubscriptionClient GetSubscriptionChannel()
         {
             if (!_subscriptionClient.Value.Connected)

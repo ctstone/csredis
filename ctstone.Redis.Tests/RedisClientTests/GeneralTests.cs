@@ -63,7 +63,7 @@ namespace ctstone.Redis.Tests.RedisClientTests
 
                 };
 
-                Redis.StartPipe(asTransaction: true);
+                Redis.StartPipeTransaction();
                 Assert.AreEqual(default(DateTime), Redis.Time());
                 Assert.IsNull(Redis.Set("test1", "value"));
                 var result = Redis.EndPipe();
@@ -83,7 +83,7 @@ namespace ctstone.Redis.Tests.RedisClientTests
         {
             using (new RedisTestKeys(Redis, "test1"))
             {
-                Redis.StartPipe(asTransaction: true);
+                Redis.StartPipeTransaction();
                 Assert.AreEqual(default(DateTime), Redis.Time());
                 Assert.IsNull(Redis.Discard());
                 Assert.IsNull(Redis.Set("test1", "value"));
