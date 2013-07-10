@@ -208,6 +208,16 @@ namespace ctstone.Redis
         }
 
         /// <summary>
+        /// Read next strongly-typed object from the Redis server
+        /// </summary>
+        /// <param name="parser">A delegate method accepting a Stream and returning a parsed object</param>
+        /// <returns>Parsed object from delegate</returns>
+        public object Read(Delegate parser)
+        {
+            return parser.DynamicInvoke(_stream);
+        }
+
+        /// <summary>
         /// Write command to Redis server
         /// </summary>
         /// <param name="command">Base Redis command</param>
@@ -260,11 +270,11 @@ namespace ctstone.Redis
         /// </summary>
         /// <param name="command">Base Redis base command</param>
         /// <param name="arguments">Array of command arguments</param>
-        public void WriteAsync(string command, params object[] arguments)
+        public Task WriteAsync(string command, params object[] arguments)
         {
             byte[] buffer = _encoding.GetBytes(CreateMessage(command, arguments));
             //return _stream.WriteAsync(buffer, 0, buffer.Length); // .NET 4.5
-            _stream.BeginWrite(buffer, 0, buffer.Length, null, null);
+            return Task.Factory.StartNew(() => _stream.Write(buffer, 0, buffer.Length));
         }
 
         /// <summary>

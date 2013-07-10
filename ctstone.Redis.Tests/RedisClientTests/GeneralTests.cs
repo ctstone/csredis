@@ -2,12 +2,99 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 namespace ctstone.Redis.Tests.RedisClientTests
 {
     [TestClass]
     public class GeneralTests : RedisTestBase
     {
+        [TestMethod, TestCategory("RedisClient"), TestCategory("Pipeline")]
+        public void TestPipeline()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                bool transaction_started = false;
+                bool transaction_queued = false;
+
+                Redis.TransactionStarted += (s, e) =>
+                {
+                    Assert.AreEqual("OK", e.Status);
+                    transaction_started = true;
+                };
+                Redis.TransactionQueued += (s, e) =>
+                {
+                    Assert.AreEqual("QUEUED", e.Status);
+                    transaction_queued = true;
+
+                };
+
+                Redis.StartPipe();
+                Assert.AreEqual(default(DateTime), Redis.Time());
+                Assert.IsNull(Redis.Set("test1", "value"));
+                var result = Redis.EndPipe();
+                Assert.IsNotNull(result);
+                Assert.AreEqual(2, result.Length);
+                Assert.AreNotEqual(default(DateTime), result[0]);
+                Assert.AreEqual("OK", result[1]);
+
+                Assert.IsFalse(transaction_started);
+                Assert.IsFalse(transaction_queued);
+            }
+        }
+
+        [TestMethod, TestCategory("RedisClient"), TestCategory("Pipeline")]
+        public void TestPipelineTransactionExec()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                bool transaction_started = false;
+                bool transaction_queued = false;
+
+                Redis.TransactionStarted += (s, e) =>
+                {
+                    Assert.AreEqual("OK", e.Status);
+                    transaction_started = true;
+                };
+                Redis.TransactionQueued += (s, e) =>
+                {
+                    Assert.AreEqual("QUEUED", e.Status);
+                    transaction_queued = true;
+
+                };
+
+                Redis.StartPipe(asTransaction: true);
+                Assert.AreEqual(default(DateTime), Redis.Time());
+                Assert.IsNull(Redis.Set("test1", "value"));
+                var result = Redis.EndPipe();
+                Assert.IsNotNull(result);
+                Assert.AreEqual(2, result.Length);
+                Assert.AreNotEqual(default(DateTime), result[0]);
+                Assert.AreEqual("OK", result[1]);
+
+                Thread.Sleep(100);
+                Assert.IsTrue(transaction_started);
+                Assert.IsTrue(transaction_queued);
+            }
+        }
+
+        [TestMethod, TestCategory("RedisClient"), TestCategory("Pipeline")]
+        public void TestPipelineTransactionDiscard()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                Redis.StartPipe(asTransaction: true);
+                Assert.AreEqual(default(DateTime), Redis.Time());
+                Assert.IsNull(Redis.Discard());
+                Assert.IsNull(Redis.Set("test1", "value"));
+                var result = Redis.EndPipe();
+                Assert.IsNotNull(result);
+                Assert.AreEqual(2, result.Length);
+                Assert.AreEqual("OK", result[0]);
+                Assert.AreEqual("OK", result[1]);
+            }
+        }
+
         [TestMethod, TestCategory("RedisClient")]
         public void TestStreaming()
         {

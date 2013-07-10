@@ -1,3 +1,8 @@
+##csredis 2.0.0.0
+Improved handling of pipeline and MULTI/EXEC result parsing.
+Breaking change: RedisClient.Multi() returns void instead of string
+Behavior change: RedisClient.End(bool) has no effect and should not be used
+
 ##csredis 1.4.7.1
 Fixed bug in tracing for empty stack
 

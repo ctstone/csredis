@@ -1,6 +1,7 @@
 ﻿using ctstone.Redis.RedisCommands;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Text;
 
@@ -12,10 +13,10 @@ namespace ctstone.Redis
     public class RedisClient : IDisposable
     {
         private RedisConnection _connection;
+        private RedisTransactionHandler _transactionHandler;
         private RedisPipelineHandler _pipelineHandler;
         private RedisSubscriptionHandler _subscriptionHandler;
         private RedisMonitorHandler _monitorHandler;
-        private bool _isTransaction;
         private bool _isStreamMode;
         private ActivityTracer _activity;
 
@@ -45,6 +46,11 @@ namespace ctstone.Redis
         public event EventHandler<RedisSubscriptionChangedEventArgs> SubscriptionChanged;
 
         /// <summary>
+        /// Occurs when a transaction is initiated with the server
+        /// </summary>
+        public event EventHandler<RedisTransactionStartedEventArgs> TransactionStarted;
+
+        /// <summary>
         /// Occurs when a transaction command has been received
         /// </summary>
         public event EventHandler<RedisTransactionQueuedEventArgs> TransactionQueued;
@@ -65,20 +71,48 @@ namespace ctstone.Redis
             _activity = new ActivityTracer("New Redis client");
             _connection = new RedisConnection(host, port);
             _connection.Connect(timeoutMilliseconds);
-            _pipelineHandler = new RedisPipelineHandler(_connection);
+
+            _transactionHandler = new RedisTransactionHandler(_connection);
+            _transactionHandler.TransactionStarted += OnTransactionStarted;
+            _transactionHandler.TransactionQueued += OnTransactionQueued;
+            
+            _pipelineHandler = new RedisPipelineHandler(_connection, _transactionHandler);
+            
             _subscriptionHandler = new RedisSubscriptionHandler(_connection);
             _subscriptionHandler.SubscriptionChanged += OnSubscriptionChanged;
             _subscriptionHandler.SubscriptionReceived += OnSubscriptionReceived;
+            
             _monitorHandler = new RedisMonitorHandler(_connection);
             _monitorHandler.MonitorReceived += OnMonitorReceived;
         }
 
         /// <summary>
+        /// Instantiate a new instance of the RedisClient class with default timeout
+        /// </summary>
+        /// <param name="host">Redis server host</param>
+        /// <param name="port">Redis server port</param>
+        public RedisClient(string host, int port)
+            : this(host, port, 0)
+        { }
+
+        /// <summary>
+        /// Instantiate a new instance of the RedisClient class with default timeout and port
+        /// </summary>
+        /// <param name="host">Redis server host</param>
+        public RedisClient(string host)
+            : this(host, 6379)
+        { }
+
+        /// <summary>
         /// Enter pipeline mode
         /// </summary>
-        public void StartPipe()
+        /// <param name="asTransaction">True if the pipeline should automatically start a MULTI/EXEC transaction. The transaction will be automatically EXEC'd when EndPipe() is called.</param>
+        /// <param name="captureResult">True if the pipeline should skip result parsing.</param>
+        public void StartPipe(bool asTransaction = false, bool captureResult = true)
         {
-            _pipelineHandler.Start();
+            _pipelineHandler.Start(captureResult);
+            if (asTransaction)
+                _pipelineHandler.StartTransaction(asTransaction);
         }
 
         /// <summary>
@@ -93,11 +127,13 @@ namespace ctstone.Redis
         /// <summary>
         /// Commit pipeline and optionally return results
         /// </summary>
-        /// <param name="ignoreResults">Prevent allocation of result array</param>
+        /// <param name="ignoreResults">Prevent allocation of result array. DEPRECATED: this parameter has no effect.</param>
         /// <returns>Array of all pipelined command results, or null if not returning results</returns>
+        [Obsolete("Result capturing is now controlled from StartPipe(). EndPipe() will return results as specified in that method.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public object[] EndPipe(bool ignoreResults)
         {
-            return _pipelineHandler.End(ignoreResults);
+            return _pipelineHandler.End();
         }
 
         /// <summary>
@@ -1997,7 +2033,7 @@ namespace ctstone.Redis
         /// <returns>Status code</returns>
         public string Discard()
         {
-            return Write(RedisCommand.Discard());
+            return DiscardTransaction();
         }
 
         /// <summary>
@@ -2006,16 +2042,16 @@ namespace ctstone.Redis
         /// <returns>Array of output from all transaction commands</returns>
         public object[] Exec()
         {
-            return Write(RedisCommand.Exec());
+            return ExecTransaction();
         }
 
         /// <summary>
         /// Mark the start of a transaction block
         /// </summary>
         /// <returns>Status code</returns>
-        public string Multi()
+        public void Multi()
         {
-            return Write(RedisCommand.Multi());
+            StartTransaction();
         }
 
         /// <summary>
@@ -2050,6 +2086,36 @@ namespace ctstone.Redis
             _activity = null;
         }
 
+        private void StartTransaction()
+        {
+            if (_pipelineHandler.Active)
+                _pipelineHandler.StartTransaction();
+            else
+                _transactionHandler.Start();
+        }
+
+        private string DiscardTransaction()
+        {
+            if (_pipelineHandler.Active)
+            {
+                _pipelineHandler.DiscardTransaction();
+                return null;
+            }
+
+            return _transactionHandler.Discard();
+        }
+
+        private object[] ExecTransaction()
+        {
+            if (_pipelineHandler.Active)
+            {
+                _pipelineHandler.ExecTransaction();
+                return null;
+            }
+
+            return _transactionHandler.Exec();
+        }
+
         private T Write<T>(RedisCommand<T> command)
         {
             using (new ActivityTracer("Write command"))
@@ -2065,25 +2131,12 @@ namespace ctstone.Redis
 
                 if (_pipelineHandler.Active)
                 {
-                    _pipelineHandler.Write(command.Command, command.Arguments);
+                    _pipelineHandler.Write(command);
                     return default(T);
                 }
-                else if (command.Command == "MULTI")
+                else if (_transactionHandler.Active)
                 {
-                    ActivityTracer.Verbose("Begin MULTI/EXEC");
-                    _isTransaction = true;
-                }
-                else if (command.Command == "EXEC" || command.Command == "DISCARD")
-                {
-                    ActivityTracer.Verbose("End MULTI/EXEC ({0})", command.Command);
-                    _isTransaction = false;
-                }
-                else if (_isTransaction)
-                {
-                    ActivityTracer.Verbose("Sending transaction command");
-                    string response = _connection.Call(RedisReader.ReadStatus, command.Command, command.Arguments);
-                    if (TransactionQueued != null)
-                        TransactionQueued(this, new RedisTransactionQueuedEventArgs(response));
+                    _transactionHandler.Write(command);
                     return default(T);
                 }
 
@@ -2113,6 +2166,18 @@ namespace ctstone.Redis
         {
             if (MonitorReceived != null)
                 MonitorReceived(this, e);
+        }
+
+        private void OnTransactionStarted(object sender, RedisTransactionStartedEventArgs e)
+        {
+            if (TransactionStarted != null)
+                TransactionStarted(this, e);
+        }
+
+        private void OnTransactionQueued(object sender, RedisTransactionQueuedEventArgs e)
+        {
+            if (TransactionQueued != null)
+                TransactionQueued(this, e);
         }
     }
 }

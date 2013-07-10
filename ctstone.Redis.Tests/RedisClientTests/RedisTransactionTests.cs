@@ -12,15 +12,34 @@ namespace ctstone.Redis.Tests.RedisClientTests
         {
             using (new RedisTestKeys(Redis, "test1"))
             {
-                Assert.AreEqual("OK", Redis.Multi());
+                bool transaction_started = false;
+                bool transaction_queued = false;
+
+                Redis.TransactionStarted += (s, e) =>
+                {
+                    Assert.AreEqual("OK", e.Status);
+                    transaction_started = true;
+                };
+                Redis.TransactionQueued += (s, e) =>
+                {
+                    Assert.AreEqual("QUEUED", e.Status);
+                    transaction_queued = true;
+
+                };
+
+                Redis.Multi();
                 Assert.IsNull(Redis.Echo("asdf"));
                 Assert.AreEqual(default(DateTime), Redis.Time());
                 Assert.AreEqual(0, Redis.StrLen("test1"));
                 Assert.IsNull(Redis.Set("test1", "asdf"));
                 Assert.AreEqual(0, Redis.StrLen("test1"));
+
                 var resp = Redis.Exec();
                 Assert.AreEqual(5, resp.Length);
                 Assert.IsTrue(Redis.Exists("test1"));
+
+                Assert.IsTrue(transaction_started);
+                Assert.IsTrue(transaction_queued);
             }
         }
 
@@ -29,12 +48,11 @@ namespace ctstone.Redis.Tests.RedisClientTests
         {
             using (new RedisTestKeys(Redis, "test1"))
             {
-                Assert.AreEqual("OK", Redis.Multi());
+                Redis.Multi();
                 Assert.IsNull(Redis.Echo("asdf"));
                 Assert.AreEqual(default(DateTime), Redis.Time());
                 Assert.AreEqual(0, Redis.StrLen("test1"));
                 Assert.IsNull(Redis.Set("test1", "asdf"));
-                Assert.AreEqual(0, Redis.StrLen("test1"));
                 Assert.AreEqual("OK", Redis.Discard());
                 Assert.IsFalse(Redis.Exists("test1"));
             }

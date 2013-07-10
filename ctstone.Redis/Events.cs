@@ -53,10 +53,44 @@ namespace ctstone.Redis
         public string Status { get; private set; }
 
         /// <summary>
+        /// The command that was queued
+        /// </summary>
+        public string Command { get; private set; }
+
+        /// <summary>
+        /// The arguments of the queued command
+        /// </summary>
+        public object[] Arguments { get; private set; }
+
+        /// <summary>
         /// Instantiate a new instance of the RedisTransactionQueuedEventArgs class
         /// </summary>
+        /// <param name="command">Command text</param>
+        /// <param name="arguments">Command arguments</param>
         /// <param name="status">Server status code</param>
-        public RedisTransactionQueuedEventArgs(string status)
+        public RedisTransactionQueuedEventArgs(string status, string command, object[] arguments)
+        {
+            Status = status;
+            Command = command;
+            Arguments = arguments;
+        }
+    }
+
+    /// <summary>
+    /// Provides data for the event that is raised when a MULTI/EXEC transaction is initiated with the server
+    /// </summary>
+    public class RedisTransactionStartedEventArgs : EventArgs
+    {
+        /// <summary>
+        /// The status code of the transaction command
+        /// </summary>
+        public string Status { get; private set; }
+
+        /// <summary>
+        /// Instantiate a new instance of the RedisTransactionStartedEventArgs class
+        /// </summary>
+        /// <param name="status">Server status code</param>
+        public RedisTransactionStartedEventArgs(string status)
         {
             Status = status;
         }

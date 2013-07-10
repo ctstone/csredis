@@ -150,7 +150,7 @@ namespace ctstone.Redis
             }
         }
 
-        private static void ExpectType(Stream stream, RedisMessage expectedType)
+        public static void ExpectType(Stream stream, RedisMessage expectedType)
         {
             RedisMessage type = ReadType(stream);
             if (type != expectedType)
