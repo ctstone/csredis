@@ -593,7 +593,7 @@ namespace ctstone.Redis
         /// <param name="key">Hash key</param>
         /// <returns>Strongly typed object mapped from hash</returns>
         public T HGetAll<T>(string key)
-            where T : new()
+            where T : class
         {
             return Write(RedisCommand.HGetAll<T>(key));
         }
@@ -682,6 +682,7 @@ namespace ctstone.Redis
         /// <param name="obj">Object mapping of hash</param>
         /// <returns>Status code</returns>
         public string HMSet<T>(string key, T obj)
+            where T : class
         {
             return Write(RedisCommand.HMSet<T>(key, obj));
         }

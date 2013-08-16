@@ -200,7 +200,7 @@ namespace ctstone.Redis
             return new RedisString("HGET", key, field);
         }
         public static RedisHash<T> HGetAll<T>(string key)
-            where T : new()
+            where T : class
         {
             return new RedisHash<T>("HGETALL", key);
         }
@@ -232,23 +232,14 @@ namespace ctstone.Redis
         public static RedisStatus HMSet(string key, Dictionary<string, string> dict)
         {
             List<object> args = new List<object> { key };
-            foreach (var keyValue in dict)
-            {
-                if (keyValue.Key != null && keyValue.Value != null)
-                    args.AddRange(new[] { keyValue.Key, keyValue.Value });
-            }
+            args.AddRange(HashMapper.FromDict(dict));
             return new RedisStatus("HMSET", args.ToArray());
         }
         public static RedisStatus HMSet<T>(string key, T obj)
+            where T : class
         {
             List<object> args = new List<object> { key };
-            PropertyInfo[] props = typeof(T).GetProperties();
-            foreach (var prop in props)
-            {
-                object value = prop.GetValue(obj, null);
-                if (prop.CanRead && value != null)
-                    args.AddRange(new[] { prop.Name, prop.GetValue(obj, null) });
-            }
+            args.AddRange(HashMapper.FromObject(obj));
             return new RedisStatus("HMSET", args.ToArray());
         }
         public static RedisStatus HMSet(string key, params string[] keyValues)

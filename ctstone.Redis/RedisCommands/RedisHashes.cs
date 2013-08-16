@@ -17,7 +17,7 @@ namespace ctstone.Redis.RedisCommands
             for (int i = 0; i < response.Length; i++)
             {
                 object[] hash = response[i] as object[];
-                dicts[i] = HashMapper.GetDict(hash);
+                dicts[i] = HashMapper.ToDict(hash);
             }
             return dicts;
         }
@@ -49,7 +49,7 @@ namespace ctstone.Redis.RedisCommands
     }
 
     class RedisHashes<T> : RedisCommand<T[]>
-        where T : new()
+        where T : class
     {
         public RedisHashes(string command, params object[] args)
             : base(ParseStream, command, args)
@@ -63,7 +63,7 @@ namespace ctstone.Redis.RedisCommands
             for (int i = 0; i < response.Length; i++)
             {
                 object[] hash = response[i] as object[];
-                objs[i] = HashMapper.ReflectHash<T>(hash);
+                objs[i] = HashMapper.ToObject<T>(hash);
             }
             return objs;
         }

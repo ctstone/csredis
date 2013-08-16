@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
 using ctstone.Redis;
+using System.Runtime.Serialization;
 
 namespace ctstone.Redis.Tests.RedisClientTests
 {
@@ -38,7 +39,48 @@ namespace ctstone.Redis.Tests.RedisClientTests
 
             using (new RedisTestKeys(Redis, "test"))
             {
-                Assert.IsNull(Redis.HGetAll<RedisGenericTest>("test"));
+                var obj = Redis.HGetAll<RedisGenericTest>("test");
+                Assert.IsNull(obj);
+            }
+        }
+
+        [TestMethod, TestCategory("Hash")]
+        public void TestHashCreate_Serializable()
+        {
+            using (new RedisTestKeys(Redis, "test"))
+            {
+                var obj = new RedisSerializableTest
+                {
+                    StringField = "mystring",
+                    IntField = 999,
+                    NullField = null,
+                    DateTimeField = DateTime.Now,
+                    ObjectField = new RedisSerializableTest
+                    {
+                        StringField = "inner",
+                        IntField = -999,
+                        NullField = null,
+                        DateTimeField = DateTime.Now + TimeSpan.FromDays(1),
+                    },
+                };
+
+                Assert.AreEqual("OK", Redis.HMSet("test", obj));
+
+                var redis_obj = Redis.HGetAll<RedisSerializableTest>("test");
+                Assert.AreEqual(obj.StringField, redis_obj.StringField);
+                Assert.AreEqual(obj.IntField, redis_obj.IntField);
+                Assert.AreEqual(obj.NullField, redis_obj.NullField);
+                Assert.AreEqual(obj.DateTimeField.ToString(), redis_obj.DateTimeField.ToString());
+                Assert.AreEqual(obj.ObjectField.StringField, redis_obj.ObjectField.StringField);
+                Assert.AreEqual(obj.ObjectField.IntField, redis_obj.ObjectField.IntField);
+                Assert.AreEqual(obj.ObjectField.NullField, redis_obj.ObjectField.NullField);
+                Assert.AreEqual(obj.ObjectField.DateTimeField.ToString(), redis_obj.ObjectField.DateTimeField.ToString());
+            }
+
+            using (new RedisTestKeys(Redis, "test"))
+            {
+                var obj = Redis.HGetAll<RedisSerializableTest>("test");
+                Assert.IsNull(obj);
             }
         }
 
@@ -288,6 +330,70 @@ namespace ctstone.Redis.Tests.RedisClientTests
             var non_hash_vals = Redis.HVals(String.Format("test_{0}", Guid.NewGuid()));
             Assert.IsNotNull(non_hash_vals);
             Assert.AreEqual(0, non_hash_vals.Length);
+        }
+
+        public class RedisSerializableTest : ISerializable
+        {
+            public string StringField { get; set; }
+            public int IntField { get; set; }
+            public string NullField { get; set; }
+            public DateTime DateTimeField { get; set; }
+            public RedisSerializableTest ObjectField { get; set; }
+
+            public RedisSerializableTest()
+            { }
+
+            public RedisSerializableTest(SerializationInfo info, StreamingContext context)
+            {
+                ObjectField = new RedisSerializableTest();
+                foreach (var item in info)
+                {
+                    switch (item.Name)
+                    {
+                        case "str":
+                            StringField = info.GetString(item.Name);
+                            break;
+
+                        case "int":
+                            IntField = info.GetInt32(item.Name);
+                            break;
+
+                        case "null":
+                            NullField = info.GetString(item.Name);
+                            break;
+
+                        case "date":
+                            DateTimeField = info.GetDateTime(item.Name);
+                            break;
+
+                        case "obj.str":
+                            ObjectField.StringField = info.GetString(item.Name);
+                            break;
+
+                        case "obj.int":
+                            ObjectField.IntField = info.GetInt32(item.Name);
+                            break;
+
+                        case "obj.date":
+                            ObjectField.DateTimeField = info.GetDateTime(item.Name);
+                            break;
+                    }
+                }
+            }
+
+            public void GetObjectData(SerializationInfo info, StreamingContext context)
+            {
+                info.AddValue("str", StringField);
+                info.AddValue("int", IntField);
+                info.AddValue("null", NullField);
+                info.AddValue("date", DateTimeField);
+                if (ObjectField != null)
+                {
+                    info.AddValue("obj.str", ObjectField.StringField);
+                    info.AddValue("obj.int", ObjectField.IntField);
+                    info.AddValue("obj.date", ObjectField.DateTimeField);
+                }
+            }
         }
 
         public class RedisGenericTest

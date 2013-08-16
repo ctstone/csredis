@@ -475,7 +475,7 @@ namespace ctstone.Redis
             return Write(RedisCommand.HGet(key, field));
         }
         public Task<T> HGetAll<T>(string key)
-            where T : new()
+            where T : class
         {
             return Write(RedisCommand.HGetAll<T>(key));
         }
@@ -508,7 +508,7 @@ namespace ctstone.Redis
             return Write(RedisCommand.HMSet(key, dict));
         }
         public Task<string> HMSet<T>(string key, T obj)
-            where T : new()
+            where T : class
         {
             return Write(RedisCommand.HMSet<T>(key, obj));
         }

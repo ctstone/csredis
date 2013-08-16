@@ -15,12 +15,12 @@ namespace ctstone.Redis.RedisCommands
         private static Dictionary<string, string> ParseStream(Stream stream)
         {
             string[] fieldValues = RedisReader.ReadMultiBulkUTF8(stream);
-            return HashMapper.GetDict(fieldValues);
+            return HashMapper.ToDict(fieldValues);
         }
     }
 
     class RedisHash<T> : RedisCommand<T>
-        where T : new()
+        where T : class
     {
         public RedisHash(string command, params object[] args)
             : base(ParseStream, command, args)
@@ -29,7 +29,7 @@ namespace ctstone.Redis.RedisCommands
         private static T ParseStream(Stream stream)
         {
             string[] fieldValues = RedisReader.ReadMultiBulkUTF8(stream);
-            return HashMapper.ReflectHash<T>(fieldValues);
+            return HashMapper.ToObject<T>(fieldValues);
         }
     }
 }
