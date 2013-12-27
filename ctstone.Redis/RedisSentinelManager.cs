@@ -20,7 +20,7 @@ namespace ctstone.Redis
             foreach (var host in sentinels)
             {
                 string[] parts = host.Split(':');
-                string hostname = parts[0];
+                string hostname = parts[0].Trim();
                 int port = Int32.Parse(parts[1]);
                 _sentinels.AddLast(new KeyValuePair<string, int>(hostname, port));
             }
