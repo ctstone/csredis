@@ -183,6 +183,16 @@ namespace ctstone.Redis
         {
             return new RedisStatus("TYPE", key);
         }
+        public static RedisScanCommand Scan(long cursor, string pattern = null, long? count = null)
+        {
+            var args = new List<object>();
+            args.Add(cursor);
+            if (pattern != null)
+                args.AddRange(new[] { "MATCH", pattern });
+            if (count != null)
+                args.AddRange(new object[] { "COUNT", count });
+            return new RedisScanCommand("SCAN", args.ToArray());
+        }
         #endregion
 
         #region Hashes
@@ -263,6 +273,17 @@ namespace ctstone.Redis
         public static RedisStrings HVals(string key)
         {
             return new RedisStrings("HVALS", key);
+        }
+        public static RedisScanPairCommand HScan(string key, long cursor, string pattern = null, long? count = null)
+        {
+            var args = new List<object>();
+            args.Add(key);
+            args.Add(cursor);
+            if (pattern != null)
+                args.AddRange(new[] { "MATCH", pattern });
+            if (count != null)
+                args.AddRange(new object[] { "COUNT", count });
+            return new RedisScanPairCommand("HSCAN", args.ToArray());
         }
         #endregion
 
@@ -438,6 +459,17 @@ namespace ctstone.Redis
             string[] args = RedisArgs.Concat(destination, keys);
             return new RedisInt("SUNIONSTORE", args);
         }
+        public static RedisScanCommand SScan(string key, long cursor, string pattern = null, long? count = null)
+        {
+            var args = new List<object>();
+            args.Add(key);
+            args.Add(cursor);
+            if (pattern != null)
+                args.AddRange(new[] { "MATCH", pattern });
+            if (count != null)
+                args.AddRange(new object[] { "COUNT", count });
+            return new RedisScanCommand("SSCAN", args.ToArray());
+        }
         #endregion
 
         #region Sorted Sets
@@ -571,6 +603,17 @@ namespace ctstone.Redis
                 args.Add(aggregate.ToString().ToUpper());
             }
             return new RedisInt("ZUNIONSTORE", args.ToArray());
+        }
+        public static RedisScanPairCommand ZScan(string key, long cursor, string pattern = null, long? count = null)
+        {
+            var args = new List<object>();
+            args.Add(key);
+            args.Add(cursor);
+            if (pattern != null)
+                args.AddRange(new[] { "MATCH", pattern });
+            if (count != null)
+                args.AddRange(new object[] { "COUNT", count });
+            return new RedisScanPairCommand("ZSCAN", args.ToArray());
         }
         #endregion
 

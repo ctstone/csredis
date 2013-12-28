@@ -238,5 +238,17 @@ namespace ctstone.Redis.Tests.RedisClientTests
                 Assert.AreEqual("2", resp[1]);
             }
         }
+
+        [TestMethod, TestCategory("Sorted Sets")]
+        public void TestZScan()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                Redis.ZAdd("test1", "0", "abc", "1", "def");
+                var scan = Redis.ZScan("test1", 0);
+                Assert.AreEqual(2, scan.Items.Count);
+                Assert.AreEqual(0, scan.Cursor);
+            }
+        }
     }
 }

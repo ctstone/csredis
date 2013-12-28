@@ -332,6 +332,23 @@ namespace ctstone.Redis.Tests.RedisClientTests
             Assert.AreEqual(0, non_hash_vals.Length);
         }
 
+        [TestMethod, TestCategory("Hash")]
+        public void TestHScan()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                Redis.HMSet("test1", new
+                {
+                    A = 1,
+                    B = 2,
+                    C = 3,
+                });
+
+                var scan = Redis.HScan("test1", 0);
+                Assert.AreEqual(3, scan.Items.Count);
+            }
+        }
+
         public class RedisSerializableTest : ISerializable
         {
             public string StringField { get; set; }

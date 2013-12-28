@@ -550,6 +550,11 @@ namespace ctstone.Redis
         {
             return Write(RedisCommand.Type(key));
         }
+
+        public RedisScan Scan(long cursor, string pattern = null, long? count = null)
+        {
+            return Write(RedisCommand.Scan(cursor, pattern, count));
+        }
         #endregion
 
         #region Hashes
@@ -730,6 +735,11 @@ namespace ctstone.Redis
         public string[] HVals(string key)
         {
             return Write(RedisCommand.HVals(key));
+        }
+
+        public RedisScanPair HScan(string key, long cursor, string pattern = null, long? count = null)
+        {
+            return Write(RedisCommand.HScan(key, cursor, pattern, count));
         }
         #endregion
 
@@ -1163,6 +1173,11 @@ namespace ctstone.Redis
         {
             return Write(RedisCommand.SUnionStore(destination, keys));
         }
+
+        public RedisScan SScan(string key, long cursor, string pattern = null, long? count = null)
+        {
+            return Write(RedisCommand.SScan(key, cursor, pattern, count));
+        }
         #endregion
 
         #region Sorted Sets
@@ -1378,6 +1393,11 @@ namespace ctstone.Redis
         public long ZUnionStore(string destination, double[] weights = null, RedisAggregate? aggregate = null, params string[] keys)
         {
             return Write(RedisCommand.ZUnionStore(destination, weights, aggregate, keys));
+        }
+
+        public RedisScanPair ZScan(string key, long cursor, string pattern = null, long? count = null)
+        {
+            return Write(RedisCommand.ZScan(key, cursor, pattern, count));
         }
         #endregion
 

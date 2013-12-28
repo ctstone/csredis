@@ -59,7 +59,7 @@ namespace ctstone.Redis
             var d_init = Expression.MemberInit(Expression.New(d_t));
             var d_add = d_t.GetMethod("Add");
             var d_setters = o_t.GetProperties(BindingFlags.Public | BindingFlags.Instance) // build setters via Add(k,v)
-                .Where(x => x.CanRead && x.CanWrite)
+                .Where(x => x.CanRead)
                 .Select(x =>
                 {
                     var prop = Expression.Property(o, x.Name);
@@ -111,7 +111,7 @@ namespace ctstone.Redis
             var td_mi_get_converter = td_t.GetMethod("GetConverter", new[] { typeof(Type) });
 
             var binds = o_t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.CanRead && x.CanWrite)
+                .Where(x => x.CanRead)
                 .Select(x =>
                 {
                     var value_t = x.PropertyType;

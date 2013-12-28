@@ -64,6 +64,7 @@
     <Compile Include="RedisCommands\RedisHashes.cs" />
     <Compile Include="RedisCommands\RedisInt.cs" />
     <Compile Include="RedisCommands\RedisIntNull.cs" />
+    <Compile Include="RedisCommands\RedisScan.cs" />
     <Compile Include="RedisCommands\RedisTuple.cs" />
     <Compile Include="RedisCommands\RedisObject.cs" />
     <Compile Include="RedisCommands\RedisObjects.cs" />

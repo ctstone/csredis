@@ -315,5 +315,17 @@ namespace ctstone.Redis.Tests.RedisClientTests
 
             Redis.Del("test");
         }
+
+        [TestMethod, TestCategory("Keys")]
+        public void TestScan()
+        {
+            using (new RedisTestKeys(Redis, "testXYZ_1", "testXYZ_2", "testXYZ_3", "testXYZ_4"))
+            {
+                Redis.MSet("testXYZ_1", "1", "testXYZ_2", "1", "testXYZ_3", "1", "testXYZ_4", "1");
+                var scan = Redis.Scan(0, "testXYZ*");
+                Assert.AreEqual(4, scan.Items.Length);
+                Assert.AreEqual(0, scan.Cursor);
+            }
+        }
     }
 }

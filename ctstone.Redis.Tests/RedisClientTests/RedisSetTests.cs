@@ -184,6 +184,18 @@ namespace ctstone.Redis.Tests.RedisClientTests
                 Assert.AreEqual(5, Redis.SUnionStore("test3", "test1", "test2"));
             }
         }
+
+        [TestMethod, TestCategory("Sets")]
+        public void TestSScan()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                Redis.SAdd("test1", 1, 2, 3, 4);
+                var scan = Redis.SScan("test1", 0);
+                Assert.AreEqual(4, scan.Items.Length);
+                Assert.AreEqual(0, scan.Cursor);
+            }
+        }
     }
 
     
