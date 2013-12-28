@@ -1,6 +1,6 @@
 # csredis
 
-csredis is a .NET client for Redis and Redis Sentinel (2.6). Includes both synchronous and asynchronous implementations.
+csredis is a .NET client for Redis and Redis Sentinel (2.8). Includes both synchronous and asynchronous implementations.
 
 The easiest way to install csredis is from [NuGet](https://nuget.org/packages/csredis) via the [Package Manager Console](http://docs.nuget.org/docs/start-here/using-the-package-manager-console):  
 

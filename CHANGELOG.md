@@ -1,3 +1,6 @@
+##csredis 2.1.1.0
+Added support for Redis 2.8 commands (SCAN, SSCAN, HSCAN, ZSCAN)
+
 ##csredis 2.1.0.0
 Improved serialization performance
 Added support for ISerializable
