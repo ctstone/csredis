@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("csredis")]
-[assembly: AssemblyDescription("csredis is a .NET client for Redis and Redis Sentinel (2.6). Includes both synchronous and asynchronous clients.")]
+[assembly: AssemblyDescription("csredis is a .NET client for Redis and Redis Sentinel (2.8). Includes both synchronous and asynchronous clients.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Chris Stone")]
 [assembly: AssemblyProduct("csredis")]
