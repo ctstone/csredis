@@ -372,7 +372,7 @@ namespace ctstone.Redis
                 {
                     cmd_builder
                         .Append(Bulk)
-                        .Append(arg.Length)
+                        .Append(_encoding.GetBytes(arg).Length)
                         .Append(EOL);
                     cmd_builder
                         .Append(arg)
