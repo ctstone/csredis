@@ -66,12 +66,25 @@ namespace ctstone.Redis
                 return null;
 
             byte[] bulk = new byte[size];
-            int bytes_read = FillBuffer(stream, bulk);
+            int bytes_read = 0;
+            while (bytes_read < size)
+                bytes_read += stream.Read(bulk, bytes_read, size - bytes_read);
+
+            /*int position = 0;
+            int bytes_read = FillBuffer(stream, bulk, size, position);*/
+
             ExpectBytesRead(size, bytes_read);
             ReadCRLF(stream);
             return bulk;
         }
 
+        static int FillBuffer(Stream stream, byte[] buffer, int size, int position)
+        {
+            int bytes_read = 0;
+            while (bytes_read < buffer.Length && (bytes_read = stream.Read(buffer, bytes_read, Math.Min(size - position, buffer.Length))) > 0)
+                position += bytes_read;
+            return position;
+        }
         
 
         public static void ReadBulk(Stream stream, Stream destination, int bufferSize, bool checkType)
@@ -83,14 +96,20 @@ namespace ctstone.Redis
                 return;
             
             byte[] buffer = new byte[bufferSize];
-            long bytes_read = 0;
-            int bytes_buffered;
-            while (bytes_read < size) 
+            int position = 0;
+            while (position < size) 
             {
-                bytes_read += bytes_buffered = FillBuffer(stream, buffer); 
-                destination.Write(buffer, 0, bytes_buffered);
+                int bytes_to_buffer = Math.Min(buffer.Length, size - position);
+                int bytes_read = 0;
+                while (bytes_read < bytes_to_buffer)
+                {
+                    int bytes_to_read = Math.Min(bytes_to_buffer - bytes_read, size - position);
+                    bytes_read += stream.Read(buffer, bytes_read, bytes_to_read);
+                }
+                position += bytes_read;
+                destination.Write(buffer, 0, bytes_read);
             }
-            ExpectBytesRead(size, bytes_read);
+            ExpectBytesRead(size, position);
             ReadCRLF(stream);
         }
 
@@ -186,13 +205,7 @@ namespace ctstone.Redis
                 throw new RedisProtocolException(String.Format("Expecting CRLF; got bytes: {0}, {1}", r, n));
         }
 
-        static int FillBuffer(Stream stream, byte[] buffer)
-        {
-            int bytes_read = 0;
-            while (bytes_read < buffer.Length)
-                bytes_read += stream.Read(buffer, bytes_read, buffer.Length - bytes_read);
-            return bytes_read;
-        }
+        
 
         static void ExpectBytesRead(long expecting, long actual)
         {
