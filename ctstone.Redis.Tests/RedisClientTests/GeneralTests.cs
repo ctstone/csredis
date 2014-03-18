@@ -9,6 +9,35 @@ namespace ctstone.Redis.Tests.RedisClientTests
     [TestClass]
     public class GeneralTests : RedisTestBase
     {
+        [TestMethod, TestCategory("RedisClient")]
+        public void TestLargeBulk()
+        {
+            string random = GetRandomString(1048576);
+            using (new RedisTestKeys(Redis, "test"))
+            {
+                Assert.AreEqual("OK", Redis.Set("test", random));
+                Assert.AreEqual(random, Redis.Get("test"));
+            }
+        }
+
+        [TestMethod, TestCategory("RedisClient")]
+        public void TestLargeBulkStream()
+        {
+            string random = GetRandomString(1048576);
+            using (new RedisTestKeys(Redis, "test"))
+            {
+                Assert.AreEqual("OK", Redis.Set("test", random));
+                using (var ms = new MemoryStream())
+                {
+                    Redis.StreamTo(ms, 1024, x => x.Get("test"));
+                    string result = Encoding.UTF8.GetString(ms.ToArray());
+                    Assert.AreEqual(random, result);
+                }
+            }
+        }
+
+        
+
         [TestMethod, TestCategory("RedisClient"), TestCategory("Pipeline")]
         public void TestPipeline()
         {
@@ -186,6 +215,20 @@ namespace ctstone.Redis.Tests.RedisClientTests
                     Assert.AreEqual(data, sb.ToString(), "2x-buffer failed");
                 }
             }
+        }
+
+        static string GetRandomString(int bytes)
+        {
+            string abc = "abcdefghijklmnopqrstuvwxyz";
+            Random random = new Random();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < bytes; i++)
+            {
+                int r = random.Next(0, abc.Length - 1);
+                char c = abc[r];
+                sb.Append(c);
+            }
+            return sb.ToString();
         }
     }
 }
