@@ -66,15 +66,14 @@ namespace ctstone.Redis
                 return null;
 
             byte[] bulk = new byte[size];
-
-            int bytes_read = 0;
-            while (bytes_read < size)
-                bytes_read += stream.Read(bulk, 0, size - bytes_read);
-            if (bytes_read != size)
-                throw new RedisProtocolException(String.Format("Expecting {0} bytes; got {1} bytes", size, bytes_read));
+            int bytes_read = FillBuffer(stream, bulk);
+            ExpectBytesRead(size, bytes_read);
             ReadCRLF(stream);
             return bulk;
         }
+
+        
+
         public static void ReadBulk(Stream stream, Stream destination, int bufferSize, bool checkType)
         {
             if (checkType)
@@ -88,9 +87,10 @@ namespace ctstone.Redis
             int bytes_buffered;
             while (bytes_read < size) 
             {
-                bytes_read += bytes_buffered = stream.Read(buffer, 0, (int)Math.Min(buffer.Length, size - bytes_read));
+                bytes_read += bytes_buffered = FillBuffer(stream, buffer); 
                 destination.Write(buffer, 0, bytes_buffered);
             }
+            ExpectBytesRead(size, bytes_read);
             ReadCRLF(stream);
         }
 
@@ -184,6 +184,20 @@ namespace ctstone.Redis
             var n = stream.ReadByte();
             if (r != (byte)13 && n != (byte)10)
                 throw new RedisProtocolException(String.Format("Expecting CRLF; got bytes: {0}, {1}", r, n));
+        }
+
+        static int FillBuffer(Stream stream, byte[] buffer)
+        {
+            int bytes_read = 0;
+            while (bytes_read < buffer.Length)
+                bytes_read += stream.Read(buffer, bytes_read, buffer.Length - bytes_read);
+            return bytes_read;
+        }
+
+        static void ExpectBytesRead(long expecting, long actual)
+        {
+            if (actual != expecting)
+                throw new RedisProtocolException(String.Format("Expecting {0} bytes; got {1} bytes", expecting, actual));
         }
     }
 }
