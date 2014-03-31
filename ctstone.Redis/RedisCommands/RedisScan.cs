@@ -14,17 +14,17 @@ namespace ctstone.Redis.RedisCommands
 
         static RedisScan ParseStream(Stream stream)
         {
-            object[] parts = RedisReader.ReadMultiBulk(stream);
-            object[] keys = parts[1] as object[];
-            RedisScan result = new RedisScan
-            {
-                Cursor = ParseCursor(parts[0]),
-                Items = new string[keys.Length],
-            };
-            for (int i = 0; i < keys.Length; i++)
-                result.Items[i] = keys[i] as String;
+            RedisReader.ExpectType(stream, RedisMessage.MultiBulk);
 
-            return result;
+            long count = RedisReader.ReadInt(stream, false);
+            RedisScan scan = new RedisScan();
+            scan.Cursor = Int64.Parse(RedisReader.Read(stream).ToString());
+            RedisReader.ExpectType(stream, RedisMessage.MultiBulk);
+
+            scan.Items = new string[RedisReader.ReadInt(stream, false)];
+            for (int i = 0; i < scan.Items.Length; i++)
+                scan.Items[i] = RedisReader.Read(stream).ToString();
+            return scan;
         }
 
         static long ParseCursor(object obj)
