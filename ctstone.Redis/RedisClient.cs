@@ -1555,6 +1555,11 @@ namespace ctstone.Redis
             return Write(RedisCommand.BitOp(operation, destKey, keys));
         }
 
+        public long BitPos(string key, byte bit, long? start = null, long? end = null)
+        {
+            return Write(RedisCommand.BitPos(key, bit, start, end));
+        }
+
         /// <summary>
         /// Decrement the integer value of a key by one
         /// </summary>

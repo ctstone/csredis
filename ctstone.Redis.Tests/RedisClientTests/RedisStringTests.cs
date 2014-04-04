@@ -2,12 +2,54 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ctstone.Redis;
 using System.Collections.Generic;
+using System.Text;
 
 namespace ctstone.Redis.Tests.RedisClientTests
 {
     [TestClass]
     public class RedisStringTests : RedisTestBase
     {
+        [TestMethod, TestCategory("Strings")]
+        public void TestUTF8()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                string bytes1 = Encoding.UTF8.GetString(new byte[] { 0x24 });
+                Redis.Set("test1", bytes1);
+                Assert.AreEqual("$", Redis.Get("test1"));
+
+                string bytes2 = Encoding.UTF8.GetString(new byte[] { 0xc2, 0xa2 });
+                Redis.Set("test1", bytes2);
+                Assert.AreEqual("¢", Redis.Get("test1"));
+
+                string bytes3 = Encoding.UTF8.GetString(new byte[] { 0xe2, 0x82, 0xac });
+                Redis.Set("test1", bytes3);
+                Assert.AreEqual("€", Redis.Get("test1"));
+
+                string bytes4 = Encoding.UTF8.GetString(new byte[] { 0xf0, 0xa4, 0xad, 0xa2 });
+                Redis.Set("test1", bytes4);
+                Assert.AreEqual("𤭢", Redis.Get("test1"));
+            }
+        }
+
+        [TestMethod, TestCategory("Strings")]
+        public void TestRawBytes()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                double pi = Math.PI;
+                byte[] bytes = BitConverter.GetBytes(pi);
+                Redis.Set("test1", bytes);
+
+                byte[] buffer = new byte[sizeof(double)];
+                Redis.BufferFor(x => x.Get("test1"));
+                Redis.Read(buffer, 0, buffer.Length);
+
+                for (int i = 0; i < bytes.Length; i++)
+                    Assert.AreEqual(bytes[i], buffer[i]);
+            }
+        }
+
         [TestMethod, TestCategory("Strings")]
         public void TestAppend()
         {
@@ -54,6 +96,23 @@ namespace ctstone.Redis.Tests.RedisClientTests
             Assert.AreEqual(6, resp1);
 
             Redis.Del("test1", "test2", "test3");
+        }
+
+        [TestMethod, TestCategory("Strings")]
+        public void TestBitPos()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                Redis.Set("test1", new byte[] { 0xff, 0xf0, 0x00 });
+                Assert.AreEqual(12, Redis.BitPos("test1", 0));
+
+                /*Redis.Set("test1", "\x00\xff\xf0");
+                Assert.AreEqual(8, Redis.BitPos("test1", 1, 0));
+                Assert.AreEqual(8, Redis.BitPos("test1", 1, 1));
+
+                Redis.Set("test1", "\x00\x00\x00");
+                Assert.AreEqual(-1, Redis.BitPos("test1", 1));*/
+            }
         }
 
         [TestMethod, TestCategory("Strings")]

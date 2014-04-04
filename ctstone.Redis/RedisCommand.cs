@@ -686,6 +686,19 @@ namespace ctstone.Redis
             string[] args = RedisArgs.Concat(new[] { operation.ToString().ToUpper(), destKey }, keys);
             return new RedisInt("BITOP", args);
         }
+        public static RedisInt BitPos(string key, int bit, long? start = null, long? end = null)
+        {
+            List<object> args = new List<object>();
+            args.Add(key);
+            args.Add(bit);
+            if (start != null)
+            {
+                args.Add(start);
+                if (end != null)
+                    args.Add(end);
+            }
+            return new RedisInt("BITPOS", args.ToArray());
+        }
         public static RedisInt Decr(string key)
         {
             return new RedisInt("DECR", key);

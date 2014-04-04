@@ -49,7 +49,7 @@ namespace ctstone.Redis
         private const char Bulk = (char)RedisMessage.Bulk;
         private const char MultiBulk = (char)RedisMessage.MultiBulk;
         private const char Int = (char)RedisMessage.Int;
-        private static Encoding _encoding = Encoding.UTF8;
+        private static Encoding _encoding = new UTF8Encoding(false);
         private Socket _socket;
         private Stream _stream;
         private BlockingCollection<Task> _asyncTaskQueue;
@@ -224,7 +224,7 @@ namespace ctstone.Redis
         /// <param name="arguments">Array of command arguments</param>
         public void Write(string command, params object[] arguments)
         {
-            byte[] buffer = _encoding.GetBytes(CreateMessage(command, arguments));
+            byte[] buffer = CreateMessage(command, arguments);
             _stream.Write(buffer, 0, buffer.Length);
         }
 
@@ -238,7 +238,7 @@ namespace ctstone.Redis
         /// <returns>Command response</returns>
         public T Call<T>(Func<Stream, T> parser, string command, params object[] arguments)
         {
-            byte[] buffer = _encoding.GetBytes(CreateMessage(command, arguments));
+            byte[] buffer = CreateMessage(command, arguments);
             _stream.Write(buffer, 0, buffer.Length);
             return parser(_stream);
         }
@@ -253,7 +253,7 @@ namespace ctstone.Redis
         /// <returns>Task that will return strongly-typed Redis response when complete</returns>
         public Task<T> CallAsync<T>(Func<Stream, T> parser, string command, params object[] arguments) 
         {
-            byte[] buffer = _encoding.GetBytes(CreateMessage(command, arguments));
+            byte[] buffer = CreateMessage(command, arguments);
             Task<T> task = new Task<T>(() => parser(_stream));
 
             lock (_asyncLock)
@@ -272,8 +272,9 @@ namespace ctstone.Redis
         /// <param name="arguments">Array of command arguments</param>
         public Task WriteAsync(string command, params object[] arguments)
         {
-            byte[] buffer = _encoding.GetBytes(CreateMessage(command, arguments));
+            //byte[] buffer = _encoding.GetBytes(CreateMessage(command, arguments));
             //return _stream.WriteAsync(buffer, 0, buffer.Length); // .NET 4.5
+            byte[] buffer = CreateMessage(command, arguments);
             return Task.Factory.StartNew(() => _stream.Write(buffer, 0, buffer.Length));
         }
 
@@ -354,34 +355,23 @@ namespace ctstone.Redis
             return true;
         }
 
-        private string CreateMessage(string command, params object[] args)
+        byte[] CreateMessage(string command, params object[] args)
         {
             using (new ActivityTracer("Create message"))
             {
-                string[] cmd = RedisArgs.Concat(command.ToString().Split(' '), args);
-                ActivityTracer.Source.TraceEvent(TraceEventType.Information, 0, "Command: {0} {1}", command, String.Join(" ", args));
+                ActivityTracer.Source.TraceEvent(TraceEventType.Information, 0, "Command: {0}", command);
 
-                StringBuilder cmd_builder = new StringBuilder();
+                string[] parts = command.Split(' ');
+                int len = parts.Length + args.Length;
 
-                cmd_builder
-                    .Append(MultiBulk)
-                    .Append(cmd.Length)
-                    .Append(EOL);
+                RedisWriter writer = new RedisWriter(len, _encoding);
+                foreach (var part in parts)
+                    writer.WriteBulk(part);
 
-                foreach (var arg in cmd)
-                {
-                    cmd_builder
-                        .Append(Bulk)
-                        .Append(_encoding.GetBytes(arg).Length)
-                        .Append(EOL);
-                    cmd_builder
-                        .Append(arg)
-                        .Append(EOL);
-                }
+                foreach (var arg in args)
+                    writer.WriteBulk(arg);
 
-                string cmd_protocol = cmd_builder.ToString();
-                ActivityTracer.Source.TraceEvent(TraceEventType.Verbose, 0, "Unified command: {0}", cmd_protocol);
-                return cmd_protocol;
+                return writer.ToArray();
             }
         }
     }

@@ -81,6 +81,7 @@
     <Compile Include="RedisCommand.cs" />
     <Compile Include="RedisSentinelClient.cs" />
     <Compile Include="RedisSentinelManager.cs" />
+    <Compile Include="RedisWriter.cs" />
     <Compile Include="Serializer.cs" />
     <Compile Include="Subscriptions.cs" />
     <Compile Include="Types.cs" />
