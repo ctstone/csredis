@@ -86,11 +86,6 @@ namespace ctstone.Redis
 
         static Func<Dictionary<string, string>, T> CompilePropertyDeserializer()
         {
-            var t1 = TypeDescriptor.GetConverter(typeof(Int32));
-            var t2 = t1.ConvertFrom("123");
-
-
-
             var o_t = typeof(T);
             var o = Expression.Variable(o_t, "o");
             var o_new = Expression.New(typeof(T));
