@@ -51,6 +51,29 @@ namespace ctstone.Redis.Tests.RedisClientTests
         }
 
         [TestMethod, TestCategory("Strings")]
+        public void TestByteString()
+        {
+            // use an encoding with 256 8 bit characters
+            Encoding DefaultEncoding = RedisClient.Encoding;
+            RedisClient.Encoding = Encoding.GetEncoding("Windows-1252");
+
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                byte[] bytes = new byte[] { 0x00, 0x8F };
+                Redis.Set("test1", bytes);
+
+                byte[] buffer = RedisClient.Encoding.GetBytes(Redis.Get("test1"));
+
+                // change encoding back for other tests running in the same process
+                RedisClient.Encoding = DefaultEncoding;
+
+                Assert.AreEqual(bytes.Length, buffer.Length);
+                for (int i = 0; i < bytes.Length; i++)
+                    Assert.AreEqual(bytes[i], buffer[i]);
+            }
+        }
+
+        [TestMethod, TestCategory("Strings")]
         public void TestAppend()
         {
             Redis.Del("test");

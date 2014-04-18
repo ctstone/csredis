@@ -9,7 +9,7 @@ namespace ctstone.Redis.RedisCommands
         { }
         private static string ParseStream(Stream stream)
         {
-            string[] result = RedisReader.ReadMultiBulkUTF8(stream);
+            string[] result = RedisReader.ReadMultiBulkString(stream);
             if (result == null)
                 return null;
             return result[1];

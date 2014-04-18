@@ -57,6 +57,16 @@ namespace ctstone.Redis
         private readonly object _asyncLock;
         private long _bytesRemaining;
         private ActivityTracer _activity;
+
+        /// <summary>
+        /// Globally used string encoding. Default is UTF8 for international characters.
+        /// Can be changed to e.g. Windows-1252 to support binary byte strings instead.
+        /// </summary>
+        public static Encoding Encoding
+        {
+            get { return _encoding; }
+            set { _encoding = value; }
+        }
         
         /// <summary>
         /// Instantiate new instance of RedisConnection

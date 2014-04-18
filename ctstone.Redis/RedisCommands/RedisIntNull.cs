@@ -14,7 +14,7 @@ namespace ctstone.Redis.RedisCommands
             if (type == RedisMessage.Int)
                 return RedisReader.ReadInt(stream, false);
 
-            RedisReader.ReadBulkUTF8(stream, false);
+            RedisReader.ReadBulkString(stream, false);
             return null;
         }
     }
