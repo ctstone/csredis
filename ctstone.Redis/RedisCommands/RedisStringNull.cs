@@ -12,7 +12,7 @@ namespace ctstone.Redis.RedisCommands
         {
             var type = RedisReader.ReadType(stream);
             if (type == RedisMessage.Bulk)
-                return RedisReader.ReadBulkUTF8(stream, false);
+                return RedisReader.ReadBulkString(stream, false);
             RedisReader.ReadMultiBulk(stream, false);
             return null;
         }

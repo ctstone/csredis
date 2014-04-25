@@ -11,7 +11,7 @@ namespace ctstone.Redis.RedisCommands
 
         private static DateTime ParseStream(Stream stream)
         {
-            string[] parts = RedisReader.ReadMultiBulkUTF8(stream);
+            string[] parts = RedisReader.ReadMultiBulkString(stream);
             int timestamp = Int32.Parse(parts[0]);
             int microseconds = Int32.Parse(parts[1]);
             long ticks = microseconds * (TimeSpan.TicksPerMillisecond / 1000);

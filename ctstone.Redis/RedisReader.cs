@@ -42,16 +42,16 @@ namespace ctstone.Redis
         }
 
         // redis type == BULK
-        public static string ReadBulkUTF8(Stream stream)
+        public static string ReadBulkString(Stream stream)
         {
-            return ReadBulkUTF8(stream, true);
+            return ReadBulkString(stream, true);
         }
-        public static string ReadBulkUTF8(Stream stream, bool checkType)
+        public static string ReadBulkString(Stream stream, bool checkType)
         {
             byte[] bulk = ReadBulk(stream, checkType);
             if (bulk == null)
                 return null;
-            return Encoding.UTF8.GetString(bulk);
+            return RedisConnection.Encoding.GetString(bulk);
         }
         public static byte[] ReadBulk(Stream stream)
         {
@@ -114,7 +114,7 @@ namespace ctstone.Redis
         }
 
         // redis type == MULTIBULK
-        public static string[] ReadMultiBulkUTF8(Stream stream)
+        public static string[] ReadMultiBulkString(Stream stream)
         {
             object[] result = ReadMultiBulk(stream);
             if (result == null)
@@ -150,7 +150,7 @@ namespace ctstone.Redis
             switch (type)
             {
                 case RedisMessage.Bulk:
-                    return ReadBulkUTF8(stream, false);
+                    return ReadBulkString(stream, false);
 
                 case RedisMessage.Int:
                     return ReadInt(stream, false);
