@@ -14,7 +14,7 @@ namespace ctstone.Redis.RedisCommands
 
         private static Dictionary<string, string> ParseStream(Stream stream)
         {
-            string[] fieldValues = RedisReader.ReadMultiBulkUTF8(stream);
+            string[] fieldValues = RedisReader.ReadMultiBulkString(stream);
             return HashMapper.ToDict(fieldValues);
         }
     }
@@ -28,7 +28,7 @@ namespace ctstone.Redis.RedisCommands
 
         private static T ParseStream(Stream stream)
         {
-            string[] fieldValues = RedisReader.ReadMultiBulkUTF8(stream);
+            string[] fieldValues = RedisReader.ReadMultiBulkString(stream);
             return HashMapper.ToObject<T>(fieldValues);
         }
     }

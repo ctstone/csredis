@@ -12,7 +12,7 @@ namespace ctstone.Redis.RedisCommands
 
         private static double ParseStream(Stream stream)
         {
-            return Double.Parse(RedisReader.ReadBulkUTF8(stream), NumberStyles.Float);
+            return Double.Parse(RedisReader.ReadBulkString(stream), NumberStyles.Float);
         }
     }
 
@@ -24,7 +24,7 @@ namespace ctstone.Redis.RedisCommands
 
         private static double? ParseStream(Stream stream)
         {
-            string result = RedisReader.ReadBulkUTF8(stream);
+            string result = RedisReader.ReadBulkString(stream);
             if (result == null)
                 return null;
             return Double.Parse(result, NumberStyles.Float);

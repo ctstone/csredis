@@ -36,6 +36,15 @@ namespace ctstone.Redis
         public int Port { get { return _connection.Port; } }
 
         /// <summary>
+        /// Globally used string encoding for RedisConnection.
+        /// </summary>
+        public static Encoding Encoding
+        {
+            get { return RedisConnection.Encoding; }
+            set { RedisConnection.Encoding = value; }
+        }
+
+        /// <summary>
         /// Occurs when a subscription message has been received
         /// </summary>
         public event EventHandler<RedisSubscriptionReceivedEventArgs> SubscriptionReceived;

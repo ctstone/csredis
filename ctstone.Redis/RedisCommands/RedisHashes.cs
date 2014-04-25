@@ -35,7 +35,7 @@ namespace ctstone.Redis.RedisCommands
 
         private static Dictionary<string, string>[] ParseStream(Stream stream, string[] fields)
         {
-            string[] response = RedisReader.ReadMultiBulkUTF8(stream);
+            string[] response = RedisReader.ReadMultiBulkString(stream);
 
             Dictionary<string, string>[] dicts = new Dictionary<string, string>[response.Length / fields.Length];
             for (int i = 0; i < response.Length; i += fields.Length)
