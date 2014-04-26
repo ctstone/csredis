@@ -1403,10 +1403,21 @@ namespace ctstone.Redis
         {
             return Write(RedisCommand.ZUnionStore(destination, weights, aggregate, keys));
         }
-
         public RedisScanPair ZScan(string key, long cursor, string pattern = null, long? count = null)
         {
             return Write(RedisCommand.ZScan(key, cursor, pattern, count));
+        }
+        public string[] ZRangeByLex(string key, string min, string max, long? offset = null, long? count = null)
+        {
+            return Write(RedisCommand.ZRangeByLex(key, min, max, offset, count));
+        }
+        public long ZRemRangeByLex(string key, string min, string max)
+        {
+            return Write(RedisCommand.ZRemRangeByLex(key, min, max));
+        }
+        public long ZLexCount(string key, string min, string max)
+        {
+            return Write(RedisCommand.ZLexCount(key, min, max));
         }
         #endregion
 
@@ -2116,7 +2127,22 @@ namespace ctstone.Redis
         }
         #endregion
 
-        
+        #region HyperLogLog
+        public long PfAdd(string key, params object[] elements)
+        {
+            return Write(RedisCommand.PfAdd(key, elements));
+        }
+        public long PfCount(params string[] keys)
+        {
+            return Write(RedisCommand.PfCount(keys));
+        }
+        public string PfMerge(string destKey, params string[] sourceKeys)
+        {
+            return Write(RedisCommand.PfMerge(destKey, sourceKeys));
+        }
+        #endregion
+
+
         /// <summary>
         /// Release resources used by the current RedisClient instance
         /// </summary>

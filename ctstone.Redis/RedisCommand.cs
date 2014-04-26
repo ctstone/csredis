@@ -615,6 +615,24 @@ namespace ctstone.Redis
                 args.AddRange(new object[] { "COUNT", count });
             return new RedisScanPairCommand("ZSCAN", args.ToArray());
         }
+        public static RedisStrings ZRangeByLex(string key, string min, string max, long? offset = null, long? count = null)
+        {
+            List<object> args = new List<object>();
+            args.Add(key);
+            args.Add(min);
+            args.Add(max);
+            if (offset != null && count != null)
+                args.AddRange(new object[] { "LIMIT", offset, count });
+            return new RedisStrings("ZRANGEBYLEX", args.ToArray());
+        }
+        public static RedisInt ZRemRangeByLex(string key, string min, string max)
+        {
+            return new RedisInt("ZREMRANGEBYLEX", key, min, max);
+        }
+        public static RedisInt ZLexCount(string key, string min, string max)
+        {
+            return new RedisInt("ZLEXCOUNT", key, min, max);
+        }
         #endregion
 
         #region PubSub
@@ -966,6 +984,23 @@ namespace ctstone.Redis
         public static RedisStatus Reset(string pattern)
         {
             return new RedisStatus("SENTINEL", pattern);
+        }
+        #endregion
+
+        #region HyperLogLog
+        public static RedisInt PfAdd(string key, params object[] elements)
+        {
+            string[] args = RedisArgs.Concat(key, elements);
+            return new RedisInt("PFADD", args);
+        }
+        public static RedisInt PfCount(params string[] keys)
+        {
+            return new RedisInt("PFCOUNT", keys);
+        }
+        public static RedisStatus PfMerge(string destKey, params string[] sourceKeys)
+        {
+            string[] args = RedisArgs.Concat(destKey, sourceKeys);
+            return new RedisStatus("PFMERGE", args);
         }
         #endregion
     }

@@ -250,5 +250,100 @@ namespace ctstone.Redis.Tests.RedisClientTests
                 Assert.AreEqual(0, scan.Cursor);
             }
         }
+
+        [TestMethod, TestCategory("Sorted Sets")]
+        public void TestZRangeByLex()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                Assert.AreEqual(7, Redis.ZAdd("test1",
+                    Tuple.Create(0, "a"),
+                    Tuple.Create(0, "b"),
+                    Tuple.Create(0, "c"),
+                    Tuple.Create(0, "d"),
+                    Tuple.Create(0, "e"),
+                    Tuple.Create(0, "f"),
+                    Tuple.Create(0, "g")));
+
+                var r1 = Redis.ZRangeByLex("test1", "-", "[c");
+                Assert.AreEqual(3, r1.Length);
+                Assert.AreEqual("a", r1[0]);
+                Assert.AreEqual("b", r1[1]);
+                Assert.AreEqual("c", r1[2]);
+
+                var r2 = Redis.ZRangeByLex("test1", "[aaa", "(g");
+                Assert.AreEqual(5, r2.Length);
+                Assert.AreEqual("b", r2[0]);
+                Assert.AreEqual("c", r2[1]);
+                Assert.AreEqual("d", r2[2]);
+                Assert.AreEqual("e", r2[3]);
+                Assert.AreEqual("f", r2[4]);
+            }
+        }
+
+        [TestMethod, TestCategory("Sorted Sets")]
+        public void TestZLexCount()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                Assert.AreEqual(5, Redis.ZAdd("test1",
+                    Tuple.Create(0, "a"),
+                    Tuple.Create(0, "b"),
+                    Tuple.Create(0, "c"),
+                    Tuple.Create(0, "d"),
+                    Tuple.Create(0, "e")));
+
+                Assert.AreEqual(2, Redis.ZAdd("test1",
+                    Tuple.Create(0, "f"),
+                    Tuple.Create(0, "g")));
+
+                Assert.AreEqual(7, Redis.ZLexCount("test1", "-", "+"));
+                Assert.AreEqual(5, Redis.ZLexCount("test1", "[b", "[f"));
+            }
+        }
+
+        [TestMethod, TestCategory("Sorted Sets")]
+        public void TestZRemRangeByLex()
+        {
+            using (new RedisTestKeys(Redis, "test1"))
+            {
+                Assert.AreEqual(5, Redis.ZAdd("test1",
+                    Tuple.Create(0, "aaaa"),
+                    Tuple.Create(0, "b"),
+                    Tuple.Create(0, "c"),
+                    Tuple.Create(0, "d"),
+                    Tuple.Create(0, "e")));
+
+                Assert.AreEqual(5, Redis.ZAdd("test1",
+                    Tuple.Create(0, "foo"),
+                    Tuple.Create(0, "zap"),
+                    Tuple.Create(0, "zap"),
+                    Tuple.Create(0, "zip"),
+                    Tuple.Create(0, "ALPHA"),
+                    Tuple.Create(0, "alpha")));
+
+                var r1 = Redis.ZRange("test1", 0, -1);
+                Assert.AreEqual(10, r1.Length);
+                Assert.AreEqual("ALPHA", r1[0]);
+                Assert.AreEqual("aaaa", r1[1]);
+                Assert.AreEqual("alpha", r1[2]);
+                Assert.AreEqual("b", r1[3]);
+                Assert.AreEqual("c", r1[4]);
+                Assert.AreEqual("d", r1[5]);
+                Assert.AreEqual("e", r1[6]);
+                Assert.AreEqual("foo", r1[7]);
+                Assert.AreEqual("zap", r1[8]);
+                Assert.AreEqual("zip", r1[9]);
+
+                Assert.AreEqual(6, Redis.ZRemRangeByLex("test1", "[alpha", "[omega"));
+
+                var r2 = Redis.ZRange("test1", 0, -1);
+                Assert.AreEqual(4, r2.Length);
+                Assert.AreEqual("ALPHA", r2[0]);
+                Assert.AreEqual("aaaa", r2[1]);
+                Assert.AreEqual("zap", r2[2]);
+                Assert.AreEqual("zip", r2[3]);
+            }
+        }
     }
 }

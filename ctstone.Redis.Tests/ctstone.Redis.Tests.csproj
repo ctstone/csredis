@@ -52,6 +52,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="RedisClientAsyncTests\PubSubTests.cs" />
+    <Compile Include="RedisClientTests\RedisHyperLogLogTests.cs" />
     <Compile Include="RedisClientTests\RedisSortedSetTests.cs" />
     <Compile Include="RedisClientTests\RedisScriptingTests.cs" />
     <Compile Include="RedisClientTests\RedisTransactionTests.cs" />
