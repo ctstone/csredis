@@ -70,22 +70,10 @@ namespace ctstone.Redis
             while (bytes_read < size)
                 bytes_read += stream.Read(bulk, bytes_read, size - bytes_read);
 
-            /*int position = 0;
-            int bytes_read = FillBuffer(stream, bulk, size, position);*/
-
             ExpectBytesRead(size, bytes_read);
             ReadCRLF(stream);
             return bulk;
         }
-
-        static int FillBuffer(Stream stream, byte[] buffer, int size, int position)
-        {
-            int bytes_read = 0;
-            while (bytes_read < buffer.Length && (bytes_read = stream.Read(buffer, bytes_read, Math.Min(size - position, buffer.Length))) > 0)
-                position += bytes_read;
-            return position;
-        }
-        
 
         public static void ReadBulk(Stream stream, Stream destination, int bufferSize, bool checkType)
         {
