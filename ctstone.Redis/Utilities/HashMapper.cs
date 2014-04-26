@@ -37,26 +37,6 @@ namespace ctstone.Redis.Utilities
         public static T ToObject<T>(object[] fieldValues)
             where T : class
         {
-            /*T obj = Activator.CreateInstance<T>();
-            
-            TypeConverter conv;
-            PropertyInfo prop;
-            string field, value;
-            for (int i = 0; i < fieldValues.Length; i += 2)
-            {
-                field = fieldValues[i].ToString().Replace("-", String.Empty);
-                value = fieldValues[i + 1].ToString();
-                prop = typeof(T).GetProperty(field, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-                if (prop == null || !prop.CanWrite)
-                    continue;
-                conv = TypeDescriptor.GetConverter(prop.PropertyType);
-                if (!conv.CanConvertFrom(typeof(String)))
-                    continue;
-                if (prop.PropertyType == typeof(Boolean) && value == "1")
-                    value = "true";
-                prop.SetValue(obj, conv.ConvertFrom(value), null);
-            }
-            return obj;*/
             if (fieldValues.Length == 0)
                 return default(T);
             var dict = new Dictionary<string, string>();
