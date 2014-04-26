@@ -1,8 +1,9 @@
-﻿using System;
+﻿using ctstone.Redis.Debug;
+using System;
 using System.IO;
 using System.Text;
 
-namespace ctstone.Redis
+namespace ctstone.Redis.IO
 {
     static class RedisReader
     {

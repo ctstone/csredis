@@ -1,10 +1,11 @@
-﻿using System;
+﻿using ctstone.Redis.IO;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace ctstone.Redis.RedisCommands
+namespace ctstone.Redis.Commands
 {
     class RedisScanCommand : RedisCommand<RedisScan>
     {

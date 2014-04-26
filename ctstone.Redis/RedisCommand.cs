@@ -1,4 +1,5 @@
-﻿using ctstone.Redis.RedisCommands;
+﻿using ctstone.Redis.Commands;
+using ctstone.Redis.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;

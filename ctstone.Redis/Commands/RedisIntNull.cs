@@ -1,6 +1,7 @@
-﻿using System.IO;
+﻿using ctstone.Redis.IO;
+using System.IO;
 
-namespace ctstone.Redis.RedisCommands
+namespace ctstone.Redis.Commands
 {
     class RedisIntNull : RedisCommand<long?>
     {

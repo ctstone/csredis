@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using ctstone.Redis.IO;
+using ctstone.Redis.Utilities;
+using System.Collections.Generic;
 using System.IO;
 
-namespace ctstone.Redis.RedisCommands
+namespace ctstone.Redis.Commands
 {
     class RedisHashes : RedisCommand<Dictionary<string, string>[]>
     {

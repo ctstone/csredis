@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ctstone.Redis
+namespace ctstone.Redis.Utilities
 {
     static class RedisArgs
     {

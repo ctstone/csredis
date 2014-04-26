@@ -1,8 +1,9 @@
-﻿using System;
+﻿using ctstone.Redis.IO;
+using System;
 using System.ComponentModel;
 using System.IO;
 
-namespace ctstone.Redis.RedisCommands
+namespace ctstone.Redis.Commands
 {
     class RedisTuple : RedisCommand<Tuple<string, string>>
     {

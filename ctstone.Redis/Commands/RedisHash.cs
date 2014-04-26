@@ -1,10 +1,12 @@
-﻿using System;
+﻿using ctstone.Redis.IO;
+using ctstone.Redis.Utilities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 
-namespace ctstone.Redis.RedisCommands
+namespace ctstone.Redis.Commands
 {
     class RedisHash : RedisCommand<Dictionary<string, string>>
     {

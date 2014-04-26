@@ -1,5 +1,6 @@
 ﻿
-namespace ctstone.Redis.RedisCommands
+using ctstone.Redis.IO;
+namespace ctstone.Redis.Commands
 {
     class RedisObjects : RedisCommand<object[]>
     {

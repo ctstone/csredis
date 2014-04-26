@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace ctstone.Redis
+namespace ctstone.Redis.IO
 {
     class RedisWriter
     {

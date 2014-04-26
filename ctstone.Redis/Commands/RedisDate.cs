@@ -1,7 +1,9 @@
-﻿using System;
+﻿using ctstone.Redis.IO;
+using ctstone.Redis.Utilities;
+using System;
 using System.IO;
 
-namespace ctstone.Redis.RedisCommands
+namespace ctstone.Redis.Commands
 {
     class RedisDate : RedisCommand<DateTime>
     {

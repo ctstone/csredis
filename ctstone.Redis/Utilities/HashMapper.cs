@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
 
-namespace ctstone.Redis
+namespace ctstone.Redis.Utilities
 {
     static class HashMapper
     {
