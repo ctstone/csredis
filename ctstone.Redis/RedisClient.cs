@@ -562,6 +562,13 @@ namespace ctstone.Redis
             return Write(RedisCommand.Type(key));
         }
 
+        /// <summary>
+        /// Iterate the set of keys in the currently selected Redis database
+        /// </summary>
+        /// <param name="cursor">The cursor returned by the server in the previous call, or 0 if this is the first call</param>
+        /// <param name="pattern">Glob-style pattern to filter returned elements</param>
+        /// <param name="count">Set the maximum number of elements to return</param>
+        /// <returns>Updated cursor and result set</returns>
         public RedisScan Scan(long cursor, string pattern = null, long? count = null)
         {
             return Write(RedisCommand.Scan(cursor, pattern, count));
@@ -748,6 +755,14 @@ namespace ctstone.Redis
             return Write(RedisCommand.HVals(key));
         }
 
+        /// <summary>
+        /// Iterate the keys and values of a hash field
+        /// </summary>
+        /// <param name="key">Hash key</param>
+        /// <param name="cursor">The cursor returned by the server in the previous call, or 0 if this is the first call</param>
+        /// <param name="pattern">Glob-style pattern to filter returned elements</param>
+        /// <param name="count">Maximum number of elements to return</param>
+        /// <returns>Updated cursor and result set</returns>
         public RedisScanPair HScan(string key, long cursor, string pattern = null, long? count = null)
         {
             return Write(RedisCommand.HScan(key, cursor, pattern, count));
@@ -1185,6 +1200,14 @@ namespace ctstone.Redis
             return Write(RedisCommand.SUnionStore(destination, keys));
         }
 
+        /// <summary>
+        /// Iterate the elements of a set field
+        /// </summary>
+        /// <param name="key">Set key</param>
+        /// <param name="cursor">The cursor returned by the server in the previous call, or 0 if this is the first call</param>
+        /// <param name="pattern">Glob-style pattern to filter returned elements</param>
+        /// <param name="count">Maximum number of elements to return</param>
+        /// <returns>Updated cursor and result set</returns>
         public RedisScan SScan(string key, long cursor, string pattern = null, long? count = null)
         {
             return Write(RedisCommand.SScan(key, cursor, pattern, count));
@@ -1405,18 +1428,53 @@ namespace ctstone.Redis
         {
             return Write(RedisCommand.ZUnionStore(destination, weights, aggregate, keys));
         }
+
+        /// <summary>
+        /// Iterate the scores and elements of a sorted set field
+        /// </summary>
+        /// <param name="key">Sorted set key</param>
+        /// <param name="cursor">The cursor returned by the server in the previous call, or 0 if this is the first call</param>
+        /// <param name="pattern">Glob-style pattern to filter returned elements</param>
+        /// <param name="count">Maximum number of elements to return</param>
+        /// <returns>Updated cursor and result set</returns>
         public RedisScanPair ZScan(string key, long cursor, string pattern = null, long? count = null)
         {
             return Write(RedisCommand.ZScan(key, cursor, pattern, count));
         }
+
+        /// <summary>
+        /// Retrieve all the elements in a sorted set with a value between min and max
+        /// </summary>
+        /// <param name="key">Sorted set key</param>
+        /// <param name="min">Lexagraphic start value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
+        /// <param name="max">Lexagraphic stop value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
+        /// <param name="offset">Limit result set by offset</param>
+        /// <param name="count">Limimt result set by size</param>
+        /// <returns>List of elements in the specified range</returns>
         public string[] ZRangeByLex(string key, string min, string max, long? offset = null, long? count = null)
         {
             return Write(RedisCommand.ZRangeByLex(key, min, max, offset, count));
         }
+
+        /// <summary>
+        /// Remove all elements in the sorted set with a value between min and max
+        /// </summary>
+        /// <param name="key">Sorted set key</param>
+        /// <param name="min">Lexagraphic start value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
+        /// <param name="max">Lexagraphic stop value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
+        /// <returns>Number of elements removed</returns>
         public long ZRemRangeByLex(string key, string min, string max)
         {
             return Write(RedisCommand.ZRemRangeByLex(key, min, max));
         }
+
+        /// <summary>
+        /// Returns the number of elements in the sorted set with a value between min and max.
+        /// </summary>
+        /// <param name="key">Sorted set key</param>
+        /// <param name="min">Lexagraphic start value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
+        /// <param name="max">Lexagraphic stop value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
+        /// <returns>Number of elements in the specified score range</returns>
         public long ZLexCount(string key, string min, string max)
         {
             return Write(RedisCommand.ZLexCount(key, min, max));
@@ -1577,6 +1635,14 @@ namespace ctstone.Redis
             return Write(RedisCommand.BitOp(operation, destKey, keys));
         }
 
+        /// <summary>
+        /// Find first bit set or clear in a string
+        /// </summary>
+        /// <param name="key">Key to examine</param>
+        /// <param name="bit">Bit value (1 or 0)</param>
+        /// <param name="start">Examine string at specified byte offset</param>
+        /// <param name="end">Examine string to specified byte offset</param>
+        /// <returns>Position of the first bit set to the specified value</returns>
         public long BitPos(string key, byte bit, long? start = null, long? end = null)
         {
             return Write(RedisCommand.BitPos(key, bit, start, end));
@@ -2130,14 +2196,33 @@ namespace ctstone.Redis
         #endregion
 
         #region HyperLogLog
+        /// <summary>
+        /// Adds the specified elements to the specified HyperLogLog.
+        /// </summary>
+        /// <param name="key">Key to update</param>
+        /// <param name="elements">Elements to add</param>
+        /// <returns>1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.</returns>
         public long PfAdd(string key, params object[] elements)
         {
             return Write(RedisCommand.PfAdd(key, elements));
         }
+
+        /// <summary>
+        /// Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s)
+        /// </summary>
+        /// <param name="keys">One or more HyperLogLog keys to examine</param>
+        /// <returns>Approximated number of unique elements observed via PFADD</returns>
         public long PfCount(params string[] keys)
         {
             return Write(RedisCommand.PfCount(keys));
         }
+
+        /// <summary>
+        /// Merge N different HyperLogLogs into a single key.
+        /// </summary>
+        /// <param name="destKey">Where to store the merged HyperLogLogs</param>
+        /// <param name="sourceKeys">The HyperLogLogs keys that will be combined</param>
+        /// <returns>Status code</returns>
         public string PfMerge(string destKey, params string[] sourceKeys)
         {
             return Write(RedisCommand.PfMerge(destKey, sourceKeys));

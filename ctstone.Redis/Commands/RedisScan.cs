@@ -61,15 +61,33 @@ namespace ctstone.Redis.Commands
         }
     }
 
+    /// <summary>
+    /// Represents the result of a Redis SCAN or SSCAN operation
+    /// </summary>
     public class RedisScan
     {
+        /// <summary>
+        /// Updated cursor that should be used as the cursor argument in the next call
+        /// </summary>
         public long Cursor { get; set; }
+        /// <summary>
+        /// Collection of elements returned by the SCAN operation
+        /// </summary>
         public string[] Items { get; set; }
     }
 
+    /// <summary>
+    /// Represents the result of a Redis HSCAN or ZSCAN operation
+    /// </summary>
     public class RedisScanPair
     {
+        /// <summary>
+        /// Updated cursor that should be used as the cursor argument in the next call
+        /// </summary>
         public long Cursor { get; set; }
+        /// <summary>
+        /// Collection of elements returned by the SCAN operation
+        /// </summary>
         public Dictionary<string, object> Items { get; set; }
     }
 }
