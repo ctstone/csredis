@@ -25,7 +25,8 @@ namespace ctstone.Redis.Tests.RedisClientTests
             _redis = new Lazy<RedisClient>(() =>
             {
                 RedisClient redis = new RedisClient(Host, Port, 0);
-                redis.Auth(Password);
+                if (!String.IsNullOrWhiteSpace(Password))
+                    redis.Auth(Password);
                 return redis;
             });
 
