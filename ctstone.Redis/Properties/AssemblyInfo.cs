@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("csredis")]
-[assembly: AssemblyDescription("csredis is a .NET client for Redis and Redis Sentinel (2.8). Includes both synchronous and asynchronous clients.")]
+[assembly: AssemblyDescription("csredis is a .NET client for Redis and Sentinel")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Chris Stone")]
 [assembly: AssemblyProduct("csredis")]
@@ -22,8 +22,8 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("1e4063d6-d412-4c26-83c5-63a29ca84334")]
 
-[assembly: AssemblyVersion("2.1.1")]
-[assembly: AssemblyFileVersion("2.1.1")]
+[assembly: AssemblyVersion("3.0.0")]
+[assembly: AssemblyFileVersion("3.0.0")]
 [assembly: AssemblyInformationalVersion("2.1.0-rc1")]
 [assembly: InternalsVisibleTo("ConsoleApplication1")]
 [assembly: InternalsVisibleTo("ctstone.Redis.Tests")]
