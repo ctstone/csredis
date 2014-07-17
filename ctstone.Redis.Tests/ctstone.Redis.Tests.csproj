@@ -51,33 +51,26 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="RedisClientAsyncTests\PubSubTests.cs" />
-    <Compile Include="RedisClientTests\RedisHyperLogLogTests.cs" />
-    <Compile Include="RedisClientTests\RedisSortedSetTests.cs" />
-    <Compile Include="RedisClientTests\RedisScriptingTests.cs" />
-    <Compile Include="RedisClientTests\RedisTransactionTests.cs" />
-    <Compile Include="RedisClientTests\RedisPubSubTests.cs" />
-    <Compile Include="RedisClientTests\RedisConnectionTests.cs" />
+    <Compile Include="SentinelTests.cs" />
+    <Compile Include="StringTests.cs" />
+    <Compile Include="ServerTests.cs" />
+    <Compile Include="ScriptingTests.cs" />
+    <Compile Include="TransactionTests.cs" />
+    <Compile Include="PubSubTests.cs" />
+    <Compile Include="HyperLogLogTests.cs" />
+    <Compile Include="ConnectionTests.cs" />
+    <Compile Include="SortedSetTests.cs" />
+    <Compile Include="SetTests.cs" />
+    <Compile Include="ListTests.cs" />
+    <Compile Include="HashTests.cs" />
+    <Compile Include="KeyTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RedisClientTests\RedisHashTests.cs" />
-    <Compile Include="RedisClientTests\RedisKeyTests.cs" />
-    <Compile Include="RedisTestBase.cs" />
-    <Compile Include="RedisClientTests\RedisStringTests.cs" />
-    <Compile Include="RedisClientTests\RedisListTests.cs" />
-    <Compile Include="RedisClientTests\RedisSetTests.cs" />
-    <Compile Include="RedisClientTests\RedisServerTests.cs" />
-    <Compile Include="RedisTestKeys.cs" />
-    <Compile Include="RedisClientAsyncTests\GeneralTests.cs" />
-    <Compile Include="RedisClientTests\GeneralTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ctstone.Redis\ctstone.Redis.csproj">
       <Project>{d35e185e-a7e1-41e1-846c-21944f56074f}</Project>
       <Name>ctstone.Redis</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup />
   <Choose>

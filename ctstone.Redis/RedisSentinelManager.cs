@@ -1,109 +1,105 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+
+// http://redis.io/topics/sentinel-clients
 
 namespace ctstone.Redis
 {
-    /// <summary>
-    /// Manage Redis Sentinel connections
-    /// </summary>
-    public class RedisSentinelManager
+    public class RedisSentinelManager2 : IDisposable
     {
-        private LinkedList<KeyValuePair<string, int>> _sentinels;
+        readonly LinkedList<Tuple<string, int>> _sentinels;
+        string _masterName;
+        string _auth;
+        int _connectTimeout;
+        int _retries;
+        RedisClient _redisClient;
 
-        /// <summary>
-        /// Instantiate a new instance of the RedisSentinelManager class
-        /// </summary>
-        /// <param name="sentinels">array of Sentinel nodes ["host1:ip", "host2:ip", ..]</param>
-        public RedisSentinelManager(params string[] sentinels)
+        public RedisSentinelManager2(params string[] sentinels)
         {
-            _sentinels = new LinkedList<KeyValuePair<string, int>>();
+            _sentinels = new LinkedList<Tuple<string, int>>();
             foreach (var host in sentinels)
             {
                 string[] parts = host.Split(':');
                 string hostname = parts[0].Trim();
                 int port = Int32.Parse(parts[1]);
-                _sentinels.AddLast(new KeyValuePair<string, int>(hostname, port));
+                _sentinels.AddLast(Tuple.Create(hostname, port));
             }
         }
 
-        /// <summary>
-        /// Connect to and return the active master Redis client
-        /// </summary>
-        /// <param name="masterName">Name of master</param>
-        /// <param name="timeout">Time to wait for Sentinel response (milliseconds)</param>
-        /// <param name="masterTimeout">Time to wait for Redis master response (milliseconds)</param>
-        /// <returns>Connected RedisClient master, or null if cannot connect</returns>
-        public RedisClient GetMaster(string masterName, int timeout, int masterTimeout)
+        public void Connect(string masterName, string auth = null, int timeout = 200)
         {
-            RedisSentinelClient sentinel = GetSentinel(timeout);
-            if (sentinel != null)
+            _masterName = masterName;
+            _connectTimeout = timeout;
+            _auth = auth;
+
+            if (!SetMaster(masterName, timeout))
+                throw new IOException("Could not connect to sentinel or master");
+
+            _redisClient.ReconnectAttempts = 0;
+        }
+
+        public T Call<T>(Func<RedisClient, T> redisAction)
+        {
+            try
             {
-                using (sentinel)
+                return redisAction(_redisClient);
+            }
+            catch (IOException)
+            {
+                Next();
+                Connect(_masterName, _auth, _connectTimeout);
+                return Call(redisAction);
+            }
+        }
+
+        bool SetMaster(string name, int timeout)
+        {
+            for (int i = 0; i < _sentinels.Count; i++)
+            {
+                using (var sentinel = Current())
                 {
-                    var host = sentinel.GetMasterAddrByName(masterName);
-                    if (host != null)
-                        return new RedisClient(host.Item1, host.Item2, masterTimeout);
+                    if (!sentinel.Connect(timeout))
+                        continue;
+
+                    var master = sentinel.GetMasterAddrByName(name);
+                    if (master == null)
+                        continue;
+
+                    _redisClient = new RedisClient(master.Item1, master.Item2);
+                    if (!_redisClient.Connect(timeout))
+                        continue;
+
+                    if (_auth != null)
+                        _redisClient.Auth(_auth);
+
+                    var role = _redisClient.Role();
+                    if (role.RoleName == "master")
+                        return true;
                 }
-            }
 
-            return null;
+                Next();
+            }
+            return false;
         }
 
-        /// <summary>
-        /// Connect to and return a Redis slave client
-        /// </summary>
-        /// <param name="masterName">Name of master that slave belongs to</param>
-        /// <param name="timeout">Time to wait for Sentinel response (milliseconds)</param>
-        /// <param name="slaveTimeout">Time to wait for Redis slave response (milliseconds)</param>
-        /// <returns>Connected RedisClient slave, or null if cannot connect</returns>
-        public RedisClient GetSlave(string masterName, int timeout, int slaveTimeout)
+        RedisSentinelClient Current()
         {
-            RedisSentinelClient sentinel = GetSentinel(timeout);
-            if (sentinel != null)
-            {
-                using (sentinel)
-                {
-                    foreach (var slave in sentinel.Slaves(masterName))
-                    {
-                        if (slave != null)
-                            return new RedisClient(slave.Ip, slave.Port, slaveTimeout);
-                    }
-                }
-            }
-            
-            return null;
+            return new RedisSentinelClient(_sentinels.First.Value.Item1, _sentinels.First.Value.Item2); ;
         }
 
-        /// <summary>
-        /// Connect to and return a Redis Sentinel client
-        /// </summary>
-        /// <param name="timeout">Time to wait for Sentinel response (milliseconds)</param>
-        /// <returns>Connected Sentinel client, or null if cannot connect</returns>
-        public RedisSentinelClient GetSentinel(int timeout)
+        void Next()
         {
-            int c = _sentinels.Count;
-            while (c-- > 0)
-            {
-                var first = _sentinels.First;
-                RedisSentinelClient sentinel = new RedisSentinelClient(first.Value.Key, first.Value.Value, timeout);
-                if (sentinel.Connected)
-                    return sentinel;
-
-                _sentinels.RemoveFirst();
-                _sentinels.AddLast(first.Value);
-            }
-
-            return null;
+            var first = _sentinels.First;
+            _sentinels.RemoveFirst();
+            _sentinels.AddLast(first.Value);
         }
 
-        /// <summary>
-        /// Add a new Sentinel server to known hosts
-        /// </summary>
-        /// <param name="host">Sentinel server hostname or IP</param>
-        /// <param name="port">Sentinel server port</param>
-        public void Add(string host, int port)
+        public void Dispose()
         {
-            _sentinels.AddLast(new KeyValuePair<string, int>(host, port));
+            if (_redisClient != null)
+                _redisClient.Dispose();
         }
     }
 }
