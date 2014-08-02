@@ -1,11 +1,11 @@
-﻿using ctstone.Redis.Internal.IO;
+﻿using CSRedis.Internal.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace ctstone.Redis.Internal
+namespace CSRedis.Internal
 {
     class RedisPipeline : IDisposable
     {

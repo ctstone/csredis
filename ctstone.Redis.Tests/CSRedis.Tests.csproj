@@ -6,8 +6,8 @@
     <ProjectGuid>{422A4579-8C59-4E92-8EB5-2A45C38D27FB}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ctstone.Redis.Tests</RootNamespace>
-    <AssemblyName>ctstone.Redis.Tests</AssemblyName>
+    <RootNamespace>CSRedis.Tests</RootNamespace>
+    <AssemblyName>CSRedis.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -67,9 +67,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ctstone.Redis\ctstone.Redis.csproj">
+    <ProjectReference Include="..\ctstone.Redis\CSRedis.csproj">
       <Project>{d35e185e-a7e1-41e1-846c-21944f56074f}</Project>
-      <Name>ctstone.Redis</Name>
+      <Name>CSRedis</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

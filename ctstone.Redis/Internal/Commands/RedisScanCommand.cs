@@ -1,11 +1,11 @@
-﻿using ctstone.Redis.Internal.IO;
+﻿using CSRedis.Internal.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace ctstone.Redis.Internal.Commands
+namespace CSRedis.Internal.Commands
 {
     class RedisScanCommand<T>: RedisCommand<RedisScan<T>>
     {
@@ -19,16 +19,14 @@ namespace ctstone.Redis.Internal.Commands
 
         public override RedisScan<T> Parse(RedisReader reader)
         {
-            RedisScan<T> scan = new RedisScan<T>();
-
             reader.ExpectType(RedisMessage.MultiBulk);
             if (reader.ReadInt(false) != 2)
                 throw new RedisProtocolException("Expected 2 items");
 
-            scan.Cursor = Int64.Parse(reader.ReadBulkString());
-            scan.Items = _command.Parse(reader);
+            long cursor = Int64.Parse(reader.ReadBulkString());
+            T[] items = _command.Parse(reader);
 
-            return scan;
+            return new RedisScan<T>(cursor, items);
         }
     }
 }

@@ -1,10 +1,10 @@
-﻿using ctstone.Redis.Internal.IO;
+﻿using CSRedis.Internal.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ctstone.Redis.Internal.Commands
+namespace CSRedis.Internal.Commands
 {
     class RedisArray : RedisCommand<object[]>
     {
@@ -39,7 +39,7 @@ namespace ctstone.Redis.Internal.Commands
         {
             readonly RedisCommand<T> _command;
 
-            protected RedisCommand<T> Command { get { return _command; } }
+            protected RedisCommand<T> Subcommand { get { return _command; } }
 
             public Generic(RedisCommand<T> command)
                 : base(command.Command, command.Arguments)
@@ -103,7 +103,7 @@ namespace ctstone.Redis.Internal.Commands
             {
                 var array = new Tuple<T1, T2>[count / 2];
                 for (int i = 0; i < count; i += 2)
-                    array[i / 2] = Command.Parse(reader);
+                    array[i / 2] = Subcommand.Parse(reader);
                 return array;
             }
         }

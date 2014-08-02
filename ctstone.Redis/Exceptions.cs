@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ctstone.Redis
+namespace CSRedis
 {
     /// <summary>
     /// Represents a Redis server error reply

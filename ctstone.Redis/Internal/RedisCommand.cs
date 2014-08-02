@@ -1,13 +1,13 @@
-﻿using ctstone.Redis.Internal.Commands;
-using ctstone.Redis.Internal.IO;
-using ctstone.Redis.Internal.Utilities;
+﻿using CSRedis.Internal.Commands;
+using CSRedis.Internal.IO;
+using CSRedis.Internal.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace ctstone.Redis
+namespace CSRedis
 {
     static class RedisCommand
     {
@@ -700,9 +700,13 @@ namespace ctstone.Redis
         {
             return new RedisInt("PUBLISH", channel, message);
         }
-        public static RedisArray.Strings PubSubChannels(string pattern)
+        public static RedisArray.Strings PubSubChannels(string pattern = null)
         {
-            return new RedisArray.Strings("PUBSUB", "CHANNELS", pattern);
+            var args = new List<string>();
+            args.Add("CHANNELS");
+            if (pattern != null)
+                args.Add(pattern);
+            return new RedisArray.Strings("PUBSUB", args.ToArray());
         }
         public static RedisArray.Tuples<string, long> PubSubNumSub(params string[] channels)
         {

@@ -10,8 +10,8 @@
     <projectUrl>https://github.com/ctstone/csredis</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>BREAKING CHANGES in handling of pipelined and MULTI/EXEC result parsing. Deferred result parsing is greatly improved, but see Project Site for information on a few small breaking changes and logic changes. Please test your project before upgrading.</releaseNotes>
-    <copyright>Copyright 2013</copyright>
+    <releaseNotes>This is a major update with some potential breaking changes.</releaseNotes>
+    <copyright>Copyright 2014</copyright>
     <tags>Redis Sentinel Async NoSQL</tags>
   </metadata>
 </package>

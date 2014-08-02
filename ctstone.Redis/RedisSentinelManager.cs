@@ -5,18 +5,29 @@ using System.Threading.Tasks;
 
 // http://redis.io/topics/sentinel-clients
 
-namespace ctstone.Redis
+namespace CSRedis
 {
-    public class RedisSentinelManager2 : IDisposable
+    /// <summary>
+    /// Represents a managed connection to a Redis master instance via a set of Redis sentinel nodes
+    /// </summary>
+    public class RedisSentinelManager : IDisposable
     {
         readonly LinkedList<Tuple<string, int>> _sentinels;
         string _masterName;
         string _auth;
         int _connectTimeout;
-        int _retries;
         RedisClient _redisClient;
 
-        public RedisSentinelManager2(params string[] sentinels)
+        /// <summary>
+        /// Raised when the connection has sucessfully reconnected
+        /// </summary>
+        public event Action Reconnected;
+
+        /// <summary>
+        /// Create a new RedisSentinenlManager
+        /// </summary>
+        /// <param name="sentinels">Sentinel addresses (host:ip)</param>
+        public RedisSentinelManager(params string[] sentinels)
         {
             _sentinels = new LinkedList<Tuple<string, int>>();
             foreach (var host in sentinels)
@@ -28,6 +39,12 @@ namespace ctstone.Redis
             }
         }
 
+        /// <summary>
+        /// Obtain connection to the specified master node
+        /// </summary>
+        /// <param name="masterName">Name of Redis master</param>
+        /// <param name="auth">Redis master password</param>
+        /// <param name="timeout">Connection timeout (milliseconds)</param>
         public void Connect(string masterName, string auth = null, int timeout = 200)
         {
             _masterName = masterName;
@@ -40,8 +57,17 @@ namespace ctstone.Redis
             _redisClient.ReconnectAttempts = 0;
         }
 
+        /// <summary>
+        /// Execute command against the master, reconnecting if necessary
+        /// </summary>
+        /// <typeparam name="T">Command return type</typeparam>
+        /// <param name="redisAction">Command to execute</param>
+        /// <returns>Command result</returns>
         public T Call<T>(Func<RedisClient, T> redisAction)
         {
+            if (_masterName == null)
+                throw new InvalidOperationException("Master not set");
+
             try
             {
                 return redisAction(_redisClient);
@@ -52,6 +78,15 @@ namespace ctstone.Redis
                 Connect(_masterName, _auth, _connectTimeout);
                 return Call(redisAction);
             }
+        }
+
+        /// <summary>
+        /// Release resources held by the current RedisSentinelManager
+        /// </summary>
+        public void Dispose()
+        {
+            if (_redisClient != null)
+                _redisClient.Dispose();
         }
 
         bool SetMaster(string name, int timeout)
@@ -68,6 +103,7 @@ namespace ctstone.Redis
                         continue;
 
                     _redisClient = new RedisClient(master.Item1, master.Item2);
+                    _redisClient.Reconnected += OnConnectionReconnected;
                     if (!_redisClient.Connect(timeout))
                         continue;
 
@@ -96,10 +132,10 @@ namespace ctstone.Redis
             _sentinels.AddLast(first.Value);
         }
 
-        public void Dispose()
+        void OnConnectionReconnected()
         {
-            if (_redisClient != null)
-                _redisClient.Dispose();
+            if (Reconnected != null)
+                Reconnected();
         }
     }
 }

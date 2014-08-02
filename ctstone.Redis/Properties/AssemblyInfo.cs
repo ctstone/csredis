@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("csredis")]
-[assembly: AssemblyDescription("csredis is a .NET client for Redis and Sentinel")]
+[assembly: AssemblyDescription("CSRedis is a .NET client for Redis and Sentinel")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Chris Stone")]
 [assembly: AssemblyProduct("csredis")]
-[assembly: AssemblyCopyright("Copyright © 2013")]
+[assembly: AssemblyCopyright("Copyright © 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -24,6 +24,5 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyVersion("3.0.0")]
 [assembly: AssemblyFileVersion("3.0.0")]
-[assembly: AssemblyInformationalVersion("2.1.0-rc1")]
-[assembly: InternalsVisibleTo("ConsoleApplication1")]
-[assembly: InternalsVisibleTo("ctstone.Redis.Tests")]
+[assembly: AssemblyInformationalVersion("3.0.0")]
+[assembly: InternalsVisibleTo("CSRedis.Tests")]

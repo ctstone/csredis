@@ -1,16 +1,27 @@
-﻿using ctstone.Redis.Internal.Commands;
+﻿using CSRedis.Internal.Commands;
 using System;
 using System.Collections.Generic;
 
-namespace ctstone.Redis
+namespace CSRedis
 {
     public partial class RedisClient
     {
+        /// <summary>
+        /// Connect to the remote host
+        /// </summary>
+        /// <param name="timeout">Connection timeout in milliseconds</param>
+        /// <returns>True if connected</returns>
         public bool Connect(int timeout)
         {
             return _connection.Connect(timeout);
         }
 
+        /// <summary>
+        /// Call arbitrary Redis command
+        /// </summary>
+        /// <param name="command">Command name</param>
+        /// <param name="args">Command arguments</param>
+        /// <returns>Redis object</returns>
         public object Call(string command, params string[] args)
         {
             return Write(RedisCommand.Call(command, args));
@@ -34,7 +45,6 @@ namespace ctstone.Redis
         /// <returns>Status message</returns>
         public string Auth(string password)
         {
-            _authPassword = password;
             return Write(RedisCommand.Auth(password));
         }
 
@@ -1285,7 +1295,6 @@ namespace ctstone.Redis
         /// <param name="key">Sorted set key</param>
         /// <param name="start">Start offset</param>
         /// <param name="stop">Stop offset</param>
-        /// <param name="withScores">Include scores in result</param>
         /// <returns>List of elements in the specified range (with optional scores)</returns>
         public Tuple<string, double>[] ZRevRangeWithScores(string key, long start, long stop)
         {
@@ -1330,7 +1339,6 @@ namespace ctstone.Redis
         /// <param name="key">Sorted set key</param>
         /// <param name="max">Maximum score</param>
         /// <param name="min">Minimum score</param>
-        /// <param name="withScores">Include scores in result</param>
         /// <param name="exclusiveMax">Maximum score is exclusive</param>
         /// <param name="exclusiveMin">Minimum score is exclusive</param>
         /// <param name="offset">Start offset</param>
@@ -1347,7 +1355,6 @@ namespace ctstone.Redis
         /// <param name="key">Sorted set key</param>
         /// <param name="max">Maximum score</param>
         /// <param name="min">Minimum score</param>
-        /// <param name="withScores">Include scores in result</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
         /// <returns>List of elements in the specified score range (with optional scores)</returns>
@@ -1475,16 +1482,30 @@ namespace ctstone.Redis
             return Write(RedisCommand.Publish(channel, message));
         }
 
-        public string[] PubSubChannels(string pattern)
+        /// <summary>
+        /// List the currently active channels
+        /// </summary>
+        /// <param name="pattern">Return only channels matching this pattern</param>
+        /// <returns>Array of channel names</returns>
+        public string[] PubSubChannels(string pattern = null)
         {
             return Write(RedisCommand.PubSubChannels(pattern));
         }
 
+        /// <summary>
+        /// Return the number of subscribers for the specified channels
+        /// </summary>
+        /// <param name="channels">Channel names</param>
+        /// <returns>Array of channel/count tuples</returns>
         public Tuple<string, long>[] PubSubNumSub(params string[] channels)
         {
             return Write(RedisCommand.PubSubNumSub(channels));
         }
 
+        /// <summary>
+        /// Return the number of subscriptions to patterns
+        /// </summary>
+        /// <returns>Number of patterns all clients are subscribed to</returns>
         public long PubSubNumPat()
         {
             return Write(RedisCommand.PubSubNumPat());
@@ -1929,6 +1950,14 @@ namespace ctstone.Redis
             return Write(RedisCommand.ClientKill(ip, port));
         }
 
+        /// <summary>
+        /// Kill the connection of a client
+        /// </summary>
+        /// <param name="addr">client's ip:port</param>
+        /// <param name="id">client's unique ID</param>
+        /// <param name="type">client type (normal|slave|pubsub)</param>
+        /// <param name="skipMe">do not kill the calling client</param>
+        /// <returns>Nummber of clients killed</returns>
         public long ClientKill(string addr = null, string id = null, string type = null, bool? skipMe = null)
         {
             return Write(RedisCommand.ClientKill(addr, id, type, skipMe));
@@ -1943,11 +1972,21 @@ namespace ctstone.Redis
             return Write(RedisCommand.ClientList());
         }
 
+        /// <summary>
+        /// Suspend all Redis clients for the specified amount of time
+        /// </summary>
+        /// <param name="milliseconds">Time to pause in milliseconds</param>
+        /// <returns>Status code</returns>
         public string ClientPause(int milliseconds)
         {
             return Write(RedisCommand.ClientPause(milliseconds));
         }
 
+        /// <summary>
+        /// Suspend all Redis clients for the specified amount of time
+        /// </summary>
+        /// <param name="timeout">Time to pause</param>
+        /// <returns>Status code</returns>
         public string ClientPause(TimeSpan timeout)
         {
             return Write(RedisCommand.ClientPause(timeout));
@@ -1991,6 +2030,10 @@ namespace ctstone.Redis
             return Write(RedisCommand.ConfigResetStat());
         }
 
+        /// <summary>
+        /// Rewrite the redis.conf file the server was started with, applying the minimal changes needed to make it reflect current configuration
+        /// </summary>
+        /// <returns>Status code</returns>
         public string ConfigRewrite()
         {
             return Write(RedisCommand.ConfigRewrite());
@@ -2071,6 +2114,10 @@ namespace ctstone.Redis
             return _monitor.Start();
         }
 
+        /// <summary>
+        /// Get role information for the current Redis instance
+        /// </summary>
+        /// <returns>RedisMasterRole|RedisSlaveRole|RedisSentinelRole</returns>
         public RedisRole Role()
         {
             return Write(RedisCommand.Role());
@@ -2093,7 +2140,6 @@ namespace ctstone.Redis
         public string Shutdown(bool? save = null)
         {
             return Write(RedisCommand.Shutdown(save));
-
         }
 
         /// <summary>
@@ -2115,17 +2161,30 @@ namespace ctstone.Redis
         {
             return Write(RedisCommand.SlaveOfNoOne());
         }
-
-       
+        
+        /// <summary>
+        /// Get latest entries from the slow log
+        /// </summary>
+        /// <param name="count">Limit entries returned</param>
+        /// <returns>Slow log entries</returns>
         public RedisSlowLogEntry[] SlowLogGet(long? count = null)
         {
             return Write(RedisCommand.SlowLogGet(count));
         }
 
+        /// <summary>
+        /// Get the length of the slow log
+        /// </summary>
+        /// <returns>Slow log length</returns>
         public long SlowLogLen()
         {
             return Write(RedisCommand.SlowLogLen());
         }
+
+        /// <summary>
+        /// Reset the slow log
+        /// </summary>
+        /// <returns>Status code</returns>
         public string SlowLogReset()
         {
             return Write(RedisCommand.SlowLogReset());

@@ -1,4 +1,4 @@
-﻿using ctstone.Redis.Internal.IO;
+﻿using CSRedis.Internal.IO;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ctstone.Redis.Internal
+namespace CSRedis.Internal
 {
     class RedisConnection
     {

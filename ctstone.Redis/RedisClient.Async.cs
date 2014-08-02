@@ -2,15 +2,25 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace ctstone.Redis
+namespace CSRedis
 {
     public partial class RedisClient
     {
+        /// <summary>
+        /// Open connection to redis server
+        /// </summary>
+        /// <returns>True on success</returns>
         public Task<bool> ConnectAsync()
         {
             return _connection.ConnectAsync();
         }
 
+        /// <summary>
+        /// Call arbitrary redis command
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public Task<object> CallAsync(string command, params string[] args)
         {
             return WriteAsync(RedisCommand.Call(command, args));
@@ -32,7 +42,6 @@ namespace ctstone.Redis
         /// <returns>Task associated with status message</returns>
         public Task<string> AuthAsync(string password)
         {
-            _authPassword = password;
             return WriteAsync(RedisCommand.Auth(password));
         }
 
@@ -1126,7 +1135,6 @@ namespace ctstone.Redis
         /// <param name="key">Sorted set key</param>
         /// <param name="start">Start offset</param>
         /// <param name="stop">Stop offset</param>
-        /// <param name="withScores">Include scores in result</param>
         /// <returns>List of elements in the specified range (with optional scores)</returns>
         public Task<Tuple<string, double>[]> ZRevRangeWithScoresAsync(string key, long start, long stop)
         {
@@ -1171,7 +1179,6 @@ namespace ctstone.Redis
         /// <param name="key">Sorted set key</param>
         /// <param name="max">Maximum score</param>
         /// <param name="min">Minimum score</param>
-        /// <param name="withScores">Include scores in result</param>
         /// <param name="exclusiveMax">Maximum score is exclusive</param>
         /// <param name="exclusiveMin">Minimum score is exclusive</param>
         /// <param name="offset">Start offset</param>
@@ -1188,7 +1195,6 @@ namespace ctstone.Redis
         /// <param name="key">Sorted set key</param>
         /// <param name="max">Maximum score</param>
         /// <param name="min">Minimum score</param>
-        /// <param name="withScores">Include scores in result</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
         /// <returns>List of elements in the specified score range (with optional scores)</returns>
@@ -1296,16 +1302,30 @@ namespace ctstone.Redis
             return WriteAsync(RedisCommand.Publish(channel, message));
         }
 
-        public Task<string[]> PubSubChannelsAsync(string pattern)
+        /// <summary>
+        /// List the currently active channels
+        /// </summary>
+        /// <param name="pattern">Glob-style channel pattern</param>
+        /// <returns>Active channel names</returns>
+        public Task<string[]> PubSubChannelsAsync(string pattern = null)
         {
             return WriteAsync(RedisCommand.PubSubChannels(pattern));
         }
 
+        /// <summary>
+        /// Return the number of subscribers (not counting clients subscribed to patterns) for the specified channels
+        /// </summary>
+        /// <param name="channels">Channels to query</param>
+        /// <returns>Channel names and counts</returns>
         public Task<Tuple<string, long>[]> PubSubNumSubAsync(params string[] channels)
         {
             return WriteAsync(RedisCommand.PubSubNumSub(channels));
         }
 
+        /// <summary>
+        /// Return the number of subscriptions to patterns
+        /// </summary>
+        /// <returns>The number of patterns all the clients are subscribed to</returns>
         public Task<long> PubSubNumPatAsync()
         {
             return WriteAsync(RedisCommand.PubSubNumPat());
@@ -1731,6 +1751,14 @@ namespace ctstone.Redis
             return WriteAsync(RedisCommand.ClientKill(ip, port));
         }
 
+        /// <summary>
+        /// Kill the connection of a client
+        /// </summary>
+        /// <param name="addr">Client address</param>
+        /// <param name="id">Client ID</param>
+        /// <param name="type">Client type</param>
+        /// <param name="skipMe">Set to true to skip calling client</param>
+        /// <returns>The number of clients killed</returns>
         public Task<long> ClientKillAsync(string addr = null, string id = null, string type = null, bool? skipMe = null)
         {
             return WriteAsync(RedisCommand.ClientKill(addr, id, type, skipMe));
@@ -1745,11 +1773,21 @@ namespace ctstone.Redis
             return WriteAsync(RedisCommand.ClientList());
         }
 
+        /// <summary>
+        /// Suspend all the Redis clients for the specified amount of time 
+        /// </summary>
+        /// <param name="milliseconds">Time in milliseconds to suspend</param>
+        /// <returns>Status code</returns>
         public Task<string> ClientPauseAsync(int milliseconds)
         {
             return WriteAsync(RedisCommand.ClientPause(milliseconds));
         }
 
+        /// <summary>
+        /// Suspend all the Redis clients for the specified amount of time 
+        /// </summary>
+        /// <param name="timeout">Time to suspend</param>
+        /// <returns>Status code</returns>
         public Task<string> ClientPauseAsync(TimeSpan timeout)
         {
             return WriteAsync(RedisCommand.ClientPause(timeout));
@@ -1784,6 +1822,10 @@ namespace ctstone.Redis
             return WriteAsync(RedisCommand.ConfigResetStat());
         }
 
+        /// <summary>
+        /// Rewrites the redis.conf file
+        /// </summary>
+        /// <returns>Status code</returns>
         public Task<string> ConfigRewriteAsync()
         {
             return WriteAsync(RedisCommand.ConfigRewrite());
@@ -1855,6 +1897,10 @@ namespace ctstone.Redis
             return WriteAsync(RedisCommand.LastSave());
         }
 
+        /// <summary>
+        /// Provide information on the role of a Redis instance in the context of replication
+        /// </summary>
+        /// <returns>Role information</returns>
         public Task<RedisRole> RoleAsync()
         {
             return WriteAsync(RedisCommand.Role());
@@ -1899,15 +1945,29 @@ namespace ctstone.Redis
             return WriteAsync(RedisCommand.SlaveOfNoOne());
         }
 
+        /// <summary>
+        /// Get latest entries from the slow log
+        /// </summary>
+        /// <param name="count">Limit entries returned</param>
+        /// <returns>Slow log entries</returns>
         public Task<RedisSlowLogEntry[]> SlowLogGetAsync(long? count = null)
         {
             return WriteAsync(RedisCommand.SlowLogGet(count));
         }
 
+        /// <summary>
+        /// Get the length of the slow log
+        /// </summary>
+        /// <returns>Slow log length</returns>
         public Task<long> SlowLogLenAsync()
         {
             return WriteAsync(RedisCommand.SlowLogLen());
         }
+
+        /// <summary>
+        /// Reset the slow log
+        /// </summary>
+        /// <returns>Status code</returns>
         public Task<string> SlowLogResetAsync()
         {
             return WriteAsync(RedisCommand.SlowLogReset());
@@ -1933,27 +1993,48 @@ namespace ctstone.Redis
         #endregion
 
         #region Transactions
-        public Task<string> MultiAsyncAsync()
+        /// <summary>
+        /// Mark the start of a transaction block
+        /// </summary>
+        /// <returns>Status code</returns>
+        public Task<string> MultiAsync()
         {
             return _transaction.StartAsync();
         }
 
-        public Task<string> DiscardAsyncAsync()
+        /// <summary>
+        /// Discard all commands issued after MULTI
+        /// </summary>
+        /// <returns>Status code</returns>
+        public Task<string> DiscardAsync()
         {
             return _transaction.AbortAsync();
         }
 
-        public Task<object[]> ExecAsyncAsync()
+        /// <summary>
+        /// Execute all commands issued after MULTI
+        /// </summary>
+        /// <returns>Array of output from all transaction commands</returns>
+        public Task<object[]> ExecAsync()
         {
             return _transaction.ExecuteAsync();
         }
 
-        public Task<string> UnwatchAsyncAsync()
+        /// <summary>
+        /// Forget about all watched keys
+        /// </summary>
+        /// <returns>Status code</returns>
+        public Task<string> UnwatchAsync()
         {
             return WriteAsync(RedisCommand.Unwatch());
         }
 
-        public Task<string> WatchAsyncAsync(params string[] keys)
+        /// <summary>
+        /// Watch the given keys to determine execution of the MULTI/EXEC block
+        /// </summary>
+        /// <param name="keys">Keys to watch</param>
+        /// <returns>Status code</returns>
+        public Task<string> WatchAsync(params string[] keys)
         {
             return WriteAsync(RedisCommand.Watch(keys));
         }

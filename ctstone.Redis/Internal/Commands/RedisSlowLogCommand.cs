@@ -1,10 +1,10 @@
-﻿using ctstone.Redis.Internal.IO;
+﻿using CSRedis.Internal.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ctstone.Redis.Internal.Commands
+namespace CSRedis.Internal.Commands
 {
     class RedisSlowLogCommand : RedisCommand<RedisSlowLogEntry>
     {

@@ -1,12 +1,12 @@
-﻿using ctstone.Redis.Internal.IO;
-using ctstone.Redis.Internal.Utilities;
+﻿using CSRedis.Internal.IO;
+using CSRedis.Internal.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 
-namespace ctstone.Redis.Internal.Commands
+namespace CSRedis.Internal.Commands
 {
     class RedisHash : RedisCommand<Dictionary<string, string>>
     {

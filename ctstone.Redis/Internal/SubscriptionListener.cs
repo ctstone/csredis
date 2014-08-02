@@ -1,10 +1,10 @@
-﻿using ctstone.Redis.Internal.Commands;
+﻿using CSRedis.Internal.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ctstone.Redis.Internal
+namespace CSRedis.Internal
 {
     class SubscriptionListener : RedisListner<RedisSubscriptionResponse>
     {

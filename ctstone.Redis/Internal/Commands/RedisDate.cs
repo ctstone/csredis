@@ -1,8 +1,8 @@
-﻿using ctstone.Redis.Internal.IO;
+﻿using CSRedis.Internal.IO;
 using System;
 using System.IO;
 
-namespace ctstone.Redis.Internal.Commands
+namespace CSRedis.Internal.Commands
 {
     class RedisDate : RedisCommand<DateTime>
     {

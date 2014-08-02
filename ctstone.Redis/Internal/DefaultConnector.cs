@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ctstone.Redis.Internal
+namespace CSRedis.Internal
 {
     class DefaultConnector : IRedisConnector
     {

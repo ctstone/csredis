@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 
-namespace ctstone.Redis.Internal.Utilities
+namespace CSRedis.Internal.Utilities
 {
     internal static class Serializer<T>
         where T : class

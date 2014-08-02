@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ctstone.Redis.Internal
+namespace CSRedis.Internal
 {
     class BlockingStream : Stream
     {

@@ -1,5 +1,5 @@
-﻿using ctstone.Redis.Internal;
-using ctstone.Redis.Internal.Commands;
+﻿using CSRedis.Internal;
+using CSRedis.Internal.Commands;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ctstone.Redis.Tests
+namespace CSRedis.Tests
 {
     [TestClass]
     public class ServerTests

@@ -1,7 +1,7 @@
 ﻿
 using System;
 using System.Runtime.Serialization;
-namespace ctstone.Redis
+namespace CSRedis
 {
     /// <summary>
     /// Sub-command used by Redis OBJECT command
@@ -181,22 +181,40 @@ namespace ctstone.Redis
         Xx,
     }
 
+    /// <summary>
+    /// Base class for Redis role information
+    /// </summary>
     public abstract class RedisRole
     {
         readonly string _roleName;
+        
+        /// <summary>
+        /// Get the role type
+        /// </summary>
         public string RoleName { get { return _roleName; } }
-        public RedisRole(string roleName)
+        
+        internal RedisRole(string roleName)
         {
             _roleName = roleName;
         }
     }
 
+    /// <summary>
+    /// Represents information on the Redis master role
+    /// </summary>
     public class RedisMasterRole : RedisRole
     {
         readonly long _replicationOffset;
         readonly Tuple<string, int, int>[] _slaves;
 
+        /// <summary>
+        /// Get the master replication offset
+        /// </summary>
         public long ReplicationOffset { get { return _replicationOffset; } }
+
+        /// <summary>
+        /// Get the slaves associated with the current master
+        /// </summary>
         public Tuple<string, int, int>[] Slaves { get { return _slaves; } }
 
         internal RedisMasterRole(string role, long replicationOffset, Tuple<string, int, int>[] slaves)
@@ -207,6 +225,9 @@ namespace ctstone.Redis
         }
     }
 
+    /// <summary>
+    /// Represents information on the Redis slave role
+    /// </summary>
     public class RedisSlaveRole : RedisRole
     {
         readonly string _masterIp;
@@ -214,9 +235,24 @@ namespace ctstone.Redis
         readonly string _replicationState;
         readonly long _dataReceived;
 
+        /// <summary>
+        /// Get the IP address of the master node
+        /// </summary>
         public string MasterIp { get { return _masterIp; } }
+
+        /// <summary>
+        /// Get the port of the master node
+        /// </summary>
         public int MasterPort { get { return _masterPort; } }
+
+        /// <summary>
+        /// Get the replication state
+        /// </summary>
         public string ReplicationState { get { return _replicationState; } }
+
+        /// <summary>
+        /// Get the number of bytes received
+        /// </summary>
         public long DataReceived { get { return _dataReceived; } }
 
         internal RedisSlaveRole(string role, string masterIp, int masterPort, string replicationState, long dataReceived)
@@ -229,10 +265,16 @@ namespace ctstone.Redis
         }
     }
 
+    /// <summary>
+    /// Represents information on the Redis sentinel role
+    /// </summary>
     public class RedisSentinelRole : RedisRole
     {
         readonly string[] _masters;
 
+        /// <summary>
+        /// Get the masters known to the current Sentinel
+        /// </summary>
         public string[] Masters { get { return _masters; } }
 
         internal RedisSentinelRole(string role, string[] masters)
@@ -247,28 +289,51 @@ namespace ctstone.Redis
     /// </summary>
     public class RedisScan<T>
     {
+        readonly long _cursor;
+        readonly T[] _items;
+
         /// <summary>
         /// Updated cursor that should be used as the cursor argument in the next call
         /// </summary>
-        public long Cursor { get; set; }
+        public long Cursor { get { return _cursor; } }
 
         /// <summary>
         /// Collection of elements returned by the SCAN operation
         /// </summary>
-        public T[] Items { get; set; }
+        public T[] Items { get { return _items; } }
+
+        internal RedisScan(long cursor, T[] items)
+        {
+            _cursor = cursor;
+            _items = items;
+        }
     }
 
+    /// <summary>
+    /// Represents a Redis subscription response
+    /// </summary>
     public class RedisSubscriptionResponse
     {
         readonly string _channel;
         readonly string _pattern;
         readonly string _type;
 
+        /// <summary>
+        /// Get the subscription channel name
+        /// </summary>
         public string Channel { get { return _channel; } }
+
+        /// <summary>
+        /// Get the subscription pattern
+        /// </summary>
         public string Pattern { get { return _pattern; } }
+
+        /// <summary>
+        /// Get the message type
+        /// </summary>
         public string Type { get { return _type; } }
 
-        public RedisSubscriptionResponse(string type, string channel, string pattern)
+        internal RedisSubscriptionResponse(string type, string channel, string pattern)
         {
             _type = type;
             _channel = channel;
@@ -276,32 +341,44 @@ namespace ctstone.Redis
         }
     }
 
+    /// <summary>
+    /// Represents a Redis subscription channel
+    /// </summary>
     public class RedisSubscriptionChannel : RedisSubscriptionResponse
     {
         readonly long _count;
 
+        /// <summary>
+        /// Get the count of active subscriptions
+        /// </summary>
         public long Count { get { return _count; } }
 
-        public RedisSubscriptionChannel(string type, string channel, string pattern, long count)
+        internal RedisSubscriptionChannel(string type, string channel, string pattern, long count)
             : base(type, channel, pattern)
         {
             _count = count;
         }
     }
 
+    /// <summary>
+    /// Represents a Redis subscription message
+    /// </summary>
     public class RedisSubscriptionMessage : RedisSubscriptionResponse
     {
         readonly string _body;
 
+        /// <summary>
+        /// Get the subscription message
+        /// </summary>
         public string Body { get { return _body; } }
 
-        public RedisSubscriptionMessage(string type, string channel, string body)
+        internal RedisSubscriptionMessage(string type, string channel, string body)
             : base(type, channel, null)
         {
             _body = body;
         }
 
-        public RedisSubscriptionMessage(string type, string pattern, string channel, string body)
+        internal RedisSubscriptionMessage(string type, string pattern, string channel, string body)
             : base(type, channel, pattern)
         {
             _body = body;
@@ -314,6 +391,11 @@ namespace ctstone.Redis
     /// </summary>
     public abstract class RedisServerInfo : ISerializable
     {
+        /// <summary>
+        /// Create new RedisServerInfo via deserialization
+        /// </summary>
+        /// <param name="info">Serialization info</param>
+        /// <param name="context">Serialization context</param>
         public RedisServerInfo(SerializationInfo info, StreamingContext context)
         {
             Name = info.GetString("name");
@@ -357,6 +439,9 @@ namespace ctstone.Redis
         /// </summary>
         public long PendingCommands { get; set; }
 
+        /// <summary>
+        /// Get or set last ping sent
+        /// </summary>
         public long LastPingSent { get; set; }
 
         /// <summary>
@@ -369,16 +454,32 @@ namespace ctstone.Redis
         /// </summary>
         public long LastPingReply { get; set; }
 
+        /// <summary>
+        /// Get or set down after milliseconds
+        /// </summary>
         public long DownAfterMilliseconds { get; set; }
 
+        /// <summary>
+        /// Not implemented
+        /// </summary>
+        /// <param name="info">info</param>
+        /// <param name="context">info</param>
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             throw new NotImplementedException();
         }
     }
 
+    /// <summary>
+    /// Base class for Redis master/slave objects reported by Sentinel
+    /// </summary>
     public abstract class RedisMasterSlaveInfo : RedisServerInfo
     {
+        /// <summary>
+        /// Create new RedisMasterSlaveInfo via deserialization
+        /// </summary>
+        /// <param name="info">Serialization info</param>
+        /// <param name="context">Serialization context</param>
         public RedisMasterSlaveInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
@@ -387,8 +488,19 @@ namespace ctstone.Redis
             RoleReportedTime = info.GetInt64("role-reported-time");
         }
 
+        /// <summary>
+        /// Get or set info refresh
+        /// </summary>
         public long InfoRefresh { get; set; }
+
+        /// <summary>
+        /// Get or set role reported
+        /// </summary>
         public string RoleReported { get; set; }
+
+        /// <summary>
+        /// Get or set role reported time
+        /// </summary>
         public long RoleReportedTime { get; set; }
     }
 
@@ -397,6 +509,11 @@ namespace ctstone.Redis
     /// </summary>
     public class RedisMasterInfo : RedisMasterSlaveInfo
     {
+        /// <summary>
+        /// Create new RedisMasterInfo via deserialization
+        /// </summary>
+        /// <param name="info">Serialization info</param>
+        /// <param name="context">Serialization context</param>
         public RedisMasterInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
@@ -408,6 +525,9 @@ namespace ctstone.Redis
             ParallelSyncs = info.GetInt64("parallel-syncs");
         }
 
+        /// <summary>
+        /// Get or set the config epoch
+        /// </summary>
         public long ConfigEpoch { get; set; }
         /// <summary>
         /// Get or set number of slaves of the current master node
@@ -421,7 +541,13 @@ namespace ctstone.Redis
         /// Get or set Sentinel quorum count
         /// </summary>
         public long Quorum { get; set; }
+        /// <summary>
+        /// Get or set the failover timeout
+        /// </summary>
         public long FailoverTimeout { get; set; }
+        /// <summary>
+        /// Get or set the parallel syncs
+        /// </summary>
         public long ParallelSyncs { get; set; }
     }
 
@@ -432,6 +558,11 @@ namespace ctstone.Redis
     /// </summary>
     public class RedisSlaveInfo : RedisMasterSlaveInfo
     {
+        /// <summary>
+        /// Create new RedisSlaveInfo via deserialization
+        /// </summary>
+        /// <param name="info">Serialization info</param>
+        /// <param name="context">Serialization context</param>
         public RedisSlaveInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
@@ -443,6 +574,9 @@ namespace ctstone.Redis
             SlaveReplOffset = info.GetInt64("slave-repl-offset");
         }
 
+        /// <summary>
+        /// Get or set the master link down time
+        /// </summary>
         public long MasterLinkDownTime { get; set; }
 
         /// <summary>
@@ -464,6 +598,10 @@ namespace ctstone.Redis
         /// Get or set the priority of the current Redis slave node
         /// </summary>
         public long SlavePriority { get; set; }
+
+        /// <summary>
+        /// Get or set the slave replication offset
+        /// </summary>
         public long SlaveReplOffset { get; set; }
     }
 
@@ -472,6 +610,11 @@ namespace ctstone.Redis
     /// </summary>
     public class RedisSentinelInfo : RedisServerInfo
     {
+        /// <summary>
+        /// Create new RedisSentinelInfo via deserialization
+        /// </summary>
+        /// <param name="info">Serialization info</param>
+        /// <param name="context">Serialization context</param>
         public RedisSentinelInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
@@ -481,6 +624,9 @@ namespace ctstone.Redis
             VotedLeaderEpoch = info.GetInt64("voted-leader-epoch");
         }
 
+        /// <summary>
+        /// Get or set the subjective down time
+        /// </summary>
         public long SDownTime { get; set; }
 
         /// <summary>
@@ -488,10 +634,19 @@ namespace ctstone.Redis
         /// </summary>
         public long LastHelloMessage { get; set; }
 
+        /// <summary>
+        /// Get or set the voted-leader value
+        /// </summary>
         public string VotedLeader { get; set; }
+        /// <summary>
+        /// Get or set the voted-leader epoch
+        /// </summary>
         public long VotedLeaderEpoch { get; set; }
     }
 
+    /// <summary>
+    /// Represents an entry from the Redis slow log
+    /// </summary>
     public class RedisSlowLogEntry
     {
         readonly long _id;
@@ -499,12 +654,24 @@ namespace ctstone.Redis
         readonly TimeSpan _latency;
         readonly string[] _arguments;
 
+        /// <summary>
+        /// Get the entry ID
+        /// </summary>
         public long Id { get { return _id; } }
+        /// <summary>
+        /// Get the entry date
+        /// </summary>
         public DateTime Date { get { return _date; } }
+        /// <summary>
+        /// Get the entry latency
+        /// </summary>
         public TimeSpan Latency { get { return _latency; } }
+        /// <summary>
+        /// Get the entry arguments
+        /// </summary>
         public string[] Arguments { get { return _arguments; } }
 
-        public RedisSlowLogEntry(long id, DateTime date, TimeSpan latency, string[] arguments)
+        internal RedisSlowLogEntry(long id, DateTime date, TimeSpan latency, string[] arguments)
         {
             _id = id;
             _date = date;
@@ -513,17 +680,29 @@ namespace ctstone.Redis
         }
     }
 
+    /// <summary>
+    /// Represents state as reported by Sentinel
+    /// </summary>
     public class RedisMasterState
     {
         readonly long _downState;
         readonly string _leader;
         readonly long _voteEpoch;
 
+        /// <summary>
+        /// Get the master down state
+        /// </summary>
         public long DownState { get { return _downState; } }
+        /// <summary>
+        /// Get the leader
+        /// </summary>
         public string Leader { get { return _leader; } }
+        /// <summary>
+        /// Get the vote epoch
+        /// </summary>
         public long VoteEpoch { get { return _voteEpoch; } }
 
-        public RedisMasterState(long downState, string leader, long voteEpoch)
+        internal RedisMasterState(long downState, string leader, long voteEpoch)
         {
             _downState = downState;
             _leader = leader;

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ctstone.Redis.Internal.IO
+namespace CSRedis.Internal.IO
 {
     class RedisWriter : IDisposable
     {

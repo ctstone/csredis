@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace ctstone.Redis.Internal.IO
+namespace CSRedis.Internal.IO
 {
     class RedisReader
     {

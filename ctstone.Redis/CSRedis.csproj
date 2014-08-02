@@ -7,7 +7,7 @@
     <ProjectGuid>{D35E185E-A7E1-41E1-846C-21944F56074F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ctstone.Redis</RootNamespace>
+    <RootNamespace>CSRedis</RootNamespace>
     <AssemblyName>csredis</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

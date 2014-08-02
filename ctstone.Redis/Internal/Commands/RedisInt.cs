@@ -1,6 +1,6 @@
 ﻿
-using ctstone.Redis.Internal.IO;
-namespace ctstone.Redis.Internal.Commands
+using CSRedis.Internal.IO;
+namespace CSRedis.Internal.Commands
 {
     class RedisInt : RedisCommand<long>
     {
