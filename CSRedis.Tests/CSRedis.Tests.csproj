@@ -67,7 +67,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ctstone.Redis\CSRedis.csproj">
+    <ProjectReference Include="..\CSRedis\CSRedis.csproj">
       <Project>{d35e185e-a7e1-41e1-846c-21944f56074f}</Project>
       <Name>CSRedis</Name>
     </ProjectReference>

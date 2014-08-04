@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSRedis", "ctstone.Redis\CSRedis.csproj", "{D35E185E-A7E1-41E1-846C-21944F56074F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSRedis", "CSRedis\CSRedis.csproj", "{D35E185E-A7E1-41E1-846C-21944F56074F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSRedis.Tests", "ctstone.Redis.Tests\CSRedis.Tests.csproj", "{422A4579-8C59-4E92-8EB5-2A45C38D27FB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSRedis.Tests", "CSRedis.Tests\CSRedis.Tests.csproj", "{422A4579-8C59-4E92-8EB5-2A45C38D27FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
