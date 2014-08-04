@@ -50,6 +50,7 @@ namespace CSRedis.Internal
         public RedisConnection(IRedisConnector connector, Encoding encoding)
         {
             ReconnectTimeout = 1500;
+            Encoding = encoding;
             _connector = connector;
             _readQueue = new ConcurrentQueue<Action>();
             _writeQueue = new ConcurrentQueue<Action>();
