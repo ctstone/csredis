@@ -1,10 +1,11 @@
 ##csredis 3.0.0.0
-Major internal rewrite with several breaking changes
+Major internal rewrite with several breaking changes. Upgrade with care!
 [breaking] Changed base namespace: CSRedis
 [breaking] Consolidated async methods into main client (removed RedisClientAsync)
 [new] Reconnection support
 [new] Command support through Redis 2.8.12
 [fix] Improved unit tests
+[fix] Improved async handling
 [fix] Better support for Sentinel and managed connections
 
 ##csredis 2.1.1.0
