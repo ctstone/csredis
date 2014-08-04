@@ -11,7 +11,6 @@ namespace CSRedis.Internal
 {
     class RedisConnection
     {
-        readonly Encoding _encoding;
         readonly IRedisConnector _connector;
         readonly ConcurrentQueue<Action> _readQueue;
         readonly ConcurrentQueue<Action> _writeQueue;
@@ -28,9 +27,9 @@ namespace CSRedis.Internal
         /// </summary>
         internal const string EOL = "\r\n";
 
-        public event Action Reconnected;
+        public event EventHandler Reconnected;
 
-        public Encoding Encoding { get { return _encoding; } }
+        public Encoding Encoding { get; set; }
         public string Host { get { return _connector.Host; } }
         public int Port { get { return _connector.Port; } }
         public bool Connected { get { return _connector.Connected; } }
@@ -52,7 +51,6 @@ namespace CSRedis.Internal
         {
             ReconnectTimeout = 1500;
             _connector = connector;
-            _encoding = encoding;
             _readQueue = new ConcurrentQueue<Action>();
             _writeQueue = new ConcurrentQueue<Action>();
         }
@@ -186,7 +184,7 @@ namespace CSRedis.Internal
         void OnReconnected()
         {
             if (Reconnected != null)
-                Reconnected();
+                Reconnected(this, new EventArgs());
         }
 
         void WriteNext()
@@ -223,9 +221,9 @@ namespace CSRedis.Internal
             if (stream != null)
             {
                 _stream = new BufferedStream(stream);
-                _writer = new RedisWriter(_stream, _encoding);
-                _reader = new RedisReader(_stream, _encoding);
-                _pipeline = new RedisPipeline(_stream, _encoding, _reader);
+                _writer = new RedisWriter(_stream, Encoding);
+                _reader = new RedisReader(_stream, Encoding);
+                _pipeline = new RedisPipeline(_stream, Encoding, _reader);
             }
             return Connected;
         }

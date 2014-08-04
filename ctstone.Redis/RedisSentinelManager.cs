@@ -19,9 +19,9 @@ namespace CSRedis
         RedisClient _redisClient;
 
         /// <summary>
-        /// Raised when the connection has sucessfully reconnected
+        /// Occurs when the connection has sucessfully reconnected
         /// </summary>
-        public event Action Reconnected;
+        public event EventHandler Reconnected;
 
         /// <summary>
         /// Create a new RedisSentinenlManager
@@ -132,10 +132,10 @@ namespace CSRedis
             _sentinels.AddLast(first.Value);
         }
 
-        void OnConnectionReconnected()
+        void OnConnectionReconnected(object sender, EventArgs args)
         {
             if (Reconnected != null)
-                Reconnected();
+                Reconnected(this, new EventArgs());
         }
     }
 }

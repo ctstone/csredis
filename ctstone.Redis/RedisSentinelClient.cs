@@ -17,19 +17,19 @@ namespace CSRedis
         readonly SubscriptionListener _subscription;
 
         /// <summary>
-        /// Raised when a subscription message is received
+        /// Occurs when a subscription message is received
         /// </summary>
-        public event Action<RedisSubscriptionMessage> SubscriptionReceived;
+        public event EventHandler<RedisSubscriptionReceivedEventArgs> SubscriptionReceived;
 
         /// <summary>
-        /// Raised when a subscription channel is added or removed
+        /// Occurs when a subscription channel is added or removed
         /// </summary>
-        public event Action<RedisSubscriptionChannel> SubscriptionChanged;
+        public event EventHandler<RedisSubscriptionChangedEventArgs> SubscriptionChanged;
 
         /// <summary>
-        /// Raised when the connection has sucessfully reconnected
+        /// Occurs when the connection has sucessfully reconnected
         /// </summary>
-        public event Action Reconnected;
+        public event EventHandler Reconnected;
 
         /// <summary>
         /// Get the Redis sentinel hostname
@@ -133,22 +133,22 @@ namespace CSRedis
                 _connection.Dispose();
         }
 
-        void OnSubscriptionReceived(RedisSubscriptionMessage message)
+        void OnSubscriptionReceived(object sender, RedisSubscriptionReceivedEventArgs args)
         {
             if (SubscriptionReceived != null)
-                SubscriptionReceived(message);
+                SubscriptionReceived(this, args);
         }
 
-        void OnSubscriptionChanged(RedisSubscriptionChannel obj)
+        void OnSubscriptionChanged(object sender, RedisSubscriptionChangedEventArgs args)
         {
             if (SubscriptionChanged != null)
-                SubscriptionChanged(obj);
+                SubscriptionChanged(this, args);
         }
 
-        void OnConnectionReconnected()
+        void OnConnectionReconnected(object sender, EventArgs args)
         {
             if (Reconnected != null)
-                Reconnected();
+                Reconnected(this, args);
         }
     }
 }

@@ -11,8 +11,9 @@ namespace CSRedis.Internal
     {
         readonly RedisConnection _connection;
         readonly RedisArray _execCommand;
+        readonly List<Tuple<string, object[]>> _pipeCommands = new List<Tuple<string, object[]>>();
 
-        event Action<string> TransactionQueued;
+        public event EventHandler<RedisTransactionQueuedEventArgs> TransactionQueued;
 
         bool _active;
         public bool Active { get { return _active; } }
@@ -38,7 +39,8 @@ namespace CSRedis.Internal
         public T Write<T>(RedisCommand<T> command)
         {
             string response = _connection.Call(RedisCommand.AsTransaction(command));
-            OnTransactionQueued(response);
+            OnTransactionQueued(command, response);
+
             _execCommand.AddParser(x => command.Parse(x));
             return default(T);
         }
@@ -49,7 +51,7 @@ namespace CSRedis.Internal
             {
                 _execCommand.AddParser(x => command.Parse(x));
                 return _connection.CallAsync(RedisCommand.AsTransaction(command))
-                    .ContinueWith(t => OnTransactionQueued(t.Result))
+                    .ContinueWith(t => OnTransactionQueued(command, t.Result))
                     .ContinueWith(t => default(T));
             }
         }
@@ -63,7 +65,7 @@ namespace CSRedis.Internal
                 _connection.Call(_execCommand);
                 object[] response = _connection.EndPipe();
                 for (int i = 0; i < response.Length - 1; i++)
-                    OnTransactionQueued(response[i].ToString());
+                    OnTransactionQueued(_pipeCommands[i].Item1, _pipeCommands[i].Item2, response[i].ToString());
                 
                 object transaction_response = response[response.Length - 1];
                 if (!(transaction_response is object[]))
@@ -93,10 +95,18 @@ namespace CSRedis.Internal
             return _connection.CallAsync(RedisCommand.Discard());
         }
 
-        void OnTransactionQueued(string response)
+        void OnTransactionQueued<T>(RedisCommand<T> command, string response)
+        {
+            if (_connection.Pipelined)
+                _pipeCommands.Add(Tuple.Create(command.Command, command.Arguments));
+            else
+                OnTransactionQueued(command.Command, command.Arguments, response);
+        }
+
+        void OnTransactionQueued(string command, object[] args, string response)
         {
             if (TransactionQueued != null)
-                TransactionQueued(response);
+                TransactionQueued(this, new RedisTransactionQueuedEventArgs(response, command, args));
         }
     }
 }

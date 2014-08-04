@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Events.cs" />
     <Compile Include="Internal\Commands\RedisArray.cs" />
     <Compile Include="Internal\Commands\RedisRoleCommand.cs" />
     <Compile Include="Exceptions.cs" />
@@ -60,7 +61,6 @@
     <Compile Include="Internal\RedisPipeline.cs" />
     <Compile Include="Internal\SubscriptionListener.cs" />
     <Compile Include="Internal\RedisTransaction.cs" />
-    <Compile Include="Internal\Utilities\HashMapper.cs" />
     <Compile Include="Internal\Utilities\RedisArgs.cs" />
     <Compile Include="Internal\Commands\RedisBool.cs" />
     <Compile Include="Internal\Commands\RedisBytes.cs" />

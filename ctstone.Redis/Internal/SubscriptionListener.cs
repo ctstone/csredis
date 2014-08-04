@@ -10,8 +10,8 @@ namespace CSRedis.Internal
     {
         long _count;
 
-        public event Action<RedisSubscriptionMessage> MessageReceived;
-        public event Action<RedisSubscriptionChannel> Changed;
+        public event EventHandler<RedisSubscriptionReceivedEventArgs> MessageReceived;
+        public event EventHandler<RedisSubscriptionChangedEventArgs> Changed;
 
         public SubscriptionListener(RedisConnection connection)
             : base(connection)
@@ -41,13 +41,13 @@ namespace CSRedis.Internal
         {
             _count = channel.Count;
             if (Changed != null)
-                Changed(channel);
+                Changed(this, new RedisSubscriptionChangedEventArgs(channel));
         }
 
         void OnReceivedMessage(RedisSubscriptionMessage message)
         {
             if (MessageReceived != null)
-                MessageReceived(message);
+                MessageReceived(this, new RedisSubscriptionReceivedEventArgs(message));
         }
     }
 }

@@ -73,5 +73,30 @@ namespace CSRedis.Internal.Utilities
             else
                 return score.ToString();
         }
+
+        public static object[] FromDict(Dictionary<string, string> dict)
+        {
+            var array = new List<object>();
+            foreach (var keyValue in dict)
+            {
+                if (keyValue.Key != null && keyValue.Value != null)
+                    array.AddRange(new[] { keyValue.Key, keyValue.Value });
+            }
+            return array.ToArray();
+        }
+
+        public static object[] FromObject<T>(T obj)
+            where T : class
+        {
+            var dict = Serializer<T>.Serialize(obj);
+            object[] array = new object[dict.Count * 2];
+            int i = 0;
+            foreach (var item in dict)
+            {
+                array[i++] = item.Key;
+                array[i++] = item.Value;
+            }
+            return array;
+        }
     }
 }

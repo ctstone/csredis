@@ -83,7 +83,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="index">Zero-based database index</param>
         /// <returns>Status message</returns>
-        public string Select(uint index)
+        public string Select(int index)
         {
             return Write(RedisCommand.Select(index));
         }

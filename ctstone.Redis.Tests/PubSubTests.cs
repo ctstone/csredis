@@ -23,8 +23,8 @@ namespace CSRedis.Tests
             {
                 var changes = new List<RedisSubscriptionChannel>();
                 var messages = new List<RedisSubscriptionMessage>();
-                redis.SubscriptionChanged += x => changes.Add(x);
-                redis.SubscriptionReceived += x => messages.Add(x);
+                redis.SubscriptionChanged += (s,a) => changes.Add(a.Response);
+                redis.SubscriptionReceived += (s, a) => messages.Add(a.Message);
                 Task.Delay(500)
                     .ContinueWith(t => redis.PUnsubscribe())
                     .ContinueWith(t =>
@@ -124,8 +124,8 @@ namespace CSRedis.Tests
             {
                 var changes = new List<RedisSubscriptionChannel>();
                 var messages = new List<RedisSubscriptionMessage>();
-                redis.SubscriptionChanged += x => changes.Add(x);
-                redis.SubscriptionReceived += x => messages.Add(x);
+                redis.SubscriptionChanged += (s, a) => changes.Add(a.Response);
+                redis.SubscriptionReceived += (s, a) => messages.Add(a.Message);
                 Task.Delay(500)
                     .ContinueWith(t => redis.Unsubscribe())
                     .ContinueWith(t =>

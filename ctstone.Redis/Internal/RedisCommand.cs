@@ -28,7 +28,7 @@ namespace CSRedis
         {
             return new RedisStatus("QUIT");
         }
-        public static RedisStatus Select(uint index)
+        public static RedisStatus Select(int index)
         {
             return new RedisStatus("SELECT", index);
         }
@@ -246,14 +246,14 @@ namespace CSRedis
         public static RedisStatus HMSet(string key, Dictionary<string, string> dict)
         {
             List<object> args = new List<object> { key };
-            args.AddRange(HashMapper.FromDict(dict));
+            args.AddRange(RedisArgs.FromDict(dict));
             return new RedisStatus("HMSET", args.ToArray());
         }
         public static RedisStatus HMSet<T>(string key, T obj)
             where T : class
         {
             List<object> args = new List<object> { key };
-            args.AddRange(HashMapper.FromObject(obj));
+            args.AddRange(RedisArgs.FromObject(obj));
             return new RedisStatus("HMSET", args.ToArray());
         }
         public static RedisStatus HMSet(string key, params string[] keyValues)

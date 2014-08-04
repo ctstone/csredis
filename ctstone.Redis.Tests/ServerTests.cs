@@ -230,7 +230,7 @@ namespace CSRedis.Tests
             {
                 redis.ReadTimeout = 100;
                 var test = new List<object>();
-                redis.MonitorReceived += x => test.Add(x);
+                redis.MonitorReceived += (s, a) => test.Add(a.Message);
                 Task.Delay(500).ContinueWith(t => redis.Dispose());
                 var t1 = redis.Monitor();
             }

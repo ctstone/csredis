@@ -17,6 +17,32 @@ namespace CSRedis
         readonly MonitorListener _monitor;
 
         /// <summary>
+        /// Occurs when a subscription message is received
+        /// </summary>
+        public event EventHandler<RedisSubscriptionReceivedEventArgs> SubscriptionReceived;
+
+        /// <summary>
+        /// Occurs when a subscription channel is added or removed
+        /// </summary>
+        public event EventHandler<RedisSubscriptionChangedEventArgs> SubscriptionChanged;
+
+        /// <summary>
+        /// Occurs when a transaction command is acknowledged by the server
+        /// </summary>
+        public event EventHandler<RedisTransactionQueuedEventArgs> TransactionQueued;
+
+        /// <summary>
+        /// Occurs when a monitor message is received
+        /// </summary>
+        public event EventHandler<RedisMonitorEventArgs> MonitorReceived;
+
+        /// <summary>
+        /// Occurs when the connection has sucessfully reconnected
+        /// </summary>
+        public event EventHandler Reconnected;
+
+
+        /// <summary>
         /// Get the Redis server hostname
         /// </summary>
         public string Host { get { return _connection.Host; } }
@@ -32,9 +58,13 @@ namespace CSRedis
         public bool Connected { get { return _connection.Connected; } }
 
         /// <summary>
-        /// Get the string encoding used to communicate with the server
+        /// Get or set the string encoding used to communicate with the server
         /// </summary>
-        public Encoding Encoding { get { return _connection.Encoding; } }
+        public Encoding Encoding 
+        { 
+            get { return _connection.Encoding; }
+            set { _connection.Encoding = value; }
+        }
 
         /// <summary>
         /// Get or set the connection read timeout (milliseconds)
@@ -71,26 +101,7 @@ namespace CSRedis
             get { return _connection.ReconnectTimeout; }
             set { _connection.ReconnectTimeout = value; }
         }
-
-        /// <summary>
-        /// Raised when a subscription message is received
-        /// </summary>
-        public event Action<RedisSubscriptionMessage> SubscriptionReceived;
-
-        /// <summary>
-        /// Raised when a subscription channel is added or removed
-        /// </summary>
-        public event Action<RedisSubscriptionChannel> SubscriptionChanged;
-
-        /// <summary>
-        /// Raised when a monitor message is received
-        /// </summary>
-        public event Action<object> MonitorReceived;
-
-        /// <summary>
-        /// Raised when the connection has sucessfully reconnected
-        /// </summary>
-        public event Action Reconnected;
+        
 
         /// <summary>
         /// Create a new RedisClient using default port and encoding
@@ -130,6 +141,7 @@ namespace CSRedis
             _subscription.Changed += OnSubscriptionChanged;
             _monitor.MonitorReceived += OnMonitorReceived;
             _connection.Reconnected += OnConnectionReconnected;
+            _transaction.TransactionQueued += OnTransactionQueued;
         }
 
         /// <summary>
@@ -169,28 +181,34 @@ namespace CSRedis
             _connection.Dispose();
         }
 
-        void OnMonitorReceived(object obj)
+        void OnMonitorReceived(object sender, RedisMonitorEventArgs obj)
         {
             if (MonitorReceived != null)
-                MonitorReceived(obj);
+                MonitorReceived(this, obj);
         }
 
-        void OnSubscriptionReceived(RedisSubscriptionMessage message)
+        void OnSubscriptionReceived(object sender, RedisSubscriptionReceivedEventArgs args)
         {
             if (SubscriptionReceived != null)
-                SubscriptionReceived(message);
+                SubscriptionReceived(this, args);
         }
 
-        void OnSubscriptionChanged(RedisSubscriptionChannel obj)
+        void OnSubscriptionChanged(object sender, RedisSubscriptionChangedEventArgs args)
         {
             if (SubscriptionChanged != null)
-                SubscriptionChanged(obj);
+                SubscriptionChanged(this, args);
         }
 
-        void OnConnectionReconnected()
+        void OnConnectionReconnected(object sender, EventArgs args)
         {
             if (Reconnected != null)
-                Reconnected();
+                Reconnected(this, args);
+        }
+
+        void OnTransactionQueued(object sender, RedisTransactionQueuedEventArgs args)
+        {
+            if (TransactionQueued != null)
+                TransactionQueued(this, args);
         }
     }
 }

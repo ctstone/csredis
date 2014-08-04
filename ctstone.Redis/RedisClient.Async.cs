@@ -77,6 +77,16 @@ namespace CSRedis
                     return t.Result;
                 });
         }
+
+        /// <summary>
+        /// Change the selected database for the current connection
+        /// </summary>
+        /// <param name="index">Zero-based database index</param>
+        /// <returns>Status message</returns>
+        public Task<string> SelectAsync(int index)
+        {
+            return WriteAsync(RedisCommand.Select(index));
+        }
         #endregion
 
         #region Keys

@@ -7,7 +7,7 @@ namespace CSRedis.Internal
 {
     class MonitorListener : RedisListner<object>
     {
-        public event Action<object> MonitorReceived;
+        public event EventHandler<RedisMonitorEventArgs> MonitorReceived;
 
         public MonitorListener(RedisConnection connection)
             : base(connection)
@@ -33,7 +33,7 @@ namespace CSRedis.Internal
         void OnMonitorReceived(object message)
         {
             if (MonitorReceived != null)
-                MonitorReceived(message);
+                MonitorReceived(this, new RedisMonitorEventArgs(message));
         }
     }
 }
