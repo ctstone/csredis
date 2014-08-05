@@ -103,7 +103,7 @@ namespace CSRedis.Internal
         {
             var tcs = new TaskCompletionSource<T>();
             _writeQueue.Enqueue(() => _writer.WriteAsync(command.Command, command.Arguments));
-            _readQueue.Enqueue(() => tcs.SetResult(command.Parse(_reader)));
+            _readQueue.Enqueue(() => TryRead(tcs, command.Parse));
 
             ConnectAsync()
                 .ContinueWith(x => WriteNext())
@@ -136,7 +136,7 @@ namespace CSRedis.Internal
         public Task<T> ReadAsync<T>(Func<RedisReader, T> parser) // TODO: reconnect
         {
             var tcs = new TaskCompletionSource<T>();
-            _readQueue.Enqueue(() => tcs.SetResult(parser(_reader)));
+            _readQueue.Enqueue(() => TryRead(tcs, parser));
             ConnectAsync()
                 .ContinueWith(x => ReadNext());
             return tcs.Task;
@@ -227,6 +227,18 @@ namespace CSRedis.Internal
                 _pipeline = new RedisPipeline(_stream, Encoding, _reader);
             }
             return Connected;
+        }
+
+        void TryRead<T>(TaskCompletionSource<T> tcs, Func<RedisReader, T> parser)
+        {
+            try
+            {
+                tcs.SetResult(parser(_reader));
+            }
+            catch (Exception e)
+            {
+                tcs.SetException(e);
+            }
         }
     }
 }
