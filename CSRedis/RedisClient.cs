@@ -190,7 +190,7 @@ namespace CSRedis
         /// <param name="func">Client command to execute (BULK reply only)</param>
         public void StreamTo<T>(Stream destination, Func<RedisClient, T> func)
         {
-            StramTo(destination, DefaultBuffer, func);
+            StreamTo(destination, DefaultBuffer, func);
         }
 
         /// <summary>
