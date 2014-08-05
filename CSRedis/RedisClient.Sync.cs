@@ -33,6 +33,11 @@ namespace CSRedis
                 return _transaction.Write(command);
             else if (_monitor.Listening)
                 return default(T);
+            else if (_streaming)
+            {
+                _connection.Write(command);
+                return default(T);
+            }
             else
                 return _connection.Call(command);
         }

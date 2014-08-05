@@ -133,6 +133,12 @@ namespace CSRedis.Internal
             return parser(_reader);
         }
 
+        public void Read(Stream destination, int bufferSize)
+        {
+            _reader.ExpectType(RedisMessage.Bulk);
+            _reader.ReadBulk(destination, bufferSize, false);
+        }
+
         public Task<T> ReadAsync<T>(Func<RedisReader, T> parser) // TODO: reconnect
         {
             var tcs = new TaskCompletionSource<T>();

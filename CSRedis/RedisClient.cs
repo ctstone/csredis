@@ -4,6 +4,7 @@ using CSRedis.Internal;
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace CSRedis
 {
@@ -13,10 +14,12 @@ namespace CSRedis
     public partial class RedisClient : IDisposable
     {
         const int DefaultPort = 6379;
+        const int DefaultBuffer = 1024;
         readonly RedisConnection _connection;
         readonly RedisTransaction _transaction;
         readonly SubscriptionListener _subscription;
         readonly MonitorListener _monitor;
+        bool _streaming;
 
         /// <summary>
         /// Occurs when a subscription message is received
@@ -179,6 +182,32 @@ namespace CSRedis
                 return _connection.EndPipe();
         }
         
+        /// <summary>
+        /// Stream a BULK reply from the server using default buffer size
+        /// </summary>
+        /// <typeparam name="T">Response type</typeparam>
+        /// <param name="destination">Destination stream</param>
+        /// <param name="func">Client command to execute (BULK reply only)</param>
+        public void StreamTo<T>(Stream destination, Func<RedisClient, T> func)
+        {
+            StramTo(destination, DefaultBuffer, func);
+        }
+
+        /// <summary>
+        /// Stream a BULK reply from the server
+        /// </summary>
+        /// <typeparam name="T">Response type</typeparam>
+        /// <param name="destination">Destination stream</param>
+        /// <param name="bufferSize">Size of buffer used to write server response</param>
+        /// <param name="func">Client command to execute (BULK reply only)</param>
+        public void StreamTo<T>(Stream destination, int bufferSize, Func<RedisClient, T> func)
+        {
+            _streaming = true;
+            func(this);
+            _streaming = false;
+            _connection.Read(destination, bufferSize);
+        }
+
         /// <summary>
         /// Dispose all resources used by the current RedisClient
         /// </summary>
