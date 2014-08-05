@@ -1,7 +1,6 @@
 ﻿using CSRedis.Internal.IO;
 using System;
 using System.Globalization;
-using System.IO;
 
 namespace CSRedis.Internal.Commands
 {

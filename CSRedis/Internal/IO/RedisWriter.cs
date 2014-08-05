@@ -107,12 +107,8 @@ namespace CSRedis.Internal.IO
                 WriteBulk(data as byte[]);
             else if (data is String)
                 WriteBulk(data as String);
-            else if (data is double)
-                WriteBulk(((double) data).ToString(CultureInfo.InvariantCulture));
-            else if (data is float)
-                WriteBulk(((float)data).ToString(CultureInfo.InvariantCulture));
             else
-                WriteBulk(data.ToString());
+                WriteBulk(string.Format(CultureInfo.InvariantCulture, "{0}", data));
         }
         Task WriteBulkAsync(object data)
         {
@@ -121,7 +117,7 @@ namespace CSRedis.Internal.IO
             else if (data is String)
                 return WriteBulkAsync(data as String);
             else
-                return WriteBulkAsync(data.ToString());
+                return WriteBulkAsync(string.Format(CultureInfo.InvariantCulture, "{0}", data));
         }
 
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace CSRedis.Internal.Utilities
 {
@@ -23,7 +24,7 @@ namespace CSRedis.Internal.Utilities
                 for (int j = 0; j < arrays[i].Length; j++)
                 {
                     object obj = arrays[i][j];
-                    output[pos++] = obj == null ? String.Empty : obj.ToString();
+                    output[pos++] = obj == null ? String.Empty : string.Format(CultureInfo.InvariantCulture, "{0}", obj);
                 }
             }
             return output;
