@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -106,6 +107,10 @@ namespace CSRedis.Internal.IO
                 WriteBulk(data as byte[]);
             else if (data is String)
                 WriteBulk(data as String);
+            else if (data is double)
+                WriteBulk(((double) data).ToString(CultureInfo.InvariantCulture));
+            else if (data is float)
+                WriteBulk(((float)data).ToString(CultureInfo.InvariantCulture));
             else
                 WriteBulk(data.ToString());
         }

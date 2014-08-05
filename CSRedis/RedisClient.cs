@@ -134,10 +134,6 @@ namespace CSRedis
 
         internal RedisClient(IRedisConnector connector, Encoding encoding)
         {
-            // use invariant culture - we have to set it explicitly for every thread we create to 
-            // prevent any floating-point problems (mostly because of number formats in non en-US cultures).
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-
             _connection = new RedisConnection(connector, encoding);
             _transaction = new RedisTransaction(_connection);
             _subscription = new SubscriptionListener(_connection);
