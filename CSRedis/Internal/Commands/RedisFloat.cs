@@ -1,7 +1,6 @@
 ﻿using CSRedis.Internal.IO;
 using System;
 using System.Globalization;
-using System.IO;
 
 namespace CSRedis.Internal.Commands
 {
@@ -18,7 +17,7 @@ namespace CSRedis.Internal.Commands
 
         static double FromString(string input)
         {
-            return Double.Parse(input, NumberStyles.Float);
+            return Double.Parse(input, NumberStyles.Float, CultureInfo.InvariantCulture);
         }
 
         public class Nullable : RedisCommand<double?>
