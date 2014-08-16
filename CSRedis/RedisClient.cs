@@ -11,11 +11,12 @@ namespace CSRedis
     /// <summary>
     /// Represents a client connection to a Redis server instance
     /// </summary>
-    public partial class RedisClient : IDisposable
+    public partial class RedisClient : IRedisClient, IRedisClientAsync
     {
         const int DefaultPort = 6379;
-        const int DefaultBuffer = 1024;
-        readonly RedisConnection _connection;
+        const int DefaultConcurrency = 1000;
+        const int DefaultBufferSize = 10240;
+        readonly IRedisConnector _connector;
         readonly RedisTransaction _transaction;
         readonly SubscriptionListener _subscription;
         readonly MonitorListener _monitor;
@@ -50,34 +51,34 @@ namespace CSRedis
         /// <summary>
         /// Get the Redis server hostname
         /// </summary>
-        public string Host { get { return _connection.Host; } }
+        public string Host { get { return _connector.Host; } }
 
         /// <summary>
         /// Get the Redis server port
         /// </summary>
-        public int Port { get { return _connection.Port; } }
+        public int Port { get { return _connector.Port; } }
 
         /// <summary>
         /// Get a value indicating whether the Redis client is connected to the server
         /// </summary>
-        public bool Connected { get { return _connection.Connected; } }
+        public bool Connected { get { return _connector.Connected; } }
 
         /// <summary>
         /// Get or set the string encoding used to communicate with the server
         /// </summary>
         public Encoding Encoding 
         { 
-            get { return _connection.Encoding; }
-            set { _connection.Encoding = value; }
+            get { return _connector.Encoding; }
+            set { _connector.Encoding = value; }
         }
 
         /// <summary>
         /// Get or set the connection read timeout (milliseconds)
         /// </summary>
-        public int ReadTimeout
+        public int ReceiveTimeout
         {
-            get { return _connection.ReadTimeout; }
-            set { _connection.ReadTimeout = value; }
+            get { return _connector.ReceiveTimeout; }
+            set { _connector.ReceiveTimeout = value; }
         }
 
         /// <summary>
@@ -85,8 +86,8 @@ namespace CSRedis
         /// </summary>
         public int SendTimeout
         {
-            get { return _connection.SendTimeout; }
-            set { _connection.SendTimeout = value; }
+            get { return _connector.SendTimeout; }
+            set { _connector.SendTimeout = value; }
         }
 
         /// <summary>
@@ -94,17 +95,17 @@ namespace CSRedis
         /// </summary>
         public int ReconnectAttempts
         {
-            get { return _connection.ReconnectAttempts; }
-            set { _connection.ReconnectAttempts = value; }
+            get { return _connector.ReconnectAttempts; }
+            set { _connector.ReconnectAttempts = value; }
         }
 
         /// <summary>
-        /// Get or set the amount of time to wait between reconnect attempts
+        /// Get or set the amount of time (milliseconds) to wait between reconnect attempts
         /// </summary>
-        public int ReconnectTimeout
+        public int ReconnectWait
         {
-            get { return _connection.ReconnectTimeout; }
-            set { _connection.ReconnectTimeout = value; }
+            get { return _connector.ReconnectWait; }
+            set { _connector.ReconnectWait = value; }
         }
         
 
@@ -117,39 +118,40 @@ namespace CSRedis
         { }
 
         /// <summary>
-        /// Create a new RedisClient using default encoding
-        /// </summary>
-        /// <param name="host">Redis server hostname</param>
-        /// <param name="port">Redis server port</param>
-        public RedisClient(string host, int port)
-            : this(host, port, new UTF8Encoding(false))
-        { }
-
-        /// <summary>
         /// Create a new RedisClient
         /// </summary>
         /// <param name="host">Redis server hostname</param>
         /// <param name="port">Redis server port</param>
-        /// <param name="encoding">String encoding</param>
-        public RedisClient(string host, int port, Encoding encoding)
-            : this(new DefaultConnector(host, port), encoding)
+        public RedisClient(string host, int port)
+            : this(new RedisConnector(host, port, DefaultConcurrency, DefaultBufferSize))
         { }
 
-        internal RedisClient(IRedisConnector connector, Encoding encoding)
+        /// <summary>
+        /// Create a new RedisClient with specific async concurrency settings
+        /// </summary>
+        /// <param name="host">Redis server hostname</param>
+        /// <param name="port">Redis server port</param>
+        /// <param name="asyncConcurrency">Max concurrent threads (default 1000)</param>
+        /// <param name="asyncBufferSize">Async thread buffer size (default 10240 bytes)</param>
+        public RedisClient(string host, int port, int asyncConcurrency, int asyncBufferSize)
+            : this(new RedisConnector(host, port, asyncConcurrency, asyncBufferSize))
+        { }
+
+        internal RedisClient(IRedisConnector connector)
         {
             // use invariant culture - we have to set it explicitly for every thread we create to 
             // prevent any floating-point problems (mostly because of number formats in non en-US cultures).
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 
-            _connection = new RedisConnection(connector, encoding);
-            _transaction = new RedisTransaction(_connection);
-            _subscription = new SubscriptionListener(_connection);
-            _monitor = new MonitorListener(_connection);
+            _connector = connector;
+            _transaction = new RedisTransaction(_connector);
+            _subscription = new SubscriptionListener(_connector);
+            _monitor = new MonitorListener(_connector);
 
             _subscription.MessageReceived += OnSubscriptionReceived;
             _subscription.Changed += OnSubscriptionChanged;
             _monitor.MonitorReceived += OnMonitorReceived;
-            _connection.Reconnected += OnConnectionReconnected;
+            _connector.Reconnected += OnConnectionReconnected;
             _transaction.TransactionQueued += OnTransactionQueued;
         }
 
@@ -158,7 +160,7 @@ namespace CSRedis
         /// </summary>
         public void StartPipe()
         {
-            _connection.BeginPipe();
+            _connector.BeginPipe();
         }
 
         /// <summary>
@@ -166,7 +168,7 @@ namespace CSRedis
         /// </summary>
         public void StartPipeTransaction()
         {
-            _connection.BeginPipe();
+            _connector.BeginPipe();
             Multi();
         }
 
@@ -179,7 +181,7 @@ namespace CSRedis
             if (_transaction.Active)
                 return _transaction.Execute();
             else
-                return _connection.EndPipe();
+                return _connector.EndPipe();
         }
         
         /// <summary>
@@ -190,7 +192,7 @@ namespace CSRedis
         /// <param name="func">Client command to execute (BULK reply only)</param>
         public void StreamTo<T>(Stream destination, Func<RedisClient, T> func)
         {
-            StreamTo(destination, DefaultBuffer, func);
+            StreamTo(destination, DefaultBufferSize, func);
         }
 
         /// <summary>
@@ -205,7 +207,7 @@ namespace CSRedis
             _streaming = true;
             func(this);
             _streaming = false;
-            _connection.Read(destination, bufferSize);
+            _connector.Read(destination, bufferSize);
         }
 
         /// <summary>
@@ -213,7 +215,7 @@ namespace CSRedis
         /// </summary>
         public void Dispose()
         {
-            _connection.Dispose();
+            _connector.Dispose();
         }
 
         void OnMonitorReceived(object sender, RedisMonitorEventArgs obj)

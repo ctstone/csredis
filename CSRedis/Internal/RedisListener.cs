@@ -10,12 +10,12 @@ namespace CSRedis.Internal
 {
     abstract class RedisListner<TResponse>
     {
-        readonly RedisConnection _connection;
+        readonly IRedisConnector _connection;
 
         public bool Listening { get; private set; }
-        protected RedisConnection Connection { get { return _connection; } }
+        protected IRedisConnector Connection { get { return _connection; } }
 
-        public RedisListner(RedisConnection connection)
+        public RedisListner(IRedisConnector connection)
         {
             _connection = connection;
         }

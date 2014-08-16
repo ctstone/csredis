@@ -13,7 +13,9 @@ namespace CSRedis
     public partial class RedisSentinelClient : IDisposable
     {
         const int DefaultPort = 26379;
-        readonly RedisConnection _connection;
+        const int DefaultConcurrency = 1000;
+        const int DefaultBufferSize = 1024;
+        readonly IRedisConnector _connector;
         readonly SubscriptionListener _subscription;
 
         /// <summary>
@@ -34,30 +36,30 @@ namespace CSRedis
         /// <summary>
         /// Get the Redis sentinel hostname
         /// </summary>
-        public string Host { get { return _connection.Host; } }
+        public string Host { get { return _connector.Host; } }
 
         /// <summary>
         /// Get the Redis sentinel port
         /// </summary>
-        public int Port { get { return _connection.Port; } }
+        public int Port { get { return _connector.Port; } }
 
         /// <summary>
         /// Get a value indicating whether the Redis sentinel client is connected to the server
         /// </summary>
-        public bool Connected { get { return _connection.Connected; } }
+        public bool Connected { get { return _connector.Connected; } }
 
         /// <summary>
         /// Get the string encoding used to communicate with the server
         /// </summary>
-        public Encoding Encoding { get { return _connection.Encoding; } }
+        public Encoding Encoding { get { return _connector.Encoding; } }
 
         /// <summary>
         /// Get or set the connection read timeout (milliseconds)
         /// </summary>
-        public int ReadTimeout
+        public int ReceiveTimeout
         {
-            get { return _connection.ReadTimeout; }
-            set { _connection.ReadTimeout = value; }
+            get { return _connector.ReceiveTimeout; }
+            set { _connector.ReceiveTimeout = value; }
         }
 
         /// <summary>
@@ -65,8 +67,8 @@ namespace CSRedis
         /// </summary>
         public int SendTimeout
         {
-            get { return _connection.SendTimeout; }
-            set { _connection.SendTimeout = value; }
+            get { return _connector.SendTimeout; }
+            set { _connector.SendTimeout = value; }
         }
 
         /// <summary>
@@ -74,17 +76,17 @@ namespace CSRedis
         /// </summary>
         public int ReconnectAttempts
         {
-            get { return _connection.ReconnectAttempts; }
-            set { _connection.ReconnectAttempts = value; }
+            get { return _connector.ReconnectAttempts; }
+            set { _connector.ReconnectAttempts = value; }
         }
 
         /// <summary>
         /// Get or set the amount of time to wait between reconnect attempts
         /// </summary>
-        public int ReconnectTimeout
+        public int ReconnectWait
         {
-            get { return _connection.ReconnectTimeout; }
-            set { _connection.ReconnectTimeout = value; }
+            get { return _connector.ReconnectWait; }
+            set { _connector.ReconnectWait = value; }
         }
 
         /// <summary>
@@ -101,27 +103,17 @@ namespace CSRedis
         /// <param name="host">Redis sentinel hostname</param>
         /// <param name="port">Redis sentinel port</param>
         public RedisSentinelClient(string host, int port)
-            : this(host, port, new UTF8Encoding(false))
+            : this(new RedisConnector(host, port, DefaultConcurrency, DefaultBufferSize))
         { }
 
-        /// <summary>
-        /// Create a new RedisSentinelClient
-        /// </summary>
-        /// <param name="host">Redis sentinel hostname</param>
-        /// <param name="port">Redis sentinel port</param>
-        /// <param name="encoding">String encoding</param>
-        public RedisSentinelClient(string host, int port, Encoding encoding)
-            : this(new DefaultConnector(host, port), encoding)
-        { }
-
-        internal RedisSentinelClient(IRedisConnector connector, Encoding encoding)
+        internal RedisSentinelClient(IRedisConnector connector)
         {
-            _connection = new RedisConnection(connector, encoding);
-            _subscription = new SubscriptionListener(_connection);
+            _connector = connector;
+            _subscription = new SubscriptionListener(_connector);
 
             _subscription.MessageReceived += OnSubscriptionReceived;
             _subscription.Changed += OnSubscriptionChanged;
-            _connection.Reconnected += OnConnectionReconnected;
+            _connector.Reconnected += OnConnectionReconnected;
         }
 
         /// <summary>
@@ -129,8 +121,8 @@ namespace CSRedis
         /// </summary>
         public void Dispose()
         {
-            if (_connection != null)
-                _connection.Dispose();
+            if (_connector != null)
+                _connector.Dispose();
         }
 
         void OnSubscriptionReceived(object sender, RedisSubscriptionReceivedEventArgs args)

@@ -13,7 +13,7 @@ namespace CSRedis.Internal
         public event EventHandler<RedisSubscriptionReceivedEventArgs> MessageReceived;
         public event EventHandler<RedisSubscriptionChangedEventArgs> Changed;
 
-        public SubscriptionListener(RedisConnection connection)
+        public SubscriptionListener(IRedisConnector connection)
             : base(connection)
         { }
 

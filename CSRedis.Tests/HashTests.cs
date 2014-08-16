@@ -20,7 +20,7 @@ namespace CSRedis.Tests
         public void TestHDel()
         {
             using (var mock = new MockConnector("MockHost", 9999, ":2\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.AreEqual(2, redis.HDel("test", "test1", "test2"));
                 Assert.AreEqual("*4\r\n$4\r\nHDEL\r\n$4\r\ntest\r\n$5\r\ntest1\r\n$5\r\ntest2\r\n", mock.GetMessage());
@@ -31,7 +31,7 @@ namespace CSRedis.Tests
         public void TestHExists()
         {
             using (var mock = new MockConnector("MockHost", 9999, ":1\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.IsTrue(redis.HExists("test", "field"));
                 Assert.AreEqual("*3\r\n$7\r\nHEXISTS\r\n$4\r\ntest\r\n$5\r\nfield\r\n", mock.GetMessage());
@@ -42,7 +42,7 @@ namespace CSRedis.Tests
         public void TestHGet()
         {
             using (var mock = new MockConnector("MockHost", 9999, "$4\r\ntest\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.AreEqual("test", redis.HGet("test", "field"));
                 Assert.AreEqual("*3\r\n$4\r\nHGET\r\n$4\r\ntest\r\n$5\r\nfield\r\n", mock.GetMessage());
@@ -53,7 +53,7 @@ namespace CSRedis.Tests
         public void TestHGetAll_Dictionary()
         {
             using (var mock = new MockConnector("MockHost", 9999, "*2\r\n$6\r\nfield1\r\n$5\r\ntest1\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 var response = redis.HGetAll("test");
                 Assert.AreEqual(1, response.Count);
@@ -67,7 +67,7 @@ namespace CSRedis.Tests
         public void TestHGetAll_Generic()
         {
             using (var mock = new MockConnector("MockHost", 9999, "*2\r\n$6\r\nfield1\r\n$5\r\ntest1\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 var response = redis.HGetAll<MyGeneric>("test");
                 Assert.AreEqual("test1", response.field1);
@@ -79,7 +79,7 @@ namespace CSRedis.Tests
         public void TestHIncrBy()
         {
             using (var mock = new MockConnector("MockHost", 9999, ":5\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.AreEqual(5, redis.HIncrBy("test", "field", 1));
                 Assert.AreEqual("*4\r\n$7\r\nHINCRBY\r\n$4\r\ntest\r\n$5\r\nfield\r\n$1\r\n1\r\n", mock.GetMessage());
@@ -90,7 +90,7 @@ namespace CSRedis.Tests
         public void TestHIncrByFloat()
         {
             using (var mock = new MockConnector("MockHost", 9999, "$4\r\n3.14\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.AreEqual(3.14, redis.HIncrByFloat("test", "field", 1.14));
                 Assert.AreEqual("*4\r\n$12\r\nHINCRBYFLOAT\r\n$4\r\ntest\r\n$5\r\nfield\r\n$4\r\n1.14\r\n", mock.GetMessage());
@@ -101,7 +101,7 @@ namespace CSRedis.Tests
         public void TestHKeys()
         {
             using (var mock = new MockConnector("MockHost", 9999, "*2\r\n$5\r\ntest1\r\n$5\r\ntest2\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 var response = redis.HKeys("test");
                 Assert.AreEqual(2, response.Length);
@@ -115,7 +115,7 @@ namespace CSRedis.Tests
         public void TestHLen()
         {
             using (var mock = new MockConnector("MockHost", 9999, ":5\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.AreEqual(5, redis.HLen("test"));
                 Assert.AreEqual("*2\r\n$4\r\nHLEN\r\n$4\r\ntest\r\n", mock.GetMessage());
@@ -126,7 +126,7 @@ namespace CSRedis.Tests
         public void TestHMGet()
         {
             using (var mock = new MockConnector("MockHost", 9999, "*2\r\n$5\r\ntest1\r\n$5\r\ntest2\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 var response = redis.HMGet("test", "field1", "field2");
                 Assert.AreEqual(2, response.Length);
@@ -140,7 +140,7 @@ namespace CSRedis.Tests
         public void TestHMSet_Array()
         {
             using (var mock = new MockConnector("MockHost", 9999, "+OK\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.AreEqual("OK", redis.HMSet("test", "field1", "test1"));
                 Assert.AreEqual("*4\r\n$5\r\nHMSET\r\n$4\r\ntest\r\n$6\r\nfield1\r\n$5\r\ntest1\r\n", mock.GetMessage());
@@ -151,7 +151,7 @@ namespace CSRedis.Tests
         public void TestHMSet_Generic()
         {
             using (var mock = new MockConnector("MockHost", 9999, "+OK\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.AreEqual("OK", redis.HMSet("test", new { field1 = "test1" }));
                 Assert.AreEqual("*4\r\n$5\r\nHMSET\r\n$4\r\ntest\r\n$6\r\nfield1\r\n$5\r\ntest1\r\n", mock.GetMessage());
@@ -162,7 +162,7 @@ namespace CSRedis.Tests
         public void TestHMSet_Dictionary()
         {
             using (var mock = new MockConnector("MockHost", 9999, "+OK\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.AreEqual("OK", redis.HMSet("test", new Dictionary<string, string> { { "field1", "test1" } }));
                 Assert.AreEqual("*4\r\n$5\r\nHMSET\r\n$4\r\ntest\r\n$6\r\nfield1\r\n$5\r\ntest1\r\n", mock.GetMessage());
@@ -173,7 +173,7 @@ namespace CSRedis.Tests
         public void TestHSet()
         {
             using (var mock = new MockConnector("MockHost", 9999, ":1\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.IsTrue(redis.HSet("test", "field1", "test1"));
                 Assert.AreEqual("*4\r\n$4\r\nHSET\r\n$4\r\ntest\r\n$6\r\nfield1\r\n$5\r\ntest1\r\n", mock.GetMessage());
@@ -184,7 +184,7 @@ namespace CSRedis.Tests
         public void TestHSetNX()
         {
             using (var mock = new MockConnector("MockHost", 9999, ":1\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 Assert.IsTrue(redis.HSetNx("test", "field1", "test1"));
                 Assert.AreEqual("*4\r\n$6\r\nHSETNX\r\n$4\r\ntest\r\n$6\r\nfield1\r\n$5\r\ntest1\r\n", mock.GetMessage());
@@ -195,7 +195,7 @@ namespace CSRedis.Tests
         public void TestHVals()
         {
             using (var mock = new MockConnector("MockHost", 9999, "*2\r\n$5\r\ntest1\r\n$5\r\ntest2\r\n"))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 var response = redis.HVals("test");
                 Assert.AreEqual(2, response.Length);
@@ -210,7 +210,7 @@ namespace CSRedis.Tests
         {
             string reply = "*2\r\n$2\r\n23\r\n*2\r\n$6\r\nfield1\r\n$5\r\ntest1\r\n";
             using (var mock = new MockConnector("MockHost", 9999, reply, reply, reply, reply))
-            using (var redis = new RedisClient(mock, new UTF8Encoding(false)))
+            using (var redis = new RedisClient(mock))
             {
                 var response1 = redis.HScan("test", 0);
                 Assert.AreEqual(23, response1.Cursor);

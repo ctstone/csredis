@@ -15,7 +15,7 @@ namespace CSRedis
         /// <returns>True if connected</returns>
         public Task<bool> ConnectAsync()
         {
-            return _connection.ConnectAsync();
+            return _connector.ConnectAsync();
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace CSRedis
 
         Task<T> WriteAsync<T>(RedisCommand<T> command)
         {
-            return _connection.CallAsync(command);
+            return _connector.CallAsync(command);
         }
 
         #region sentinel
@@ -41,7 +41,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> PingAsync()
         {
-            return WriteAsync(RedisCommand.Ping());
+            return WriteAsync(RedisCommands.Ping());
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace CSRedis
         /// <returns>Redis master info</returns>
         public Task<RedisMasterInfo[]> MastersAsync()
         {
-            return WriteAsync(RedisCommand.Sentinel.Masters());
+            return WriteAsync(RedisCommands.Sentinel.Masters());
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace CSRedis
         /// <returns>Master information</returns>
         public Task<RedisMasterInfo> MasterAsync(string masterName)
         {
-            return WriteAsync(RedisCommand.Sentinel.Master(masterName));
+            return WriteAsync(RedisCommands.Sentinel.Master(masterName));
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace CSRedis
         /// <returns>Sentinel hosts and ports</returns>
         public Task<RedisSentinelInfo[]> SentinelsAsync(string masterName)
         {
-            return WriteAsync(RedisCommand.Sentinel.Sentinels(masterName));
+            return WriteAsync(RedisCommands.Sentinel.Sentinels(masterName));
         }
 
 
@@ -81,7 +81,7 @@ namespace CSRedis
         /// <returns>Redis slave info</returns>
         public Task<RedisSlaveInfo[]> SlavesAsync(string masterName)
         {
-            return WriteAsync(RedisCommand.Sentinel.Slaves(masterName));
+            return WriteAsync(RedisCommands.Sentinel.Slaves(masterName));
         }
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace CSRedis
         /// <returns>IP and port of master Redis server</returns>
         public Task<Tuple<string, int>> GetMasterAddrByNameAsync(string masterName)
         {
-            return WriteAsync(RedisCommand.Sentinel.GetMasterAddrByName(masterName));
+            return WriteAsync(RedisCommands.Sentinel.GetMasterAddrByName(masterName));
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace CSRedis
         /// <returns>Master state</returns>
         public Task<RedisMasterState> IsMasterDownByAddrAsync(string ip, int port, long currentEpoch, string runId)
         {
-            return WriteAsync(RedisCommand.Sentinel.IsMasterDownByAddr(ip, port, currentEpoch, runId));
+            return WriteAsync(RedisCommands.Sentinel.IsMasterDownByAddr(ip, port, currentEpoch, runId));
         }
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace CSRedis
         /// <returns>Number of masters that were reset</returns>
         public Task<long> ResetAsync(string pattern)
         {
-            return WriteAsync(RedisCommand.Sentinel.Reset(pattern));
+            return WriteAsync(RedisCommands.Sentinel.Reset(pattern));
         }
 
         /// <summary>
@@ -124,7 +124,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> FailoverAsync(string masterName)
         {
-            return WriteAsync(RedisCommand.Sentinel.Failover(masterName));
+            return WriteAsync(RedisCommands.Sentinel.Failover(masterName));
         }
 
         /// <summary>
@@ -136,7 +136,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> MonitorAsync(string name, int port, int quorum)
         {
-            return WriteAsync(RedisCommand.Sentinel.Monitor(name, port, quorum));
+            return WriteAsync(RedisCommands.Sentinel.Monitor(name, port, quorum));
         }
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> RemoveAsync(string name)
         {
-            return WriteAsync(RedisCommand.Sentinel.Remove(name));
+            return WriteAsync(RedisCommands.Sentinel.Remove(name));
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> SetAsync(string masterName, string option, string value)
         {
-            return WriteAsync(RedisCommand.Sentinel.Set(masterName, option, value));
+            return WriteAsync(RedisCommands.Sentinel.Set(masterName, option, value));
         }
         #endregion
     }

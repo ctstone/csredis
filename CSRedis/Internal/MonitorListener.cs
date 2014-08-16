@@ -9,13 +9,13 @@ namespace CSRedis.Internal
     {
         public event EventHandler<RedisMonitorEventArgs> MonitorReceived;
 
-        public MonitorListener(RedisConnection connection)
+        public MonitorListener(IRedisConnector connection)
             : base(connection)
         { }
 
         public string Start()
         {
-            string status = Call(RedisCommand.Monitor());
+            string status = Call(RedisCommands.Monitor());
             Listen(x => x.Read());
             return status;
         }

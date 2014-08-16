@@ -12,7 +12,7 @@ namespace CSRedis
         /// <returns>True on success</returns>
         public Task<bool> ConnectAsync()
         {
-            return _connection.ConnectAsync();
+            return _connector.ConnectAsync();
         }
 
         /// <summary>
@@ -23,7 +23,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<object> CallAsync(string command, params string[] args)
         {
-            return WriteAsync(RedisCommand.Call(command, args));
+            return WriteAsync(RedisCommands.Call(command, args));
         }
 
         Task<T> WriteAsync<T>(RedisCommand<T> command)
@@ -31,7 +31,7 @@ namespace CSRedis
             if (_transaction.Active)
                 return _transaction.WriteAsync(command);
             else
-                return _connection.CallAsync(command);
+                return _connector.CallAsync(command);
         }
 
         #region Connection
@@ -42,7 +42,7 @@ namespace CSRedis
         /// <returns>Task associated with status message</returns>
         public Task<string> AuthAsync(string password)
         {
-            return WriteAsync(RedisCommand.Auth(password));
+            return WriteAsync(RedisCommands.Auth(password));
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace CSRedis
         /// <returns>Task associated with echo response</returns>
         public Task<string> EchoAsync(string message)
         {
-            return WriteAsync(RedisCommand.Echo(message));
+            return WriteAsync(RedisCommands.Echo(message));
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace CSRedis
         /// <returns>Task associated with status message</returns>
         public Task<string> PingAsync()
         {
-            return WriteAsync(RedisCommand.Ping());
+            return WriteAsync(RedisCommands.Ping());
         }
 
         /// <summary>
@@ -70,10 +70,10 @@ namespace CSRedis
         /// <returns>Task associated with status message</returns>
         public Task<string> QuitAsync()
         {
-            return WriteAsync(RedisCommand.Quit())
+            return WriteAsync(RedisCommands.Quit())
                 .ContinueWith<string>(t =>
                 {
-                    _connection.Dispose();
+                    _connector.Dispose();
                     return t.Result;
                 });
         }
@@ -85,7 +85,7 @@ namespace CSRedis
         /// <returns>Status message</returns>
         public Task<string> SelectAsync(int index)
         {
-            return WriteAsync(RedisCommand.Select(index));
+            return WriteAsync(RedisCommands.Select(index));
         }
         #endregion
 
@@ -97,7 +97,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<long> DelAsync(params string[] keys)
         {
-            return WriteAsync(RedisCommand.Del(keys));
+            return WriteAsync(RedisCommands.Del(keys));
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<byte[]> DumpAsync(string key)
         {
-            return WriteAsync(RedisCommand.Dump(key));
+            return WriteAsync(RedisCommands.Dump(key));
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> ExistsAsync(string key)
         {
-            return WriteAsync(RedisCommand.Exists(key));
+            return WriteAsync(RedisCommands.Exists(key));
         }
 
         /// <summary>
@@ -128,7 +128,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> ExpireAsync(string key, int expiration)
         {
-            return WriteAsync(RedisCommand.Expire(key, expiration));
+            return WriteAsync(RedisCommands.Expire(key, expiration));
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> ExpireAsync(string key, TimeSpan expiration)
         {
-            return WriteAsync(RedisCommand.Expire(key, expiration));
+            return WriteAsync(RedisCommands.Expire(key, expiration));
         }
 
         /// <summary>
@@ -150,7 +150,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> ExpireAtAsync(string key, DateTime expirationDate)
         {
-            return WriteAsync(RedisCommand.ExpireAt(key, expirationDate));
+            return WriteAsync(RedisCommands.ExpireAt(key, expirationDate));
         }
 
         /// <summary>
@@ -161,7 +161,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> ExpireAtAsync(string key, int timestamp)
         {
-            return WriteAsync(RedisCommand.ExpireAt(key, timestamp));
+            return WriteAsync(RedisCommands.ExpireAt(key, timestamp));
         }
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<string[]> KeysAsync(string pattern)
         {
-            return WriteAsync(RedisCommand.Keys(pattern));
+            return WriteAsync(RedisCommands.Keys(pattern));
         }
 
         /// <summary>
@@ -185,7 +185,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<string> MigrateAsync(string host, int port, string key, int destinationDb, int timeout)
         {
-            return WriteAsync(RedisCommand.Migrate(host, port, key, destinationDb, timeout));
+            return WriteAsync(RedisCommands.Migrate(host, port, key, destinationDb, timeout));
         }
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<string> MigrateAsync(string host, int port, string key, int destinationDb, TimeSpan timeout)
         {
-            return WriteAsync(RedisCommand.Migrate(host, port, key, destinationDb, timeout));
+            return WriteAsync(RedisCommands.Migrate(host, port, key, destinationDb, timeout));
         }
 
         /// <summary>
@@ -210,7 +210,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> MoveAsync(string key, int database)
         {
-            return WriteAsync(RedisCommand.Move(key, database));
+            return WriteAsync(RedisCommands.Move(key, database));
         }
 
         /// <summary>
@@ -220,7 +220,7 @@ namespace CSRedis
         /// <returns>The type of internal representation used to store the value at the specified key</returns>
         public Task<string> ObjectEncodingAsync(params string[] arguments)
         {
-            return WriteAsync(RedisCommand.ObjectEncoding(arguments));
+            return WriteAsync(RedisCommands.ObjectEncoding(arguments));
         }
 
         /// <summary>
@@ -231,7 +231,7 @@ namespace CSRedis
         /// <returns>Varies depending on subCommand</returns>
         public Task<long?> ObjectAsync(RedisObjectSubCommand subCommand, params string[] arguments)
         {
-            return WriteAsync(RedisCommand.Object(subCommand, arguments));
+            return WriteAsync(RedisCommands.Object(subCommand, arguments));
         }
 
         /// <summary>
@@ -241,7 +241,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> PersistAsync(string key)
         {
-            return WriteAsync(RedisCommand.Persist(key));
+            return WriteAsync(RedisCommands.Persist(key));
         }
 
         /// <summary>
@@ -252,7 +252,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> PExpireAsync(string key, TimeSpan expiration)
         {
-            return WriteAsync(RedisCommand.PExpire(key, expiration));
+            return WriteAsync(RedisCommands.PExpire(key, expiration));
         }
 
         /// <summary>
@@ -263,7 +263,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> PExpireAsync(string key, long milliseconds)
         {
-            return WriteAsync(RedisCommand.PExpire(key, milliseconds));
+            return WriteAsync(RedisCommands.PExpire(key, milliseconds));
         }
 
         /// <summary>
@@ -274,7 +274,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> PExpireAtAsync(string key, DateTime date)
         {
-            return WriteAsync(RedisCommand.PExpireAt(key, date));
+            return WriteAsync(RedisCommands.PExpireAt(key, date));
         }
 
         /// <summary>
@@ -285,7 +285,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> PExpireAtAsync(string key, long timestamp)
         {
-            return WriteAsync(RedisCommand.PExpireAt(key, timestamp));
+            return WriteAsync(RedisCommands.PExpireAt(key, timestamp));
         }
 
         /// <summary>
@@ -295,7 +295,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<long> PTtlAsync(string key)
         {
-            return WriteAsync(RedisCommand.PTtl(key));
+            return WriteAsync(RedisCommands.PTtl(key));
         }
 
         /// <summary>
@@ -304,7 +304,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<string> RandomKeyAsync()
         {
-            return WriteAsync(RedisCommand.RandomKey());
+            return WriteAsync(RedisCommands.RandomKey());
         }
 
         /// <summary>
@@ -315,7 +315,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<string> RenameAsync(string key, string newKey)
         {
-            return WriteAsync(RedisCommand.Rename(key, newKey));
+            return WriteAsync(RedisCommands.Rename(key, newKey));
         }
 
         /// <summary>
@@ -326,7 +326,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<bool> RenameNxAsync(string key, string newKey)
         {
-            return WriteAsync(RedisCommand.RenameNx(key, newKey));
+            return WriteAsync(RedisCommands.RenameNx(key, newKey));
         }
 
         /// <summary>
@@ -338,7 +338,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<string> RestoreAsync(string key, long ttl, string serializedValue)
         {
-            return WriteAsync(RedisCommand.Restore(key, ttl, serializedValue));
+            return WriteAsync(RedisCommands.Restore(key, ttl, serializedValue));
         }
 
         /// <summary>
@@ -354,7 +354,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<string[]> SortAsync(string key, long? offset = null, long? count = null, string by = null, RedisSortDir? dir = null, bool? isAlpha = null, params string[] get)
         {
-            return WriteAsync(RedisCommand.Sort(key, offset, count, by, dir, isAlpha, get));
+            return WriteAsync(RedisCommands.Sort(key, offset, count, by, dir, isAlpha, get));
         }
 
         /// <summary>
@@ -371,7 +371,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<long> SortAndStoreAsync(string key, string destination, long? offset = null, long? count = null, string by = null, RedisSortDir? dir = null, bool? isAlpha = null, params string[] get)
         {
-            return WriteAsync(RedisCommand.SortAndStore(key, destination, offset, count, by, dir, isAlpha, get));
+            return WriteAsync(RedisCommands.SortAndStore(key, destination, offset, count, by, dir, isAlpha, get));
         }
 
         /// <summary>
@@ -381,7 +381,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<long> TtlAsync(string key)
         {
-            return WriteAsync(RedisCommand.Ttl(key));
+            return WriteAsync(RedisCommands.Ttl(key));
         }
 
         /// <summary>
@@ -391,7 +391,7 @@ namespace CSRedis
         /// <returns></returns>
         public Task<string> TypeAsync(string key)
         {
-            return WriteAsync(RedisCommand.Type(key));
+            return WriteAsync(RedisCommands.Type(key));
         }
         #endregion
 
@@ -404,7 +404,7 @@ namespace CSRedis
         /// <returns>Number of fields removed from hash</returns>
         public Task<long> HDelAsync(string key, params string[] fields)
         {
-            return WriteAsync(RedisCommand.HDel(key, fields));
+            return WriteAsync(RedisCommands.HDel(key, fields));
         }
 
         /// <summary>
@@ -415,7 +415,7 @@ namespace CSRedis
         /// <returns>True if hash field exists</returns>
         public Task<bool> HExistsAsync(string key, string field)
         {
-            return WriteAsync(RedisCommand.HExists(key, field));
+            return WriteAsync(RedisCommands.HExists(key, field));
         }
 
         /// <summary>
@@ -426,7 +426,7 @@ namespace CSRedis
         /// <returns>Value of hash field</returns>
         public Task<string> HGetAsync(string key, string field)
         {
-            return WriteAsync(RedisCommand.HGet(key, field));
+            return WriteAsync(RedisCommands.HGet(key, field));
         }
 
         /// <summary>
@@ -438,7 +438,7 @@ namespace CSRedis
         public Task<T> HGetAllAsync<T>(string key)
             where T : class
         {
-            return WriteAsync(RedisCommand.HGetAll<T>(key));
+            return WriteAsync(RedisCommands.HGetAll<T>(key));
         }
 
         /// <summary>
@@ -448,7 +448,7 @@ namespace CSRedis
         /// <returns>Dictionary mapped from string</returns>
         public Task<Dictionary<string, string>> HGetAllAsync(string key)
         {
-            return WriteAsync(RedisCommand.HGetAll(key));
+            return WriteAsync(RedisCommands.HGetAll(key));
         }
 
         /// <summary>
@@ -460,7 +460,7 @@ namespace CSRedis
         /// <returns>Value of field after increment</returns>
         public Task<long> HIncrByAsync(string key, string field, long increment)
         {
-            return WriteAsync(RedisCommand.HIncrBy(key, field, increment));
+            return WriteAsync(RedisCommands.HIncrBy(key, field, increment));
         }
 
         /// <summary>
@@ -472,7 +472,7 @@ namespace CSRedis
         /// <returns>Value of field after increment</returns>
         public Task<double> HIncrByFloatAsync(string key, string field, double increment)
         {
-            return WriteAsync(RedisCommand.HIncrByFloat(key, field, increment));
+            return WriteAsync(RedisCommands.HIncrByFloat(key, field, increment));
         }
 
         /// <summary>
@@ -482,7 +482,7 @@ namespace CSRedis
         /// <returns>All hash field names</returns>
         public Task<string[]> HKeysAsync(string key)
         {
-            return WriteAsync(RedisCommand.HKeys(key));
+            return WriteAsync(RedisCommands.HKeys(key));
         }
 
         /// <summary>
@@ -492,7 +492,7 @@ namespace CSRedis
         /// <returns>Number of fields in hash</returns>
         public Task<long> HLenAsync(string key)
         {
-            return WriteAsync(RedisCommand.HLen(key));
+            return WriteAsync(RedisCommands.HLen(key));
         }
 
         /// <summary>
@@ -503,7 +503,7 @@ namespace CSRedis
         /// <returns>Values of given fields</returns>
         public Task<string[]> HMGetAsync(string key, params string[] fields)
         {
-            return WriteAsync(RedisCommand.HMGet(key, fields));
+            return WriteAsync(RedisCommands.HMGet(key, fields));
         }
 
         /// <summary>
@@ -514,7 +514,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> HMSetAsync(string key, Dictionary<string, string> dict)
         {
-            return WriteAsync(RedisCommand.HMSet(key, dict));
+            return WriteAsync(RedisCommands.HMSet(key, dict));
         }
 
         /// <summary>
@@ -527,7 +527,7 @@ namespace CSRedis
         public Task<string> HMSetAsync<T>(string key, T obj)
             where T : class
         {
-            return WriteAsync(RedisCommand.HMSet<T>(key, obj));
+            return WriteAsync(RedisCommands.HMSet<T>(key, obj));
         }
 
         /// <summary>
@@ -538,7 +538,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> HMSetAsync(string key, params string[] keyValues)
         {
-            return WriteAsync(RedisCommand.HMSet(key, keyValues));
+            return WriteAsync(RedisCommands.HMSet(key, keyValues));
         }
 
         /// <summary>
@@ -550,7 +550,7 @@ namespace CSRedis
         /// <returns>True if field is new</returns>
         public Task<bool> HSetAsync(string key, string field, object value)
         {
-            return WriteAsync(RedisCommand.HSet(key, field, value));
+            return WriteAsync(RedisCommands.HSet(key, field, value));
         }
 
         /// <summary>
@@ -562,7 +562,7 @@ namespace CSRedis
         /// <returns>True if field was set to value</returns>
         public Task<bool> HSetNxAsync(string key, string field, object value)
         {
-            return WriteAsync(RedisCommand.HSetNx(key, field, value));
+            return WriteAsync(RedisCommands.HSetNx(key, field, value));
         }
 
         /// <summary>
@@ -572,7 +572,7 @@ namespace CSRedis
         /// <returns>Array of all values in hash</returns>
         public Task<string[]> HValsAsync(string key)
         {
-            return WriteAsync(RedisCommand.HVals(key));
+            return WriteAsync(RedisCommands.HVals(key));
         }
         #endregion
 
@@ -585,7 +585,7 @@ namespace CSRedis
         /// <returns>Element at index</returns>
         public Task<string> LIndexAsync(string key, long index)
         {
-            return WriteAsync(RedisCommand.LIndex(key, index));
+            return WriteAsync(RedisCommands.LIndex(key, index));
         }
 
         /// <summary>
@@ -598,7 +598,7 @@ namespace CSRedis
         /// <returns>Length of list after insert or -1 if pivot not found</returns>
         public Task<long> LInsertAsync(string key, RedisInsert insertType, string pivot, object value)
         {
-            return WriteAsync(RedisCommand.LInsert(key, insertType, pivot, value));
+            return WriteAsync(RedisCommands.LInsert(key, insertType, pivot, value));
         }
 
         /// <summary>
@@ -608,7 +608,7 @@ namespace CSRedis
         /// <returns>Length of list at key</returns>
         public Task<long> LLenAsync(string key)
         {
-            return WriteAsync(RedisCommand.LLen(key));
+            return WriteAsync(RedisCommands.LLen(key));
         }
 
         /// <summary>
@@ -618,7 +618,7 @@ namespace CSRedis
         /// <returns>First element in list</returns>
         public Task<string> LPopAsync(string key)
         {
-            return WriteAsync(RedisCommand.LPop(key));
+            return WriteAsync(RedisCommands.LPop(key));
         }
 
         /// <summary>
@@ -629,7 +629,7 @@ namespace CSRedis
         /// <returns>Length of list after push</returns>
         public Task<long> LPushAsync(string key, params object[] values)
         {
-            return WriteAsync(RedisCommand.LPush(key, values));
+            return WriteAsync(RedisCommands.LPush(key, values));
         }
 
         /// <summary>
@@ -640,7 +640,7 @@ namespace CSRedis
         /// <returns>Length of list after push</returns>
         public Task<long> LPushXAsync(string key, object value)
         {
-            return WriteAsync(RedisCommand.LPushX(key, value));
+            return WriteAsync(RedisCommands.LPushX(key, value));
         }
 
         /// <summary>
@@ -652,7 +652,7 @@ namespace CSRedis
         /// <returns>List of elements in range</returns>
         public Task<string[]> LRangeAsync(string key, long start, long stop)
         {
-            return WriteAsync(RedisCommand.LRange(key, start, stop));
+            return WriteAsync(RedisCommands.LRange(key, start, stop));
         }
 
         /// <summary>
@@ -664,7 +664,7 @@ namespace CSRedis
         /// <returns>Number of removed elements</returns>
         public Task<long> LRemAsync(string key, long count, object value)
         {
-            return WriteAsync(RedisCommand.LRem(key, count, value));
+            return WriteAsync(RedisCommands.LRem(key, count, value));
         }
 
         /// <summary>
@@ -676,7 +676,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> LSetAsync(string key, long index, object value)
         {
-            return WriteAsync(RedisCommand.LSet(key, index, value));
+            return WriteAsync(RedisCommands.LSet(key, index, value));
         }
 
         /// <summary>
@@ -688,7 +688,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> LTrimAsync(string key, long start, long stop)
         {
-            return WriteAsync(RedisCommand.LTrim(key, start, stop));
+            return WriteAsync(RedisCommands.LTrim(key, start, stop));
         }
 
         /// <summary>
@@ -698,7 +698,7 @@ namespace CSRedis
         /// <returns>Value of last list element</returns>
         public Task<string> RPopAsync(string key)
         {
-            return WriteAsync(RedisCommand.RPop(key));
+            return WriteAsync(RedisCommands.RPop(key));
         }
 
         /// <summary>
@@ -709,7 +709,7 @@ namespace CSRedis
         /// <returns>Element being popped and pushed</returns>
         public Task<string> RPopLPushAsync(string source, string destination)
         {
-            return WriteAsync(RedisCommand.RPopLPush(source, destination));
+            return WriteAsync(RedisCommands.RPopLPush(source, destination));
         }
 
         /// <summary>
@@ -720,7 +720,7 @@ namespace CSRedis
         /// <returns>Length of list after push</returns>
         public Task<long> RPushAsync(string key, params object[] values)
         {
-            return WriteAsync(RedisCommand.RPush(key, values));
+            return WriteAsync(RedisCommands.RPush(key, values));
         }
 
         /// <summary>
@@ -731,7 +731,7 @@ namespace CSRedis
         /// <returns>Length of list after push</returns>
         public Task<long> RPushXAsync(string key, params object[] values)
         {
-            return WriteAsync(RedisCommand.RPushX(key, values));
+            return WriteAsync(RedisCommands.RPushX(key, values));
         }
         #endregion
 
@@ -744,7 +744,7 @@ namespace CSRedis
         /// <returns>Number of elements added to set</returns>
         public Task<long> SAddAsync(string key, params object[] members)
         {
-            return WriteAsync(RedisCommand.SAdd(key, members));
+            return WriteAsync(RedisCommands.SAdd(key, members));
         }
 
         /// <summary>
@@ -754,7 +754,7 @@ namespace CSRedis
         /// <returns>Number of elements in set</returns>
         public Task<long> SCardAsync(string key)
         {
-            return WriteAsync(RedisCommand.SCard(key));
+            return WriteAsync(RedisCommands.SCard(key));
         }
 
         /// <summary>
@@ -764,7 +764,7 @@ namespace CSRedis
         /// <returns>Array of elements in resulting set</returns>
         public Task<string[]> SDiffAsync(params string[] keys)
         {
-            return WriteAsync(RedisCommand.SDiff(keys));
+            return WriteAsync(RedisCommands.SDiff(keys));
         }
 
         /// <summary>
@@ -775,7 +775,7 @@ namespace CSRedis
         /// <returns>Number of elements in the resulting set</returns>
         public Task<long> SDiffStoreAsync(string destination, params string[] keys)
         {
-            return WriteAsync(RedisCommand.SDiffStore(destination, keys));
+            return WriteAsync(RedisCommands.SDiffStore(destination, keys));
         }
 
         /// <summary>
@@ -785,7 +785,7 @@ namespace CSRedis
         /// <returns>Array of elements in resulting set</returns>
         public Task<string[]> SInterAsync(params string[] keys)
         {
-            return WriteAsync(RedisCommand.SInter(keys));
+            return WriteAsync(RedisCommands.SInter(keys));
         }
 
         /// <summary>
@@ -796,7 +796,7 @@ namespace CSRedis
         /// <returns>Number of elements in resulting set</returns>
         public Task<long> SInterStoreAsync(string destination, params string[] keys)
         {
-            return WriteAsync(RedisCommand.SInterStore(destination, keys));
+            return WriteAsync(RedisCommands.SInterStore(destination, keys));
         }
 
         /// <summary>
@@ -807,7 +807,7 @@ namespace CSRedis
         /// <returns>True if member exists in set</returns>
         public Task<bool> SIsMemberAsync(string key, object member)
         {
-            return WriteAsync(RedisCommand.SIsMember(key, member));
+            return WriteAsync(RedisCommands.SIsMember(key, member));
         }
 
         /// <summary>
@@ -817,7 +817,7 @@ namespace CSRedis
         /// <returns>All elements in the set</returns>
         public Task<string[]> SMembersAsync(string key)
         {
-            return WriteAsync(RedisCommand.SMembers(key));
+            return WriteAsync(RedisCommands.SMembers(key));
         }
 
         /// <summary>
@@ -829,7 +829,7 @@ namespace CSRedis
         /// <returns>True if element was moved</returns>
         public Task<bool> SMoveAsync(string source, string destination, object member)
         {
-            return WriteAsync(RedisCommand.SMove(source, destination, member));
+            return WriteAsync(RedisCommands.SMove(source, destination, member));
         }
 
         /// <summary>
@@ -839,7 +839,7 @@ namespace CSRedis
         /// <returns>The removed element</returns>
         public Task<string> SPopAsync(string key)
         {
-            return WriteAsync(RedisCommand.SPop(key));
+            return WriteAsync(RedisCommands.SPop(key));
         }
 
         /// <summary>
@@ -849,7 +849,7 @@ namespace CSRedis
         /// <returns>One random element from set</returns>
         public Task<string> SRandMemberAsync(string key)
         {
-            return WriteAsync(RedisCommand.SRandMember(key));
+            return WriteAsync(RedisCommands.SRandMember(key));
         }
 
         /// <summary>
@@ -860,7 +860,7 @@ namespace CSRedis
         /// <returns>One or more random elements from set</returns>
         public Task<string[]> SRandMemberAsync(string key, long count)
         {
-            return WriteAsync(RedisCommand.SRandMember(key, count));
+            return WriteAsync(RedisCommands.SRandMember(key, count));
         }
 
         /// <summary>
@@ -871,7 +871,7 @@ namespace CSRedis
         /// <returns>Number of elements removed from set</returns>
         public Task<long> SRemAsync(string key, params object[] members)
         {
-            return WriteAsync(RedisCommand.SRem(key, members));
+            return WriteAsync(RedisCommands.SRem(key, members));
         }
 
         /// <summary>
@@ -881,7 +881,7 @@ namespace CSRedis
         /// <returns>Array of elements in resulting set</returns>
         public Task<string[]> SUnionAsync(params string[] keys)
         {
-            return WriteAsync(RedisCommand.SUnion(keys));
+            return WriteAsync(RedisCommands.SUnion(keys));
         }
 
         /// <summary>
@@ -892,7 +892,7 @@ namespace CSRedis
         /// <returns>Number of elements in resulting set</returns>
         public Task<long> SUnionStoreAsync(string destination, params string[] keys)
         {
-            return WriteAsync(RedisCommand.SUnionStore(destination, keys));
+            return WriteAsync(RedisCommands.SUnionStore(destination, keys));
         }
         #endregion
 
@@ -905,7 +905,7 @@ namespace CSRedis
         /// <returns>Number of elements added to the sorted set (not including member updates)</returns>
         public Task<long> ZAddAsync<TScore, TMember>(string key, params Tuple<TScore, TMember>[] memberScores)
         {
-            return WriteAsync(RedisCommand.ZAdd(key, memberScores));
+            return WriteAsync(RedisCommands.ZAdd(key, memberScores));
         }
 
         /// <summary>
@@ -916,7 +916,7 @@ namespace CSRedis
         /// <returns>Number of elements added to the sorted set (not including member updates)</returns>
         public Task<long> ZAddAsync(string key, params string[] memberScores)
         {
-            return WriteAsync(RedisCommand.ZAdd(key, memberScores));
+            return WriteAsync(RedisCommands.ZAdd(key, memberScores));
         }
 
         /// <summary>
@@ -926,7 +926,7 @@ namespace CSRedis
         /// <returns>Number of elements in the sorted set</returns>
         public Task<long> ZCardAsync(string key)
         {
-            return WriteAsync(RedisCommand.ZCard(key));
+            return WriteAsync(RedisCommands.ZCard(key));
         }
 
         /// <summary>
@@ -940,7 +940,7 @@ namespace CSRedis
         /// <returns>Number of elements in the specified score range</returns>
         public Task<long> ZCountAsync(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false)
         {
-            return WriteAsync(RedisCommand.ZCount(key, min, max, exclusiveMin, exclusiveMax));
+            return WriteAsync(RedisCommands.ZCount(key, min, max, exclusiveMin, exclusiveMax));
         }
 
         /// <summary>
@@ -952,7 +952,7 @@ namespace CSRedis
         /// <returns>Number of elements in the specified score range</returns>
         public Task<long> ZCountAsync(string key, string min, string max)
         {
-            return WriteAsync(RedisCommand.ZCount(key, min, max));
+            return WriteAsync(RedisCommands.ZCount(key, min, max));
         }
 
         /// <summary>
@@ -964,7 +964,7 @@ namespace CSRedis
         /// <returns>New score of member</returns>
         public Task<double> ZIncrByAsync(string key, double increment, string member)
         {
-            return WriteAsync(RedisCommand.ZIncrBy(key, increment, member));
+            return WriteAsync(RedisCommands.ZIncrBy(key, increment, member));
         }
 
         /// <summary>
@@ -977,7 +977,7 @@ namespace CSRedis
         /// <returns>Number of elements in the resulting sorted set</returns>
         public Task<long> ZInterStoreAsync(string destination, double[] weights = null, RedisAggregate? aggregate = null, params string[] keys)
         {
-            return WriteAsync(RedisCommand.ZInterStore(destination, weights, aggregate, keys));
+            return WriteAsync(RedisCommands.ZInterStore(destination, weights, aggregate, keys));
         }
 
         /// <summary>
@@ -1001,7 +1001,7 @@ namespace CSRedis
         /// <returns>Array of elements in the specified range (with optional scores)</returns>
         public Task<string[]> ZRangeAsync(string key, long start, long stop, bool withScores = false)
         {
-            return WriteAsync(RedisCommand.ZRange(key, start, stop, withScores));
+            return WriteAsync(RedisCommands.ZRange(key, start, stop, withScores));
         }
 
         /// <summary>
@@ -1013,7 +1013,7 @@ namespace CSRedis
         /// <returns>Array of elements in the specified range with scores</returns>
         public Task<Tuple<string, double>[]> ZRangeWithScoresAsync(string key, long start, long stop)
         {
-            return WriteAsync(RedisCommand.ZRangeWithScores(key, start, stop));
+            return WriteAsync(RedisCommands.ZRangeWithScores(key, start, stop));
         }
 
         /// <summary>
@@ -1030,7 +1030,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified range (with optional scores)</returns>
         public Task<string[]> ZRangeByScoreAsync(string key, double min, double max, bool withScores = false, bool exclusiveMin = false, bool exclusiveMax = false, long? offset = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZRangeByScore(key, min, max, withScores, exclusiveMin, exclusiveMax, offset, count));
+            return WriteAsync(RedisCommands.ZRangeByScore(key, min, max, withScores, exclusiveMin, exclusiveMax, offset, count));
         }
 
         /// <summary>
@@ -1045,7 +1045,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified range (with optional scores)</returns>
         public Task<string[]> ZRangeByScoreAsync(string key, string min, string max, bool withScores = false, long? offset = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZRangeByScore(key, min, max, withScores, offset, count));
+            return WriteAsync(RedisCommands.ZRangeByScore(key, min, max, withScores, offset, count));
         }
 
         /// <summary>
@@ -1061,7 +1061,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified range (with optional scores)</returns>
         public Task<Tuple<string, double>[]> ZRangeByScoreWithScoresAsync(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false, long? offset = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZRangeByScoreWithScores(key, min, max, exclusiveMin, exclusiveMax, offset, count));
+            return WriteAsync(RedisCommands.ZRangeByScoreWithScores(key, min, max, exclusiveMin, exclusiveMax, offset, count));
         }
 
         /// <summary>
@@ -1075,7 +1075,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified range (with optional scores)</returns>
         public Task<Tuple<string, double>[]> ZRangeByScoreWithScoresAsync(string key, string min, string max, long? offset = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZRangeByScoreWithScores(key, min, max, offset, count));
+            return WriteAsync(RedisCommands.ZRangeByScoreWithScores(key, min, max, offset, count));
         }
 
         /// <summary>
@@ -1086,7 +1086,7 @@ namespace CSRedis
         /// <returns>Rank of member or null if key does not exist</returns>
         public Task<long?> ZRankAsync(string key, string member)
         {
-            return WriteAsync(RedisCommand.ZRank(key, member));
+            return WriteAsync(RedisCommands.ZRank(key, member));
         }
 
         /// <summary>
@@ -1097,7 +1097,7 @@ namespace CSRedis
         /// <returns>Number of elements removed</returns>
         public Task<long> ZRemAsync(string key, params object[] members)
         {
-            return WriteAsync(RedisCommand.ZRem(key, members));
+            return WriteAsync(RedisCommands.ZRem(key, members));
         }
 
         /// <summary>
@@ -1109,7 +1109,7 @@ namespace CSRedis
         /// <returns>Number of elements removed</returns>
         public Task<long> ZRemRangeByRankAsync(string key, long start, long stop)
         {
-            return WriteAsync(RedisCommand.ZRemRangeByRank(key, start, stop));
+            return WriteAsync(RedisCommands.ZRemRangeByRank(key, start, stop));
         }
 
         /// <summary>
@@ -1123,7 +1123,7 @@ namespace CSRedis
         /// <returns>Number of elements removed</returns>
         public Task<long> ZRemRangeByScoreAsync(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false)
         {
-            return WriteAsync(RedisCommand.ZRemRangeByScore(key, min, max, exclusiveMin, exclusiveMax));
+            return WriteAsync(RedisCommands.ZRemRangeByScore(key, min, max, exclusiveMin, exclusiveMax));
         }
 
         /// <summary>
@@ -1136,7 +1136,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified range (with optional scores)</returns>
         public Task<string[]> ZRevRangeAsync(string key, long start, long stop, bool withScores = false)
         {
-            return WriteAsync(RedisCommand.ZRevRange(key, start, stop, withScores));
+            return WriteAsync(RedisCommands.ZRevRange(key, start, stop, withScores));
         }
 
         /// <summary>
@@ -1148,7 +1148,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified range (with optional scores)</returns>
         public Task<Tuple<string, double>[]> ZRevRangeWithScoresAsync(string key, long start, long stop)
         {
-            return WriteAsync(RedisCommand.ZRevRangeWithScores(key, start, stop));
+            return WriteAsync(RedisCommands.ZRevRangeWithScores(key, start, stop));
         }
 
         /// <summary>
@@ -1165,7 +1165,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified score range (with optional scores)</returns>
         public Task<string[]> ZRevRangeByScoreAsync(string key, double max, double min, bool withScores = false, bool exclusiveMax = false, bool exclusiveMin = false, long? offset = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZRevRangeByScore(key, max, min, withScores, exclusiveMax, exclusiveMin, offset, count));
+            return WriteAsync(RedisCommands.ZRevRangeByScore(key, max, min, withScores, exclusiveMax, exclusiveMin, offset, count));
         }
 
         /// <summary>
@@ -1180,7 +1180,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified score range (with optional scores)</returns>
         public Task<string[]> ZRevRangeByScoreAsync(string key, string max, string min, bool withScores = false, long? offset = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZRevRangeByScore(key, max, min, withScores, offset, count));
+            return WriteAsync(RedisCommands.ZRevRangeByScore(key, max, min, withScores, offset, count));
         }
 
         /// <summary>
@@ -1196,7 +1196,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified score range (with optional scores)</returns>
         public Task<Tuple<string, double>[]> ZRevRangeByScoreWithScoresAsync(string key, double max, double min, bool exclusiveMax = false, bool exclusiveMin = false, long? offset = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZRevRangeByScoreWithScores(key, max, min, exclusiveMax, exclusiveMin, offset, count));
+            return WriteAsync(RedisCommands.ZRevRangeByScoreWithScores(key, max, min, exclusiveMax, exclusiveMin, offset, count));
         }
 
         /// <summary>
@@ -1210,7 +1210,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified score range (with optional scores)</returns>
         public Task<Tuple<string, double>[]> ZRevRangeByScoreWithScoresAsync(string key, string max, string min, long? offset = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZRevRangeByScoreWithScores(key, max, min, offset, count));
+            return WriteAsync(RedisCommands.ZRevRangeByScoreWithScores(key, max, min, offset, count));
         }
 
         /// <summary>
@@ -1221,7 +1221,7 @@ namespace CSRedis
         /// <returns>Rank of member, or null if member does not exist</returns>
         public Task<long?> ZRevRankAsync(string key, string member)
         {
-            return WriteAsync(RedisCommand.ZRevRank(key, member));
+            return WriteAsync(RedisCommands.ZRevRank(key, member));
         }
 
         /// <summary>
@@ -1232,7 +1232,7 @@ namespace CSRedis
         /// <returns>Score of member, or null if member does not exist</returns>
         public Task<double?> ZScoreAsync(string key, string member)
         {
-            return WriteAsync(RedisCommand.ZScore(key, member));
+            return WriteAsync(RedisCommands.ZScore(key, member));
         }
 
         /// <summary>
@@ -1245,7 +1245,7 @@ namespace CSRedis
         /// <returns>Number of elements in the resulting sorted set</returns>
         public Task<long> ZUnionStoreAsync(string destination, double[] weights = null, RedisAggregate? aggregate = null, params string[] keys)
         {
-            return WriteAsync(RedisCommand.ZUnionStore(destination, weights, aggregate, keys));
+            return WriteAsync(RedisCommands.ZUnionStore(destination, weights, aggregate, keys));
         }
 
         /// <summary>
@@ -1258,7 +1258,7 @@ namespace CSRedis
         /// <returns>Updated cursor and result set</returns>
         public Task<RedisScan<Tuple<string, double>>> ZScanAsync(string key, long cursor, string pattern = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZScan(key, cursor, pattern, count));
+            return WriteAsync(RedisCommands.ZScan(key, cursor, pattern, count));
         }
 
         /// <summary>
@@ -1272,7 +1272,7 @@ namespace CSRedis
         /// <returns>List of elements in the specified range</returns>
         public Task<string[]> ZRangeByLexAsync(string key, string min, string max, long? offset = null, long? count = null)
         {
-            return WriteAsync(RedisCommand.ZRangeByLex(key, min, max, offset, count));
+            return WriteAsync(RedisCommands.ZRangeByLex(key, min, max, offset, count));
         }
 
         /// <summary>
@@ -1284,7 +1284,7 @@ namespace CSRedis
         /// <returns>Number of elements removed</returns>
         public Task<long> ZRemRangeByLexAsync(string key, string min, string max)
         {
-            return WriteAsync(RedisCommand.ZRemRangeByLex(key, min, max));
+            return WriteAsync(RedisCommands.ZRemRangeByLex(key, min, max));
         }
 
         /// <summary>
@@ -1296,7 +1296,7 @@ namespace CSRedis
         /// <returns>Number of elements in the specified score range</returns>
         public Task<long> ZLexCountAsync(string key, string min, string max)
         {
-            return WriteAsync(RedisCommand.ZLexCount(key, min, max));
+            return WriteAsync(RedisCommands.ZLexCount(key, min, max));
         }
         #endregion
 
@@ -1309,7 +1309,7 @@ namespace CSRedis
         /// <returns>Number of clients that received the message</returns>
         public Task<long> PublishAsync(string channel, string message)
         {
-            return WriteAsync(RedisCommand.Publish(channel, message));
+            return WriteAsync(RedisCommands.Publish(channel, message));
         }
 
         /// <summary>
@@ -1319,7 +1319,7 @@ namespace CSRedis
         /// <returns>Active channel names</returns>
         public Task<string[]> PubSubChannelsAsync(string pattern = null)
         {
-            return WriteAsync(RedisCommand.PubSubChannels(pattern));
+            return WriteAsync(RedisCommands.PubSubChannels(pattern));
         }
 
         /// <summary>
@@ -1329,7 +1329,7 @@ namespace CSRedis
         /// <returns>Channel names and counts</returns>
         public Task<Tuple<string, long>[]> PubSubNumSubAsync(params string[] channels)
         {
-            return WriteAsync(RedisCommand.PubSubNumSub(channels));
+            return WriteAsync(RedisCommands.PubSubNumSub(channels));
         }
 
         /// <summary>
@@ -1338,7 +1338,7 @@ namespace CSRedis
         /// <returns>The number of patterns all the clients are subscribed to</returns>
         public Task<long> PubSubNumPatAsync()
         {
-            return WriteAsync(RedisCommand.PubSubNumPat());
+            return WriteAsync(RedisCommands.PubSubNumPat());
         }
         #endregion
 
@@ -1352,7 +1352,7 @@ namespace CSRedis
         /// <returns>Redis object</returns>
         public Task<object> EvalAsync(string script, string[] keys, params string[] arguments)
         {
-            return WriteAsync(RedisCommand.Eval(script, keys, arguments));
+            return WriteAsync(RedisCommands.Eval(script, keys, arguments));
         }
 
         /// <summary>
@@ -1364,7 +1364,7 @@ namespace CSRedis
         /// <returns>Redis object</returns>
         public Task<object> EvalSHAAsync(string sha1, string[] keys, params string[] arguments)
         {
-            return WriteAsync(RedisCommand.EvalSHA(sha1, keys, arguments));
+            return WriteAsync(RedisCommands.EvalSHA(sha1, keys, arguments));
         }
 
         /// <summary>
@@ -1374,7 +1374,7 @@ namespace CSRedis
         /// <returns>Array of boolean values indicating script existence on server</returns>
         public Task<bool[]> ScriptExistsAsync(params string[] scripts)
         {
-            return WriteAsync(RedisCommand.ScriptExists(scripts));
+            return WriteAsync(RedisCommands.ScriptExists(scripts));
         }
 
         /// <summary>
@@ -1383,7 +1383,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ScriptFlushAsync()
         {
-            return WriteAsync(RedisCommand.ScriptFlush());
+            return WriteAsync(RedisCommands.ScriptFlush());
         }
 
         /// <summary>
@@ -1392,7 +1392,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ScriptKillAsync()
         {
-            return WriteAsync(RedisCommand.ScriptKill());
+            return WriteAsync(RedisCommands.ScriptKill());
         }
 
         /// <summary>
@@ -1402,7 +1402,7 @@ namespace CSRedis
         /// <returns>SHA1 hash of script</returns>
         public Task<string> ScriptLoadAsync(string script)
         {
-            return WriteAsync(RedisCommand.ScriptLoad(script));
+            return WriteAsync(RedisCommands.ScriptLoad(script));
         }
         #endregion
 
@@ -1415,7 +1415,7 @@ namespace CSRedis
         /// <returns>Length of string after append</returns>
         public Task<long> AppendAsync(string key, object value)
         {
-            return WriteAsync(RedisCommand.Append(key, value));
+            return WriteAsync(RedisCommands.Append(key, value));
         }
 
         /// <summary>
@@ -1427,7 +1427,7 @@ namespace CSRedis
         /// <returns>Number of bits set to 1</returns>
         public Task<long> BitCountAsync(string key, long? start = null, long? end = null)
         {
-            return WriteAsync(RedisCommand.BitCount(key, start, end));
+            return WriteAsync(RedisCommands.BitCount(key, start, end));
         }
 
         /// <summary>
@@ -1439,7 +1439,7 @@ namespace CSRedis
         /// <returns>Size of string stored in the destination key</returns>
         public Task<long> BitOpAsync(RedisBitOp operation, string destKey, params string[] keys)
         {
-            return WriteAsync(RedisCommand.BitOp(operation, destKey, keys));
+            return WriteAsync(RedisCommands.BitOp(operation, destKey, keys));
         }
 
         /// <summary>
@@ -1452,7 +1452,7 @@ namespace CSRedis
         /// <returns>Position of the first bit set to the specified value</returns>
         public Task<long> BitPosAsync(string key, bool bit, long? start = null, long? end = null)
         {
-            return WriteAsync(RedisCommand.BitPos(key, bit, start, end));
+            return WriteAsync(RedisCommands.BitPos(key, bit, start, end));
         }
 
         /// <summary>
@@ -1462,7 +1462,7 @@ namespace CSRedis
         /// <returns>Value of key after decrement</returns>
         public Task<long> DecrAsync(string key)
         {
-            return WriteAsync(RedisCommand.Decr(key));
+            return WriteAsync(RedisCommands.Decr(key));
         }
 
         /// <summary>
@@ -1473,7 +1473,7 @@ namespace CSRedis
         /// <returns>Value of key after decrement</returns>
         public Task<long> DecrByAsync(string key, long decrement)
         {
-            return WriteAsync(RedisCommand.DecrBy(key, decrement));
+            return WriteAsync(RedisCommands.DecrBy(key, decrement));
         }
 
         /// <summary>
@@ -1483,7 +1483,7 @@ namespace CSRedis
         /// <returns>Value of key</returns>
         public Task<string> GetAsync(string key)
         {
-            return WriteAsync(RedisCommand.Get(key));
+            return WriteAsync(RedisCommands.Get(key));
         }
 
         /// <summary>
@@ -1494,7 +1494,7 @@ namespace CSRedis
         /// <returns>Bit value stored at offset</returns>
         public Task<bool> GetBitAsync(string key, uint offset)
         {
-            return WriteAsync(RedisCommand.GetBit(key, offset));
+            return WriteAsync(RedisCommands.GetBit(key, offset));
         }
 
         /// <summary>
@@ -1506,7 +1506,7 @@ namespace CSRedis
         /// <returns>Substring in the specified range</returns>
         public Task<string> GetRangeAsync(string key, long start, long end)
         {
-            return WriteAsync(RedisCommand.GetRange(key, start, end));
+            return WriteAsync(RedisCommands.GetRange(key, start, end));
         }
 
         /// <summary>
@@ -1517,7 +1517,7 @@ namespace CSRedis
         /// <returns>Old value stored at key, or null if key did not exist</returns>
         public Task<string> GetSetAsync(string key, object value)
         {
-            return WriteAsync(RedisCommand.GetSet(key, value));
+            return WriteAsync(RedisCommands.GetSet(key, value));
         }
 
         /// <summary>
@@ -1527,7 +1527,7 @@ namespace CSRedis
         /// <returns>Value of key after increment</returns>
         public Task<long> IncrAsync(string key)
         {
-            return WriteAsync(RedisCommand.Incr(key));
+            return WriteAsync(RedisCommands.Incr(key));
         }
 
         /// <summary>
@@ -1538,7 +1538,7 @@ namespace CSRedis
         /// <returns>Value of key after increment</returns>
         public Task<long> IncrByAsync(string key, long increment)
         {
-            return WriteAsync(RedisCommand.IncrBy(key, increment));
+            return WriteAsync(RedisCommands.IncrBy(key, increment));
         }
 
         /// <summary>
@@ -1549,7 +1549,7 @@ namespace CSRedis
         /// <returns>Value of key after increment</returns>
         public Task<double> IncrByFloatAsync(string key, double increment)
         {
-            return WriteAsync(RedisCommand.IncrByFloat(key, increment));
+            return WriteAsync(RedisCommands.IncrByFloat(key, increment));
         }
 
         /// <summary>
@@ -1559,7 +1559,7 @@ namespace CSRedis
         /// <returns>Array of values at the specified keys</returns>
         public Task<string[]> MGetAsync(params string[] keys)
         {
-            return WriteAsync(RedisCommand.MGet(keys));
+            return WriteAsync(RedisCommands.MGet(keys));
         }
 
         /// <summary>
@@ -1569,7 +1569,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> MSetAsync(params Tuple<string, string>[] keyValues)
         {
-            return WriteAsync(RedisCommand.MSet(keyValues));
+            return WriteAsync(RedisCommands.MSet(keyValues));
         }
 
         /// <summary>
@@ -1579,7 +1579,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> MSetAsync(params string[] keyValues)
         {
-            return WriteAsync(RedisCommand.MSet(keyValues));
+            return WriteAsync(RedisCommands.MSet(keyValues));
         }
 
         /// <summary>
@@ -1589,7 +1589,7 @@ namespace CSRedis
         /// <returns>True if all keys were set</returns>
         public Task<bool> MSetNxAsync(params Tuple<string, string>[] keyValues)
         {
-            return WriteAsync(RedisCommand.MSetNx(keyValues));
+            return WriteAsync(RedisCommands.MSetNx(keyValues));
         }
 
         /// <summary>
@@ -1599,7 +1599,7 @@ namespace CSRedis
         /// <returns>True if all keys were set</returns>
         public Task<bool> MSetNxAsync(params string[] keyValues)
         {
-            return WriteAsync(RedisCommand.MSetNx(keyValues));
+            return WriteAsync(RedisCommands.MSetNx(keyValues));
         }
 
         /// <summary>
@@ -1611,7 +1611,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> PSetExAsync(string key, long milliseconds, object value)
         {
-            return WriteAsync(RedisCommand.PSetEx(key, milliseconds, value));
+            return WriteAsync(RedisCommands.PSetEx(key, milliseconds, value));
         }
 
         /// <summary>
@@ -1622,7 +1622,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> SetAsync(string key, object value)
         {
-            return WriteAsync(RedisCommand.Set(key, value));
+            return WriteAsync(RedisCommands.Set(key, value));
         }
 
         /// <summary>
@@ -1635,7 +1635,7 @@ namespace CSRedis
         /// <returns>Status code, or null if condition not met</returns>
         public Task<string> SetAsync(string key, object value, TimeSpan expiration, RedisExistence? condition = null)
         {
-            return WriteAsync(RedisCommand.Set(key, value, expiration, condition));
+            return WriteAsync(RedisCommands.Set(key, value, expiration, condition));
         }
 
         /// <summary>
@@ -1648,7 +1648,7 @@ namespace CSRedis
         /// <returns>Status code, or null if condition not met</returns>
         public Task<string> SetAsync(string key, object value, int? expirationSeconds = null, RedisExistence? condition = null)
         {
-            return WriteAsync(RedisCommand.Set(key, value, expirationSeconds, condition));
+            return WriteAsync(RedisCommands.Set(key, value, expirationSeconds, condition));
         }
 
         /// <summary>
@@ -1661,7 +1661,7 @@ namespace CSRedis
         /// <returns>Status code, or null if condition not met</returns>
         public Task<string> SetAsync(string key, object value, long? expirationMilliseconds = null, RedisExistence? condition = null)
         {
-            return WriteAsync(RedisCommand.Set(key, value, expirationMilliseconds, condition));
+            return WriteAsync(RedisCommands.Set(key, value, expirationMilliseconds, condition));
         }
 
         /// <summary>
@@ -1673,7 +1673,7 @@ namespace CSRedis
         /// <returns>Original bit stored at offset</returns>
         public Task<bool> SetBitAsync(string key, uint offset, bool value)
         {
-            return WriteAsync(RedisCommand.SetBit(key, offset, value));
+            return WriteAsync(RedisCommands.SetBit(key, offset, value));
         }
 
         /// <summary>
@@ -1685,7 +1685,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> SetExAsync(string key, long seconds, object value)
         {
-            return WriteAsync(RedisCommand.SetEx(key, seconds, value));
+            return WriteAsync(RedisCommands.SetEx(key, seconds, value));
         }
 
         /// <summary>
@@ -1696,7 +1696,7 @@ namespace CSRedis
         /// <returns>True if key was set</returns>
         public Task<bool> SetNxAsync(string key, object value)
         {
-            return WriteAsync(RedisCommand.SetNx(key, value));
+            return WriteAsync(RedisCommands.SetNx(key, value));
         }
 
         /// <summary>
@@ -1708,7 +1708,7 @@ namespace CSRedis
         /// <returns>Length of string after operation</returns>
         public Task<long> SetRangeAsync(string key, uint offset, object value)
         {
-            return WriteAsync(RedisCommand.SetRange(key, offset, value));
+            return WriteAsync(RedisCommands.SetRange(key, offset, value));
         }
 
         /// <summary>
@@ -1718,7 +1718,7 @@ namespace CSRedis
         /// <returns>Length of string at key</returns>
         public Task<long> StrLenAsync(string key)
         {
-            return WriteAsync(RedisCommand.StrLen(key));
+            return WriteAsync(RedisCommands.StrLen(key));
         }
         #endregion
 
@@ -1729,7 +1729,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> BgRewriteAofAsync()
         {
-            return WriteAsync(RedisCommand.BgRewriteAof());
+            return WriteAsync(RedisCommands.BgRewriteAof());
         }
 
         /// <summary>
@@ -1738,7 +1738,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> BgSaveAsync()
         {
-            return WriteAsync(RedisCommand.BgSave());
+            return WriteAsync(RedisCommands.BgSave());
         }
 
         /// <summary>
@@ -1747,7 +1747,7 @@ namespace CSRedis
         /// <returns>Connection name</returns>
         public Task<string> ClientGetNameAsync()
         {
-            return WriteAsync(RedisCommand.ClientGetName());
+            return WriteAsync(RedisCommands.ClientGetName());
         }
 
         /// <summary>
@@ -1758,7 +1758,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ClientKillAsync(string ip, int port)
         {
-            return WriteAsync(RedisCommand.ClientKill(ip, port));
+            return WriteAsync(RedisCommands.ClientKill(ip, port));
         }
 
         /// <summary>
@@ -1771,7 +1771,7 @@ namespace CSRedis
         /// <returns>The number of clients killed</returns>
         public Task<long> ClientKillAsync(string addr = null, string id = null, string type = null, bool? skipMe = null)
         {
-            return WriteAsync(RedisCommand.ClientKill(addr, id, type, skipMe));
+            return WriteAsync(RedisCommands.ClientKill(addr, id, type, skipMe));
         }
 
         /// <summary>
@@ -1780,7 +1780,7 @@ namespace CSRedis
         /// <returns>Formatted string of clients</returns>
         public Task<string> ClientListAsync()
         {
-            return WriteAsync(RedisCommand.ClientList());
+            return WriteAsync(RedisCommands.ClientList());
         }
 
         /// <summary>
@@ -1790,7 +1790,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ClientPauseAsync(int milliseconds)
         {
-            return WriteAsync(RedisCommand.ClientPause(milliseconds));
+            return WriteAsync(RedisCommands.ClientPause(milliseconds));
         }
 
         /// <summary>
@@ -1800,7 +1800,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ClientPauseAsync(TimeSpan timeout)
         {
-            return WriteAsync(RedisCommand.ClientPause(timeout));
+            return WriteAsync(RedisCommands.ClientPause(timeout));
         }
 
         /// <summary>
@@ -1810,7 +1810,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ClientSetNameAsync(string connectionName)
         {
-            return WriteAsync(RedisCommand.ClientSetName(connectionName));
+            return WriteAsync(RedisCommands.ClientSetName(connectionName));
         }
 
         /// <summary>
@@ -1820,7 +1820,7 @@ namespace CSRedis
         /// <returns>Configuration value</returns>
         public Task<Tuple<string, string>[]> ConfigGetAsync(string parameter)
         {
-            return WriteAsync(RedisCommand.ConfigGet(parameter));
+            return WriteAsync(RedisCommands.ConfigGet(parameter));
         }
 
         /// <summary>
@@ -1829,7 +1829,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ConfigResetStatAsync()
         {
-            return WriteAsync(RedisCommand.ConfigResetStat());
+            return WriteAsync(RedisCommands.ConfigResetStat());
         }
 
         /// <summary>
@@ -1838,7 +1838,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ConfigRewriteAsync()
         {
-            return WriteAsync(RedisCommand.ConfigRewrite());
+            return WriteAsync(RedisCommands.ConfigRewrite());
         }
 
         /// <summary>
@@ -1849,7 +1849,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ConfigSetAsync(string parameter, string value)
         {
-            return WriteAsync(RedisCommand.ConfigSet(parameter, value));
+            return WriteAsync(RedisCommands.ConfigSet(parameter, value));
         }
 
         /// <summary>
@@ -1858,7 +1858,7 @@ namespace CSRedis
         /// <returns>Number of keys</returns>
         public Task<long> DbSizeAsync()
         {
-            return WriteAsync(RedisCommand.DbSize());
+            return WriteAsync(RedisCommands.DbSize());
         }
 
         /// <summary>
@@ -1867,7 +1867,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> DebugSegFaultAsync()
         {
-            return WriteAsync(RedisCommand.DebugSegFault());
+            return WriteAsync(RedisCommands.DebugSegFault());
         }
 
         /// <summary>
@@ -1876,7 +1876,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> FlushAllAsync()
         {
-            return WriteAsync(RedisCommand.FlushAll());
+            return WriteAsync(RedisCommands.FlushAll());
         }
 
         /// <summary>
@@ -1885,7 +1885,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> FlushDbAsync()
         {
-            return WriteAsync(RedisCommand.FlushDb());
+            return WriteAsync(RedisCommands.FlushDb());
         }
 
         /// <summary>
@@ -1895,7 +1895,7 @@ namespace CSRedis
         /// <returns>Formatted string</returns>
         public Task<string> InfoAsync(string section = null)
         {
-            return WriteAsync(RedisCommand.Info());
+            return WriteAsync(RedisCommands.Info());
         }
 
         /// <summary>
@@ -1904,7 +1904,7 @@ namespace CSRedis
         /// <returns>Date of last save</returns>
         public Task<DateTime> LastSaveAsync()
         {
-            return WriteAsync(RedisCommand.LastSave());
+            return WriteAsync(RedisCommands.LastSave());
         }
 
         /// <summary>
@@ -1913,7 +1913,7 @@ namespace CSRedis
         /// <returns>Role information</returns>
         public Task<RedisRole> RoleAsync()
         {
-            return WriteAsync(RedisCommand.Role());
+            return WriteAsync(RedisCommands.Role());
         }
 
         /// <summary>
@@ -1922,7 +1922,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> SaveAsync()
         {
-            return WriteAsync(RedisCommand.Save());
+            return WriteAsync(RedisCommands.Save());
         }
 
         /// <summary>
@@ -1932,7 +1932,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> ShutdownAsync(bool? save = null)
         {
-            return WriteAsync(RedisCommand.Shutdown());
+            return WriteAsync(RedisCommands.Shutdown());
         }
 
         /// <summary>
@@ -1943,7 +1943,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> SlaveOfAsync(string host, int port)
         {
-            return WriteAsync(RedisCommand.SlaveOf(host, port));
+            return WriteAsync(RedisCommands.SlaveOf(host, port));
         }
 
         /// <summary>
@@ -1952,7 +1952,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> SlaveOfNoOneAsync()
         {
-            return WriteAsync(RedisCommand.SlaveOfNoOne());
+            return WriteAsync(RedisCommands.SlaveOfNoOne());
         }
 
         /// <summary>
@@ -1962,7 +1962,7 @@ namespace CSRedis
         /// <returns>Slow log entries</returns>
         public Task<RedisSlowLogEntry[]> SlowLogGetAsync(long? count = null)
         {
-            return WriteAsync(RedisCommand.SlowLogGet(count));
+            return WriteAsync(RedisCommands.SlowLogGet(count));
         }
 
         /// <summary>
@@ -1971,7 +1971,7 @@ namespace CSRedis
         /// <returns>Slow log length</returns>
         public Task<long> SlowLogLenAsync()
         {
-            return WriteAsync(RedisCommand.SlowLogLen());
+            return WriteAsync(RedisCommands.SlowLogLen());
         }
 
         /// <summary>
@@ -1980,7 +1980,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> SlowLogResetAsync()
         {
-            return WriteAsync(RedisCommand.SlowLogReset());
+            return WriteAsync(RedisCommands.SlowLogReset());
         }
 
         /// <summary>
@@ -1989,7 +1989,7 @@ namespace CSRedis
         /// <returns>Byte array of Redis sync data</returns>
         public Task<byte[]> SyncAsync()
         {
-            return WriteAsync(RedisCommand.Sync());
+            return WriteAsync(RedisCommands.Sync());
         }
 
         /// <summary>
@@ -1998,7 +1998,7 @@ namespace CSRedis
         /// <returns>Server time</returns>
         public Task<DateTime> TimeAsync()
         {
-            return WriteAsync(RedisCommand.Time());
+            return WriteAsync(RedisCommands.Time());
         }
         #endregion
 
@@ -2036,7 +2036,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> UnwatchAsync()
         {
-            return WriteAsync(RedisCommand.Unwatch());
+            return WriteAsync(RedisCommands.Unwatch());
         }
 
         /// <summary>
@@ -2046,7 +2046,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> WatchAsync(params string[] keys)
         {
-            return WriteAsync(RedisCommand.Watch(keys));
+            return WriteAsync(RedisCommands.Watch(keys));
         }
         #endregion
 
@@ -2059,7 +2059,7 @@ namespace CSRedis
         /// <returns>1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.</returns>
         public Task<bool> PfAddAsync(string key, params object[] elements)
         {
-            return WriteAsync(RedisCommand.PfAdd(key, elements));
+            return WriteAsync(RedisCommands.PfAdd(key, elements));
         }
         /// <summary>
         /// Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s)
@@ -2068,7 +2068,7 @@ namespace CSRedis
         /// <returns>Approximated number of unique elements observed via PFADD</returns>
         public Task<long> PfCountAsync(params string[] keys)
         {
-            return WriteAsync(RedisCommand.PfCount(keys));
+            return WriteAsync(RedisCommands.PfCount(keys));
         }
         /// <summary>
         /// Merge N different HyperLogLogs into a single key.
@@ -2078,7 +2078,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public Task<string> PfMergeAsync(string destKey, params string[] sourceKeys)
         {
-            return WriteAsync(RedisCommand.PfMerge(destKey, sourceKeys));
+            return WriteAsync(RedisCommands.PfMerge(destKey, sourceKeys));
         }
         #endregion
     }

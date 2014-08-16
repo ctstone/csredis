@@ -9,7 +9,7 @@ namespace CSRedis.Internal
 {
     class RedisTransaction
     {
-        readonly RedisConnection _connection;
+        readonly IRedisConnector _connector;
         readonly RedisArray _execCommand;
         readonly List<Tuple<string, object[]>> _pipeCommands = new List<Tuple<string, object[]>>();
 
@@ -18,27 +18,27 @@ namespace CSRedis.Internal
         bool _active;
         public bool Active { get { return _active; } }
 
-        public RedisTransaction(RedisConnection connection)
+        public RedisTransaction(IRedisConnector connector)
         {
-            _connection = connection;
-            _execCommand = RedisCommand.Exec();
+            _connector = connector;
+            _execCommand = RedisCommands.Exec();
         }
 
         public string Start()
         {
             _active = true;
-            return _connection.Call(RedisCommand.Multi());
+            return _connector.Call(RedisCommands.Multi());
         }
 
         public Task<string> StartAsync()
         {
             _active = true;
-            return _connection.CallAsync(RedisCommand.Multi());
+            return _connector.CallAsync(RedisCommands.Multi());
         }
 
         public T Write<T>(RedisCommand<T> command)
         {
-            string response = _connection.Call(RedisCommand.AsTransaction(command));
+            string response = _connector.Call(RedisCommands.AsTransaction(command));
             OnTransactionQueued(command, response);
 
             _execCommand.AddParser(x => command.Parse(x));
@@ -50,7 +50,7 @@ namespace CSRedis.Internal
             lock (_execCommand)
             {
                 _execCommand.AddParser(x => command.Parse(x));
-                return _connection.CallAsync(RedisCommand.AsTransaction(command))
+                return _connector.CallAsync(RedisCommands.AsTransaction(command))
                     .ContinueWith(t => OnTransactionQueued(command, t.Result))
                     .ContinueWith(t => default(T));
             }
@@ -60,10 +60,10 @@ namespace CSRedis.Internal
         {
             _active = false;
 
-            if (_connection.Connected && _connection.Pipelined)
+            if (_connector.Connected && _connector.Pipelined)
             {
-                _connection.Call(_execCommand);
-                object[] response = _connection.EndPipe();
+                _connector.Call(_execCommand);
+                object[] response = _connector.EndPipe();
                 for (int i = 0; i < response.Length - 1; i++)
                     OnTransactionQueued(_pipeCommands[i].Item1, _pipeCommands[i].Item2, response[i].ToString());
                 
@@ -74,30 +74,30 @@ namespace CSRedis.Internal
                 return transaction_response as object[];
             }
 
-            return _connection.Call(_execCommand);
+            return _connector.Call(_execCommand);
         }
 
         public Task<object[]> ExecuteAsync()
         {
             _active = false;
-            return _connection.CallAsync(_execCommand);
+            return _connector.CallAsync(_execCommand);
         }
 
         public string Abort()
         {
             _active = false;
-            return _connection.Call(RedisCommand.Discard());
+            return _connector.Call(RedisCommands.Discard());
         }
 
         public Task<string> AbortAsync()
         {
             _active = false;
-            return _connection.CallAsync(RedisCommand.Discard());
+            return _connector.CallAsync(RedisCommands.Discard());
         }
 
         void OnTransactionQueued<T>(RedisCommand<T> command, string response)
         {
-            if (_connection.Pipelined)
+            if (_connector.Pipelined)
                 _pipeCommands.Add(Tuple.Create(command.Command, command.Arguments));
             else
                 OnTransactionQueued(command.Command, command.Arguments, response);

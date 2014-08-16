@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace CSRedis
 {
-    static class RedisCommand
+    static class RedisCommands
     {
         #region Connection
         public static RedisStatus Auth(string password)
@@ -1151,9 +1151,7 @@ namespace CSRedis
         }
     }
 
-    
-
-    abstract class RedisCommand<T>
+    class RedisCommand
     {
         readonly string _command;
         readonly object[] _args;
@@ -1166,6 +1164,14 @@ namespace CSRedis
             _command = command;
             _args = args;
         }
+    }
+
+    abstract class RedisCommand<T> : RedisCommand
+    {
+        protected RedisCommand(string command, params object[] args)
+            : base (command,args)
+        { }
+
         public abstract T Parse(RedisReader reader);
 
         public override string ToString()

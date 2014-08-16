@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CSRedis.Internal
+namespace CSRedis.Internal.Old
 {
     class RedisConnection
     {
@@ -16,6 +16,7 @@ namespace CSRedis.Internal
         readonly ConcurrentQueue<Action> _writeQueue;
         readonly object _readLock = new object();
         readonly object _connectionLock = new object();
+        readonly Semaphore _sem = new Semaphore(1, 1);
 
         Stream _stream;
         RedisWriter _writer;
@@ -102,12 +103,30 @@ namespace CSRedis.Internal
         public Task<T> CallAsync<T>(RedisCommand<T> command) // TODO: reconnect
         {
             var tcs = new TaskCompletionSource<T>();
-            _writeQueue.Enqueue(() => _writer.WriteAsync(command.Command, command.Arguments));
+            //_writeQueue.Enqueue(() => _writer.WriteAsync(command.Command, command.Arguments));
+
+            ConnectAsync().ContinueWith(t1 =>
+            {
+                _sem.WaitOne();
+
+                /*Action action;
+                _writeQueue.TryDequeue(out action);
+                action();*/
+                _writer.WriteAsync(command.Command, command.Arguments)
+                    .ContinueWith(t2 => 
+                    {
+                        TryRead(tcs, command.Parse);
+                        _sem.Release();
+                    });
+            });
+
+
+            /*_writeQueue.Enqueue(() => _writer.WriteAsync(command.Command, command.Arguments));
             _readQueue.Enqueue(() => TryRead(tcs, command.Parse));
 
             ConnectAsync()
                 .ContinueWith(x => WriteNext())
-                .ContinueWith(x => ReadNext());
+                .ContinueWith(x => ReadNext());*/
 
             return tcs.Task;
         }
@@ -217,6 +236,20 @@ namespace CSRedis.Internal
             }
         }
 
+        void DoStuff()
+        {
+                Action writer;
+                if (_writeQueue.TryDequeue(out writer))
+                {
+                    writer();
+                    _connector.OnWriteFlushed();
+                }
+
+                Action reader;
+                if (_readQueue.TryDequeue(out reader))
+                    reader();
+        }
+
         bool InitIO(Stream stream)
         {
             lock (_connectionLock)
@@ -229,7 +262,7 @@ namespace CSRedis.Internal
             {
                 _stream = new BufferedStream(stream);
                 _writer = new RedisWriter(_stream, Encoding);
-                _reader = new RedisReader(_stream, Encoding);
+                //_reader = new RedisReader(_stream, Encoding);
                 _pipeline = new RedisPipeline(_stream, Encoding, _reader);
             }
             return Connected;

@@ -15,21 +15,27 @@ namespace CSRedis.Internal
         readonly RedisReader _reader;
         readonly Queue<Func<object>> _parsers;
 
-        public bool Active { get; set; }
+        public bool Active { get; private set; }
 
-        internal RedisPipeline(Stream destination, Encoding encoding, RedisReader reader)
+        internal RedisPipeline(Stream destination, RedisEncoding encoding, RedisReader reader)
         {
             _reader = reader;
             _destination = destination;
             _buffer = new MemoryStream();
-            _writer = new RedisWriter(_buffer, encoding);
+            _writer = new RedisWriter(encoding);
             _parsers = new Queue<Func<object>>();
         }
 
-        public void Write<T>(RedisCommand<T> command)
+        public T Write<T>(RedisCommand<T> command)
         {
-            _writer.Write(command.Command, command.Arguments);
+            _writer.Write(command, _buffer);
             _parsers.Enqueue(() => command.Parse(_reader));
+            return default(T);
+        }
+
+        public void Begin()
+        {
+            Active = true;
         }
 
         public object[] Flush()
@@ -41,13 +47,13 @@ namespace CSRedis.Internal
             for (int i = 0; i < results.Length; i++)
                 results[i] = _parsers.Dequeue()();
             _buffer.SetLength(0);
+            Active = false;
             return results;
         }
 
         public void Dispose()
         {
             _buffer.Dispose();
-            _writer.Dispose();
         }
     }
 }

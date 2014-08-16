@@ -7,12 +7,9 @@ namespace CSRedis.Internal.IO
     class RedisReader
     {
         readonly Stream _stream;
-        readonly Encoding _encoding;
+        readonly RedisEncoding _encoding;
 
-        public bool Debug { get; set; }
-        public string DebugBuffer { get; set; }
-
-        public RedisReader(Stream stream, Encoding encoding)
+        public RedisReader(RedisEncoding encoding, Stream stream)
         {
             _stream = stream;
             _encoding = encoding;
@@ -25,7 +22,6 @@ namespace CSRedis.Internal.IO
                 throw new RedisException(ReadStatus(false));
             return type;
         }
-
 
         public string ReadStatus(bool checkType = true)
         {
@@ -94,7 +90,7 @@ namespace CSRedis.Internal.IO
             byte[] bulk = ReadBulk(checkType);
             if (bulk == null)
                 return null;
-            return _encoding.GetString(bulk);
+            return _encoding.Encoding.GetString(bulk);
         }
 
         public void ExpectType(RedisMessage expectedType)
@@ -168,15 +164,15 @@ namespace CSRedis.Internal.IO
 
         string ReadLine()
         {
-            StringBuilder sb = new StringBuilder();
+             StringBuilder sb = new StringBuilder();
             char c;
             bool should_break = false;
             while (true)
             {
-                c = (char)_stream.ReadByte();
-                if (c == RedisConnection.EOL[0]) // TODO: don't assume 2 char EOL string
+                 c = (char)_stream.ReadByte();
+                if (c == '\r') // TODO: remove hardcoded
                     should_break = true;
-                else if (c == RedisConnection.EOL[1] && should_break)
+                else if (c == '\n' && should_break)
                     break;
                 else
                 {

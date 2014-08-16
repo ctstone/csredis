@@ -288,7 +288,7 @@ namespace CSRedis.Tests
         static void TestSentinel<T>(string reply, Func<RedisSentinelClient, T> syncFunc, Func<RedisSentinelClient, Task<T>> asyncFunc, Action<MockConnector, T> test)
         {
             using (var mock = new MockConnector("MockHost", 9999, reply, reply))
-            using (var sentinel = new RedisSentinelClient(mock, new UTF8Encoding(false)))
+            using (var sentinel = new RedisSentinelClient(mock))
             {
                 var sync_result = syncFunc(sentinel);
                 var async_result = asyncFunc(sentinel);

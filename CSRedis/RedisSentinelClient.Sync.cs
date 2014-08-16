@@ -15,7 +15,7 @@ namespace CSRedis
         /// <returns>True if connected</returns>
         public bool Connect(int timeout)
         {
-            return _connection.Connect(timeout);
+            return _connector.Connect(); // TODO: timeout
         }
 
         /// <summary>
@@ -26,12 +26,12 @@ namespace CSRedis
         /// <returns>Redis unified response</returns>
         public object Call(string command, params string[] args)
         {
-            return Write(RedisCommand.Call(command, args));
+            return Write(RedisCommands.Call(command, args));
         }
 
         T Write<T>(RedisCommand<T> command)
         {
-            return _connection.Call(command);
+            return _connector.Call(command);
         }
 
         #region sentinel
@@ -41,7 +41,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public string Ping()
         {
-            return Write(RedisCommand.Ping());
+            return Write(RedisCommands.Ping());
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace CSRedis
         /// <returns>Redis master info</returns>
         public RedisMasterInfo[] Masters()
         {
-            return Write(RedisCommand.Sentinel.Masters());
+            return Write(RedisCommands.Sentinel.Masters());
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace CSRedis
         /// <returns>Master information</returns>
         public RedisMasterInfo Master(string masterName)
         {
-            return Write(RedisCommand.Sentinel.Master(masterName));
+            return Write(RedisCommands.Sentinel.Master(masterName));
         }
 
         /// <summary>
@@ -70,7 +70,7 @@ namespace CSRedis
         /// <returns>Sentinel hosts and ports</returns>
         public RedisSentinelInfo[] Sentinels(string masterName)
         {
-            return Write(RedisCommand.Sentinel.Sentinels(masterName));
+            return Write(RedisCommands.Sentinel.Sentinels(masterName));
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace CSRedis
         /// <returns>Redis slave info</returns>
         public RedisSlaveInfo[] Slaves(string masterName)
         {
-            return Write(RedisCommand.Sentinel.Slaves(masterName));
+            return Write(RedisCommands.Sentinel.Slaves(masterName));
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace CSRedis
         /// <returns>IP and port of master Redis server</returns>
         public Tuple<string, int> GetMasterAddrByName(string masterName)
         {
-            return Write(RedisCommand.Sentinel.GetMasterAddrByName(masterName));
+            return Write(RedisCommands.Sentinel.GetMasterAddrByName(masterName));
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace CSRedis
         /// <param name="channels">Name of channels to open (refer to http://redis.io/ for channel names)</param>
         public void Subscribe(params string[] channels)
         {
-            _subscription.Send(RedisCommand.Subscribe(channels));
+            _subscription.Send(RedisCommands.Subscribe(channels));
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace CSRedis
         /// <param name="channels">Name of channels to close</param>
         public void Unsubscribe(params string[] channels)
         {
-            _subscription.Send(RedisCommand.Unsubscribe(channels));
+            _subscription.Send(RedisCommands.Unsubscribe(channels));
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace CSRedis
         /// <param name="channelPatterns">Pattern of channels to open (refer to http://redis.io/ for channel names)</param>
         public void PSubscribe(params string[] channelPatterns)
         {
-            _subscription.Send(RedisCommand.PSubscribe(channelPatterns));
+            _subscription.Send(RedisCommands.PSubscribe(channelPatterns));
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace CSRedis
         /// <param name="channelPatterns">Pattern of channels to close</param>
         public void PUnsubscribe(params string[] channelPatterns)
         {
-            _subscription.Send(RedisCommand.PUnsubscribe(channelPatterns));
+            _subscription.Send(RedisCommands.PUnsubscribe(channelPatterns));
         }
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace CSRedis
         /// <returns>Master state</returns>
         public RedisMasterState IsMasterDownByAddr(string ip, int port, long currentEpoch, string runId)
         {
-            return Write(RedisCommand.Sentinel.IsMasterDownByAddr(ip, port, currentEpoch, runId));
+            return Write(RedisCommands.Sentinel.IsMasterDownByAddr(ip, port, currentEpoch, runId));
         }
 
         /// <summary>
@@ -149,7 +149,7 @@ namespace CSRedis
         /// <returns>Number of masters that were reset</returns>
         public long Reset(string pattern)
         {
-            return Write(RedisCommand.Sentinel.Reset(pattern));
+            return Write(RedisCommands.Sentinel.Reset(pattern));
         }
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public string Failover(string masterName)
         {
-            return Write(RedisCommand.Sentinel.Failover(masterName));
+            return Write(RedisCommands.Sentinel.Failover(masterName));
         }
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public string Monitor(string name, int port, int quorum)
         {
-            return Write(RedisCommand.Sentinel.Monitor(name, port, quorum));
+            return Write(RedisCommands.Sentinel.Monitor(name, port, quorum));
         }
 
         /// <summary>
@@ -181,7 +181,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public string Remove(string name)
         {
-            return Write(RedisCommand.Sentinel.Remove(name));
+            return Write(RedisCommands.Sentinel.Remove(name));
         }
 
         /// <summary>
@@ -193,7 +193,7 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public string Set(string masterName, string option, string value)
         {
-            return Write(RedisCommand.Sentinel.Set(masterName, option, value));
+            return Write(RedisCommands.Sentinel.Set(masterName, option, value));
         }
         #endregion
     }

@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSRedis.Internal
+namespace CSRedis.Internal.Old
 {
     class DefaultConnector : IRedisConnector
     {
@@ -93,14 +93,16 @@ namespace CSRedis.Internal
             return _connectionSource.Task;
         }
 
+        public void OnWriteFlushed()
+        { }
+
         public void Dispose()
         {
             _socket.Dispose();
         }
 
 
-        public void OnWriteFlushed()
-        { }
+       
 
         void ResetConnection()
         {

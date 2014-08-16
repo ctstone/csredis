@@ -55,7 +55,12 @@
     <Compile Include="Internal\Commands\RedisSlowLogCommand.cs" />
     <Compile Include="Internal\IRedisConnector.cs" />
     <Compile Include="Internal\MockConnector.cs" />
-    <Compile Include="Internal\DefaultConnector.cs" />
+    <Compile Include="Internal\RedisAsyncCommandToken.cs" />
+    <Compile Include="Internal\RedisConnector.cs" />
+    <Compile Include="Internal\IO\RedisReader.cs" />
+    <Compile Include="Internal\RedisEncoding.cs" />
+    <Compile Include="Internal\IO\RedisWriter.cs" />
+    <Compile Include="Internal\Utilities\SocketAsyncPool.cs" />
     <Compile Include="Internal\RedisListener.cs" />
     <Compile Include="Internal\MonitorListener.cs" />
     <Compile Include="Internal\RedisPipeline.cs" />
@@ -74,8 +79,8 @@
     <Compile Include="Internal\Commands\RedisStatus.cs" />
     <Compile Include="Internal\Commands\RedisString.cs" />
     <Compile Include="Internal\Commands\RedisSubscription.cs" />
-    <Compile Include="Internal\RedisConnection.cs" />
-    <Compile Include="Internal\IO\RedisReader.cs" />
+    <Compile Include="IRedisClientAsync.cs" />
+    <Compile Include="IRedisClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RedisClient.cs" />
     <Compile Include="Internal\RedisCommand.cs" />
@@ -90,7 +95,6 @@
       <DependentUpon>RedisSentinelClient.cs</DependentUpon>
     </Compile>
     <Compile Include="RedisSentinelManager.cs" />
-    <Compile Include="Internal\IO\RedisWriter.cs" />
     <Compile Include="Internal\Utilities\Serializer.cs" />
     <Compile Include="Types.cs" />
   </ItemGroup>
@@ -102,6 +106,7 @@
   <ItemGroup>
     <None Include="CSRedis.nuspec" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
