@@ -1,3 +1,10 @@
+##csredis 3.1.0.0
+[breaking] Changed RedisClient.Connected property to RedisClient.IsConnected
+[breaking] Changed RedisClient.Reconnected event to RedisClient.Connected. Event is now raised when the connection is first established as well as when the connection reconnects
+[breaking] Changed RedisClient.ReconnectTimeout to RedisClient.ReconnectWait
+[fix] Fixes to async handling
+[fix] Fixes to pipeline handling
+
 ##csredis 3.0.0.0
 Major internal rewrite with several breaking changes. Upgrade with care!
 [breaking] Changed base namespace: CSRedis

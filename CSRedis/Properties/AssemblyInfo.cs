@@ -22,8 +22,7 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("1e4063d6-d412-4c26-83c5-63a29ca84334")]
 
-[assembly: AssemblyVersion("3.0.0")]
-[assembly: AssemblyFileVersion("3.0.0")]
-[assembly: AssemblyInformationalVersion("3.0.0")]
+[assembly: AssemblyVersion("3.1.0")]
+[assembly: AssemblyFileVersion("3.1.0")]
+[assembly: AssemblyInformationalVersion("3.1.0-rc1")]
 [assembly: InternalsVisibleTo("CSRedis.Tests")]
-[assembly: InternalsVisibleTo("RedisTest")]
