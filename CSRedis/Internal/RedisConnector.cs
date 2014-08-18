@@ -12,18 +12,11 @@ using System.Threading.Tasks;
 
 namespace CSRedis.Internal
 {
-
-    class RedisAsyncThing // TODO: put all the async stuff here
-    {
-    }
-
-
     class RedisConnector : IRedisConnector
     {
         readonly DnsEndPoint _endpoint;
         readonly SocketAsyncEventArgs _connectArgs; // TODO: lazy
         readonly SocketAsyncPool _transferPool; // TODO: lazy
-        readonly Task<bool> _connectionTask; // TODO: lazy
         readonly ConcurrentQueue<IRedisAsyncCommandToken> _readQueue; // TODO: lazy
         readonly ConcurrentQueue<IRedisAsyncCommandToken> _writeQueue; // TODO: lazy
         readonly object _readLock; 
@@ -35,6 +28,7 @@ namespace CSRedis.Internal
         RedisReader _reader;
         RedisPipeline _pipeline;
         bool _asyncConnectionStarted;
+        TaskCompletionSource<bool> _connectionTaskSource;
 
         public event EventHandler Reconnected;
 
@@ -72,11 +66,10 @@ namespace CSRedis.Internal
             _writeLock = new object();
             _writer = new RedisWriter(_encoding);
 
-            var connectionTaskSource = new TaskCompletionSource<bool>();
-            _connectArgs = new SocketAsyncEventArgs { RemoteEndPoint = _endpoint, UserToken = connectionTaskSource };
+            
+            _connectArgs = new SocketAsyncEventArgs { RemoteEndPoint = _endpoint };
             _connectArgs.Completed += OnSocketCompleted;
             _transferPool.Completed += OnSocketCompleted;
-            _connectionTask = connectionTaskSource.Task;
         }
 
         public bool Connect()
@@ -92,11 +85,11 @@ namespace CSRedis.Internal
 
         public Task<bool> ConnectAsync()
         {
-            if (!_asyncConnectionStarted)
+            if (!_asyncConnectionStarted && !Connected)
             {
                 lock (_connectArgs)
                 {
-                    if (!_asyncConnectionStarted)
+                    if (!_asyncConnectionStarted && !Connected)
                     {
                         _asyncConnectionStarted = true;
                         InitSocket();
@@ -106,7 +99,7 @@ namespace CSRedis.Internal
                 }
             }
 
-            return _connectionTask;
+            return _connectionTaskSource.Task;
         }
 
         public T Call<T>(RedisCommand<T> command)
@@ -138,20 +131,50 @@ namespace CSRedis.Internal
             return token.TaskSource.Task;
         }
 
-        public void Write(RedisCommand command) // TODO: reconnect
+        public void Write(RedisCommand command)
         {
-            _writer.Write(command, _stream);
+            try
+            {
+                _writer.Write(command, _stream);
+            }
+            catch (IOException)
+            {
+                if (ReconnectAttempts == 0)
+                    throw;
+                Reconnect();
+                Write(command);
+            }
         }
 
-        public T Read<T>(Func<RedisReader, T> func) // TODO: reconnect
+        public T Read<T>(Func<RedisReader, T> func)
         {
-            return func(_reader);
+            try
+            {
+                return func(_reader);
+            }
+            catch (IOException)
+            {
+                if (ReconnectAttempts == 0)
+                    throw;
+                Reconnect();
+                return Read(func);
+            }
         }
 
         public void Read(Stream destination, int bufferSize) // TODO: reconnect
         {
-            _reader.ExpectType(RedisMessage.Bulk);
-            _reader.ReadBulk(destination, bufferSize, false);
+            try
+            {
+                _reader.ExpectType(RedisMessage.Bulk);
+                _reader.ReadBulk(destination, bufferSize, false);
+            }
+            catch (IOException)
+            {
+                if (ReconnectAttempts == 0)
+                    throw;
+                Reconnect();
+                Read(destination, bufferSize);
+            }
         }
 
         public void BeginPipe()
@@ -162,7 +185,33 @@ namespace CSRedis.Internal
 
         public object[] EndPipe()
         {
-            return _pipeline.Flush();
+            try
+            {
+                return _pipeline.Flush();
+            }
+            catch (IOException)
+            {
+                if (ReconnectAttempts == 0)
+                    throw;
+                Reconnect();
+                return EndPipe();
+            }
+        }
+
+        public void Dispose()
+        {
+            _connectArgs.Dispose();
+            _transferPool.Dispose();
+
+            if (_pipeline != null)
+                _pipeline.Dispose();
+
+            if (_stream != null)
+                _stream.Dispose();
+
+            if (_socket != null)
+                _socket.Dispose();
+
         }
 
         void CallAsyncDeferred(Task t)
@@ -176,10 +225,18 @@ namespace CSRedis.Internal
                 _readQueue.Enqueue(token);
 
                 var args = _transferPool.Acquire();
-                int bytes = _writer.Write(token.Command, args.Buffer, args.Offset); // TODO: check bounds
+                int bytes;
+                try
+                {
+                    bytes = _writer.Write(token.Command, args.Buffer, args.Offset);
+                }
+                catch (ArgumentException e)
+                {
+                    throw new RedisClientException("Could not write command '" + token.Command.Command + "'. Argument size exceeds buffer allocation of " + args.Count + ".", e);
+                }
                 args.SetBuffer(args.Offset, bytes);
 
-                if (!_socket.SendAsync(args)) // TODO: catch here
+                if (!_socket.SendAsync(args))
                     OnSocketSent(args);
             }
         }
@@ -202,7 +259,6 @@ namespace CSRedis.Internal
                 }
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(ReconnectWait));
-                attempts++;
             }
 
             throw new IOException("Could not reconnect after " + attempts + " attempts");
@@ -228,8 +284,6 @@ namespace CSRedis.Internal
             if (_socket.Connected)
                 InitReader();
 
-            var token = (TaskCompletionSource<bool>)args.UserToken; 
-            token.SetResult(_socket.Connected);
         }
 
         void OnSocketSent(SocketAsyncEventArgs args)
@@ -240,7 +294,24 @@ namespace CSRedis.Internal
             lock (_readLock)
             {
                 if (_readQueue.TryDequeue(out token))
-                    token.SetResult(_reader);
+                {
+                    try
+                    {
+                        token.SetResult(_reader);
+                    }
+                    catch (IOException)
+                    {
+                        if (ReconnectAttempts == 0)
+                            throw;
+                        Reconnect();
+                        _writeQueue.Enqueue(token);
+                        ConnectAsync().ContinueWith(CallAsyncDeferred);
+                    }
+                    catch (Exception e)
+                    {
+                        token.SetException(e);
+                    }
+                }
             }
         }
 
@@ -254,7 +325,10 @@ namespace CSRedis.Internal
         {
             if (_socket != null)
                 _socket.Dispose();
+            if (_connectionTaskSource != null)
+                _connectionTaskSource.TrySetResult(false);
 
+            _connectionTaskSource = new TaskCompletionSource<bool>();
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         }
 
@@ -266,11 +340,9 @@ namespace CSRedis.Internal
             _stream = new BufferedStream(new NetworkStream(_socket));
             _reader = new RedisReader (_encoding, _stream);
             _pipeline = new RedisPipeline(_stream, _encoding, _reader);
+            _connectionTaskSource.SetResult(_socket.Connected);
         }
 
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }

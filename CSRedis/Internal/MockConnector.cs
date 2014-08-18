@@ -160,5 +160,11 @@ namespace CSRedis.Internal
                 tcs.SetException(e);
             }
         }
+
+        void OnReconnect()
+        {
+            if (Reconnected != null)
+                Reconnected(this, new EventArgs());
+        }
     }
 }

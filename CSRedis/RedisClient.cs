@@ -123,7 +123,7 @@ namespace CSRedis
         /// <param name="host">Redis server hostname</param>
         /// <param name="port">Redis server port</param>
         public RedisClient(string host, int port)
-            : this(new RedisConnector(host, port, DefaultConcurrency, DefaultBufferSize))
+            : this(host, port, DefaultConcurrency, DefaultBufferSize)
         { }
 
         /// <summary>
@@ -190,7 +190,7 @@ namespace CSRedis
         /// <typeparam name="T">Response type</typeparam>
         /// <param name="destination">Destination stream</param>
         /// <param name="func">Client command to execute (BULK reply only)</param>
-        public void StreamTo<T>(Stream destination, Func<RedisClient, T> func)
+        public void StreamTo<T>(Stream destination, Func<IRedisClient, T> func)
         {
             StreamTo(destination, DefaultBufferSize, func);
         }
@@ -202,7 +202,7 @@ namespace CSRedis
         /// <param name="destination">Destination stream</param>
         /// <param name="bufferSize">Size of buffer used to write server response</param>
         /// <param name="func">Client command to execute (BULK reply only)</param>
-        public void StreamTo<T>(Stream destination, int bufferSize, Func<RedisClient, T> func)
+        public void StreamTo<T>(Stream destination, int bufferSize, Func<IRedisClient, T> func)
         {
             _streaming = true;
             func(this);

@@ -105,8 +105,7 @@ namespace CSRedis.Internal.IO
         public void ExpectSize(long expectedSize)
         {
             long size = ReadInt(false);
-            if (size != expectedSize)
-                throw new RedisProtocolException("Expected " + expectedSize + " elements; got " + size);
+            ExpectSize(expectedSize, size);
         }
 
         public void ExpectSize(long expectedSize, long actualSize)
@@ -115,7 +114,7 @@ namespace CSRedis.Internal.IO
                 throw new RedisProtocolException("Expected " + expectedSize + " elements; got " + actualSize);
         }
 
-        public void ReadCRLF() // TODO: use RedisConnection.EOL
+        public void ReadCRLF() // TODO: remove hardcoded
         {
             var r = _stream.ReadByte();
             var n = _stream.ReadByte();

@@ -60,7 +60,7 @@
     <Compile Include="Internal\IO\RedisReader.cs" />
     <Compile Include="Internal\RedisEncoding.cs" />
     <Compile Include="Internal\IO\RedisWriter.cs" />
-    <Compile Include="Internal\Utilities\SocketAsyncPool.cs" />
+    <Compile Include="Internal\IO\SocketAsyncPool.cs" />
     <Compile Include="Internal\RedisListener.cs" />
     <Compile Include="Internal\MonitorListener.cs" />
     <Compile Include="Internal\RedisPipeline.cs" />

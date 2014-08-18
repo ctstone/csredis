@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace CSRedis
 {
+    /// <summary>
+    /// Interface for asyncronous RedisClient methods
+    /// </summary>
     interface IRedisClientAsync : IDisposable
     {
         /// <summary>

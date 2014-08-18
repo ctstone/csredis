@@ -5,9 +5,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-namespace CSRedis.Internal
+namespace CSRedis.Internal.IO
 {
-    class SocketAsyncPool
+    class SocketAsyncPool : IDisposable
     {
         readonly byte[] _buffer;
         readonly Stack<SocketAsyncEventArgs> _pool;
@@ -38,9 +38,7 @@ namespace CSRedis.Internal
 
             lock (_pool)
             {
-                var args = _pool.Pop();  // TODO: check for empty pool
-                args.SetBuffer(args.Offset, _bufferSize);
-                return args;
+                return _pool.Pop();
             }
         }
 
@@ -49,11 +47,18 @@ namespace CSRedis.Internal
             lock (_pool)
             {
                 if (args.Buffer.Equals(_buffer))
-                {
                     _pool.Push(args);
-                }
+                else
+                    args.Dispose();
             }
             _acquisitionGate.Release();
+        }
+
+        public void Dispose()
+        {
+            Array.Clear(_buffer, 0, _buffer.Length);
+            for (int i = 0; i < _pool.Count; i++)
+                _pool.Pop().Dispose();
         }
 
         void OnSocketCompleted(object sender, SocketAsyncEventArgs e)
