@@ -36,6 +36,19 @@ using (var redis = new RedisClient("localhost"))
 }
 ```
 
+Use the IRedisClient or IRedisClientAsync interfaces to use synconous or asyncronous methods exclusively.
+```csharp
+using (IRedisClient csredis = new RedisClient(Host))
+{
+    // only syncronous methods exposed
+}
+
+using (IRedisClientAsync csredis = new RedisClient(Host))
+{
+    // only asyncronous methods exposed
+}
+```
+
 ##Pipelining
 CSRedis supports pipelining commands to lessen the effects of network overhead on sequential server calls. To enable pipelining, wrap a group of commands between **StartPipe()** and **EndPipe()**. Note that redis-server currently has a 1GB limit on client buffers but CSRedis does not enforce this. Similar performance gains may be obtained by using the deferred Task/Asyncronous methods.
 ```csharp
@@ -53,6 +66,12 @@ using (var redis = new RedisClient("localhost"))
     redis.Set("key", "value");
     redis.Set("key2", "value2");
     object[] result2 = redis.EndPipe(); // transaction is EXEC'd automatically if DISCARD was not called first
+    
+    // DISCARD pipelined transaction
+    redis.StartPipeTransaction();
+    redis.Set("key", 123);
+    redis.Set("key2", "abc");
+    redis.Discard();
 }
 ```
 
@@ -72,9 +91,10 @@ CSRedis supports a simple reconnect option to handle dropped connections to the 
 ```csharp
 using (var redis = new RedisClient("localhost"))
 {
+    redis.Connected += (s, e) => redis.Auth(Password); // set AUTH, CLIENT NAME, etc
     redis.ReconnectAttempts = 3;
-    redis.ReconnectTimeout = 200;
-    // connection will retry 3 times before throwing an Exception
+    redis.ReconnectWait = 200;
+    // connection will retry 3 times with 200ms in between before throwing an Exception
 }
 ```
 
@@ -110,7 +130,7 @@ redis.HMSet("myhash", new[] { "F1", "string", "F2", "true", "F3", DateTime.Now.T
 
 
 ##Transactions
-Synchronous transactions are handled using the API calls MULTI/EXEC/DISCARD. Attach an event handler to **RedisClient.TransactionQueued** event to observe server queue replies (typically just 'OK'). When inside of a transaction, command return values will be default(T).
+Synchronous transactions are handled using the API calls MULTI/EXEC/DISCARD. Attach an event handler to **RedisClient.TransactionQueued** event to observe server queue replies (typically 'OK'). When inside of a transaction, command return values will be default(T).
 ```csharp
 redis.TransactionQueued += (s, e) =>
 {
@@ -154,32 +174,30 @@ object resp = redis.Call("ANYTHING", "arg1", "arg2", "arg3");
 Note that the response object will need to be cast according to the Redis unified protocol: status (System.String), integer (System.Int64), bulk (System.String), multi-bulk (System.Object[]).
 
 
-##Streaming responses (temporarily deprecated in v3)
+##Streaming responses
 For large result sizes, it may be preferred to stream the raw bytes from the server rather than allocating large chunks of memory in place. This can be achieved with **RedisClient.StreamTo()**. Note that this only applies to BULK responses (e.g. GET, HGET, LINDEX, etc). Attempting to stream any other response will result in an InvalidOperationException. Here is an example that stores the response in a MemoryStream 64 bytes at a time. A more useful example might use a FileStream and a larger buffer size.
 ```csharp
-redis.Set("test", "lots-of-data-here");
+redis.Set("test", new string('x', 1048576)); // 1MB string
 using (var ms = new MemoryStream())
 {
-  redis.StreamTo(ms, 64, r => r.Get("test")); // small buffer size used for demo
-  byte[] bytes = ms.ToArray(); // optional: get the bytes if needed
-}
-```
-
-To access the raw bytes from a server response, use **RedisClient.BufferFor()** with **RedisClient.Read()**. Together, these two methods allow you to read any BULK server response a few bytes at a time. Note that the buffer *MUST* be emptied fully before issuing another command. The read buffer is considered empty when **Read()** returns 0 bytes read. Failing to empty the buffer before executing a new Redis command will result in an InvalidOperationException. Example:
-```csharp
-redis.Set("test", "lots-of-data-here");
-redis.BufferFor(r => r.Get("test"));
-byte[] buffer = new byte[64];
-int bytes_read;
-while ((bytes_read = redis.Read(buffer, 0, buffer.Length)) > 0)
-{
-  Console.WriteLine("Read {0} bytes : {1}", bytes_read, Encoding.UTF8.GetString(buffer, 0, bytes_read));
+    redis.StreamTo(ms, 64, r => r.Get("test")); // read in small 64 byte blocks
+    byte[] bytes = ms.ToArray(); // optional: get the bytes if needed
 }
 ```
 
 ##Tracing
-Placeholder: link to low-level .NET TCP tracing
+Use [.NET tracing](http://msdn.microsoft.com/en-us/library/ms733025(v=vs.110).aspx) to expose low level TCP messages
 
 
 ##Sentinel
-Rewired in v3. Examples coming soon
+**RedisSentinelManager** is a managed connection that will automatically obtain a connection to a Redis master node based on information from one or more Redis Sentinel nodes. Async methods coming soon
+```csharp
+using (var sentinel = new RedisSentinelManager("host1:123", "host2:456"))
+{
+    sentinel.Add(Host); // add host using default port 
+    sentinel.Add(Host, 36379); // add host using specific port
+    sentinel.Connected += (s, e) => sentinel.Call(x => x.Auth(Password)); // this will be called each time a master connects
+    sentinel.Connect("mymaster"); // open connection
+    var test2 = sentinel.Call(x => x.Time()); // use the Call() lambda to access the current master connection
+}
+```
