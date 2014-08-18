@@ -16,13 +16,15 @@ namespace CSRedis.Internal
     {
         readonly DnsEndPoint _endpoint;
         readonly SocketAsyncEventArgs _connectArgs; // TODO: lazy
-        readonly SocketAsyncPool _transferPool; // TODO: lazy
+        readonly Lazy<SocketAsyncPool> _transferPool; // TODO: lazy
         readonly ConcurrentQueue<IRedisAsyncCommandToken> _readQueue; // TODO: lazy
         readonly ConcurrentQueue<IRedisAsyncCommandToken> _writeQueue; // TODO: lazy
         readonly object _readLock; 
         readonly object _writeLock;
         readonly RedisWriter _writer;
         readonly RedisEncoding _encoding;
+        readonly int _concurrency;
+        readonly int _bufferSize;
         Socket _socket;
         BufferedStream _stream;
         RedisReader _reader;
@@ -53,24 +55,26 @@ namespace CSRedis.Internal
             get { return _encoding.Encoding; }
             set { _encoding.Encoding = value; }
         }
+        SocketAsyncPool TransferPool { get { return _transferPool.Value; } }
         
 
         public RedisConnector(string host, int port, int concurrency, int bufferSize)
         {
+            _concurrency = concurrency;
+            _bufferSize = bufferSize;
             _endpoint = new DnsEndPoint(host, port);
             _encoding = new RedisEncoding();
-            _transferPool = new SocketAsyncPool(concurrency, bufferSize);
+            _transferPool = new Lazy<SocketAsyncPool>(SocketAsyncPoolFactory);
             _readQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
             _writeQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
             _readLock = new object();
             _writeLock = new object();
             _writer = new RedisWriter(_encoding);
-
-            
             _connectArgs = new SocketAsyncEventArgs { RemoteEndPoint = _endpoint };
             _connectArgs.Completed += OnSocketCompleted;
-            _transferPool.Completed += OnSocketCompleted;
         }
+
+        
 
         public bool Connect()
         {
@@ -201,7 +205,7 @@ namespace CSRedis.Internal
         public void Dispose()
         {
             _connectArgs.Dispose();
-            _transferPool.Dispose();
+            TransferPool.Dispose();
 
             if (_pipeline != null)
                 _pipeline.Dispose();
@@ -224,7 +228,7 @@ namespace CSRedis.Internal
 
                 _readQueue.Enqueue(token);
 
-                var args = _transferPool.Acquire();
+                var args = TransferPool.Acquire();
                 int bytes;
                 try
                 {
@@ -285,7 +289,7 @@ namespace CSRedis.Internal
 
         void OnSocketSent(SocketAsyncEventArgs args)
         {
-            _transferPool.Release(args);
+            TransferPool.Release(args);
 
             IRedisAsyncCommandToken token;
             lock (_readLock)
@@ -341,6 +345,11 @@ namespace CSRedis.Internal
             OnConnected();
         }
 
-        
+        SocketAsyncPool SocketAsyncPoolFactory()
+        {
+            SocketAsyncPool pool = new SocketAsyncPool(_concurrency, _bufferSize);
+            pool.Completed += OnSocketCompleted;
+            return pool;
+        }        
     }
 }
