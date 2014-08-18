@@ -30,6 +30,9 @@ namespace CSRedis
         { }
     }
 
+    /// <summary>
+    /// Exception thrown by RedisClient
+    /// </summary>
     public class RedisClientException : Exception
     {
         /// <summary>
@@ -40,6 +43,11 @@ namespace CSRedis
             : base(message)
         { }
 
+        /// <summary>
+        /// Instantiate a new instance of the RedisClientException class
+        /// </summary>
+        /// <param name="message">Exception message</param>
+        /// <param name="inner">Inner exception</param>
         public RedisClientException(string message, Exception inner)
             : base(message, inner)
         { }
