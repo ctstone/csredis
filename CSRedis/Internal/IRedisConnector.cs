@@ -10,7 +10,7 @@ namespace CSRedis.Internal
 {
     interface IRedisConnector : IDisposable
     {
-        bool Connected { get; }
+        bool IsConnected { get; }
         string Host { get; }
         int Port { get; }
         int ReceiveTimeout { get; set; }
@@ -18,9 +18,9 @@ namespace CSRedis.Internal
         Encoding Encoding { get; set; }
         int ReconnectAttempts { get; set; }
         int ReconnectWait { get; set; }
-        bool Pipelined { get; }
+        bool IsPipelined { get; }
 
-        event EventHandler Reconnected;
+        event EventHandler Connected;
 
         bool Connect();
         Task<bool> ConnectAsync();

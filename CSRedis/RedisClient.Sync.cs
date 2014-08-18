@@ -2221,7 +2221,10 @@ namespace CSRedis
         /// <returns>Status code</returns>
         public string Discard()
         {
-            return _transaction.Abort();
+            string response = _transaction.Abort();
+            if (_connector.IsPipelined)
+                return _connector.EndPipe()[0].ToString();
+            return response;
         }
 
         /// <summary>

@@ -12,16 +12,16 @@ namespace CSRedis
     /// </summary>
     public class RedisSentinelManager : IDisposable
     {
+        const int DefaultPort = 26379;
         readonly LinkedList<Tuple<string, int>> _sentinels;
         string _masterName;
-        string _auth;
         int _connectTimeout;
         RedisClient _redisClient;
 
         /// <summary>
-        /// Occurs when the connection has sucessfully reconnected
+        /// Occurs when the master connection has sucessfully connected
         /// </summary>
-        public event EventHandler Reconnected;
+        public event EventHandler Connected;
 
         /// <summary>
         /// Create a new RedisSentinenlManager
@@ -35,26 +35,51 @@ namespace CSRedis
                 string[] parts = host.Split(':');
                 string hostname = parts[0].Trim();
                 int port = Int32.Parse(parts[1]);
-                _sentinels.AddLast(Tuple.Create(hostname, port));
+                Add(host, port);
             }
+        }
+
+        /// <summary>
+        /// Add a new sentinel host using default port
+        /// </summary>
+        /// <param name="host">Sentinel hostname</param>
+        public void Add(string host)
+        {
+            Add(host, DefaultPort);
+        }
+
+        /// <summary>
+        /// Add a new sentinel host
+        /// </summary>
+        /// <param name="host">Sentinel hostname</param>
+        /// <param name="port">Sentinel port</param>
+        public void Add(string host, int port)
+        {
+            foreach (var sentinel in _sentinels)
+            {
+                if (sentinel.Item1 == host && sentinel.Item2 == port)
+                    return;
+            }
+            _sentinels.AddLast(Tuple.Create(host, port));
         }
 
         /// <summary>
         /// Obtain connection to the specified master node
         /// </summary>
         /// <param name="masterName">Name of Redis master</param>
-        /// <param name="auth">Redis master password</param>
         /// <param name="timeout">Connection timeout (milliseconds)</param>
-        public void Connect(string masterName, string auth = null, int timeout = 200)
+        /// <returns>host:port of Sentinel server that responded</returns>
+        public string Connect(string masterName, int timeout = 200)
         {
             _masterName = masterName;
             _connectTimeout = timeout;
-            _auth = auth;
 
-            if (!SetMaster(masterName, timeout))
+            string sentinel = SetMaster(masterName, timeout);
+            if (sentinel == null)
                 throw new IOException("Could not connect to sentinel or master");
 
             _redisClient.ReconnectAttempts = 0;
+            return sentinel;
         }
 
         /// <summary>
@@ -75,7 +100,7 @@ namespace CSRedis
             catch (IOException)
             {
                 Next();
-                Connect(_masterName, _auth, _connectTimeout);
+                Connect(_masterName, _connectTimeout);
                 return Call(redisAction);
             }
         }
@@ -89,40 +114,51 @@ namespace CSRedis
                 _redisClient.Dispose();
         }
 
-        bool SetMaster(string name, int timeout)
+        string SetMaster(string name, int timeout)
         {
             for (int i = 0; i < _sentinels.Count; i++)
             {
+                if (i > 0)
+                    Next();
+
                 using (var sentinel = Current())
                 {
-                    if (!sentinel.Connect(timeout))
+                    try
+                    {
+                        if (!sentinel.Connect(timeout))
+                            continue;
+                    }
+                    catch (Exception)
+                    {
                         continue;
+                    }
 
                     var master = sentinel.GetMasterAddrByName(name);
                     if (master == null)
                         continue;
 
                     _redisClient = new RedisClient(master.Item1, master.Item2);
-                    _redisClient.Reconnected += OnConnectionReconnected;
+                    _redisClient.Connected += OnConnectionConnected;
                     if (!_redisClient.Connect(timeout))
                         continue;
 
-                    if (_auth != null)
-                        _redisClient.Auth(_auth);
-
                     var role = _redisClient.Role();
-                    if (role.RoleName == "master")
-                        return true;
+                    if (role.RoleName != "master")
+                        continue;
+
+                    foreach (var remoteSentinel in sentinel.Sentinels(name))
+                        Add(remoteSentinel.Ip, remoteSentinel.Port);
+
+                    return sentinel.Host + ':' + sentinel.Port;
                 }
 
-                Next();
             }
-            return false;
+            return null;
         }
 
         RedisSentinelClient Current()
         {
-            return new RedisSentinelClient(_sentinels.First.Value.Item1, _sentinels.First.Value.Item2); ;
+            return new RedisSentinelClient(_sentinels.First.Value.Item1, _sentinels.First.Value.Item2);
         }
 
         void Next()
@@ -132,10 +168,10 @@ namespace CSRedis
             _sentinels.AddLast(first.Value);
         }
 
-        void OnConnectionReconnected(object sender, EventArgs args)
+        void OnConnectionConnected(object sender, EventArgs args)
         {
-            if (Reconnected != null)
-                Reconnected(this, new EventArgs());
+            if (Connected != null)
+                Connected(this, new EventArgs());
         }
     }
 }

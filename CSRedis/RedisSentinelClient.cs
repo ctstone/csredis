@@ -46,7 +46,7 @@ namespace CSRedis
         /// <summary>
         /// Get a value indicating whether the Redis sentinel client is connected to the server
         /// </summary>
-        public bool Connected { get { return _connector.Connected; } }
+        public bool Connected { get { return _connector.IsConnected; } }
 
         /// <summary>
         /// Get the string encoding used to communicate with the server
@@ -113,7 +113,7 @@ namespace CSRedis
 
             _subscription.MessageReceived += OnSubscriptionReceived;
             _subscription.Changed += OnSubscriptionChanged;
-            _connector.Reconnected += OnConnectionReconnected;
+            _connector.Connected += OnConnectionReconnected;
         }
 
         /// <summary>

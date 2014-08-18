@@ -22,16 +22,16 @@ namespace CSRedis.Internal
         readonly RedisPipeline _pipeline;
         bool _connected;
         
-        public event EventHandler Reconnected;
+        public event EventHandler Connected;
 
-        public bool Connected { get { return _connected; } }
+        public bool IsConnected { get { return _connected; } }
         public string Host { get { return _host; } }
         public int Port { get { return _port; } }
         public int ReceiveTimeout { get; set; }
         public int SendTimeout { get; set; }
         public int ReconnectAttempts { get; set; }
         public int ReconnectWait { get; set; }
-        public bool Pipelined { get { return _pipeline.Active; } }
+        public bool IsPipelined { get { return _pipeline.Active; } }
 
         public Encoding Encoding
         {
@@ -163,8 +163,8 @@ namespace CSRedis.Internal
 
         void OnReconnect()
         {
-            if (Reconnected != null)
-                Reconnected(this, new EventArgs());
+            if (Connected != null)
+                Connected(this, new EventArgs());
         }
     }
 }

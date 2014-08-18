@@ -45,7 +45,7 @@ namespace CSRedis
         /// <summary>
         /// Occurs when the connection has sucessfully reconnected
         /// </summary>
-        public event EventHandler Reconnected;
+        public event EventHandler Connected;
 
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace CSRedis
         /// <summary>
         /// Get a value indicating whether the Redis client is connected to the server
         /// </summary>
-        public bool Connected { get { return _connector.Connected; } }
+        public bool IsConnected { get { return _connector.IsConnected; } }
 
         /// <summary>
         /// Get or set the string encoding used to communicate with the server
@@ -151,7 +151,7 @@ namespace CSRedis
             _subscription.MessageReceived += OnSubscriptionReceived;
             _subscription.Changed += OnSubscriptionChanged;
             _monitor.MonitorReceived += OnMonitorReceived;
-            _connector.Reconnected += OnConnectionReconnected;
+            _connector.Connected += OnConnectionConnected;
             _transaction.TransactionQueued += OnTransactionQueued;
         }
 
@@ -236,10 +236,10 @@ namespace CSRedis
                 SubscriptionChanged(this, args);
         }
 
-        void OnConnectionReconnected(object sender, EventArgs args)
+        void OnConnectionConnected(object sender, EventArgs args)
         {
-            if (Reconnected != null)
-                Reconnected(this, args);
+            if (Connected != null)
+                Connected(this, args);
         }
 
         void OnTransactionQueued(object sender, RedisTransactionQueuedEventArgs args)

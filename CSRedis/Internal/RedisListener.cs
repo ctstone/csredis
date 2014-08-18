@@ -32,7 +32,7 @@ namespace CSRedis.Internal
                 }
                 catch (IOException)
                 {
-                    if (_connection.Connected)
+                    if (_connection.IsConnected)
                         throw;
                     break;
                 }

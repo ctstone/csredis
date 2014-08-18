@@ -30,12 +30,12 @@ namespace CSRedis.Internal
         bool _asyncConnectionStarted;
         TaskCompletionSource<bool> _connectionTaskSource;
 
-        public event EventHandler Reconnected;
+        public event EventHandler Connected;
 
-        public bool Connected { get { return _socket == null ? false : _socket.Connected; } }
+        public bool IsConnected { get { return _socket == null ? false : _socket.Connected; } }
         public string Host { get { return _endpoint.Host; } }
         public int Port { get { return _endpoint.Port; } }
-        public bool Pipelined { get { return _pipeline.Active; } }
+        public bool IsPipelined { get { return _pipeline.Active; } }
         public int ReconnectAttempts { get; set; }
         public int ReconnectWait { get; set; }
         public int ReceiveTimeout 
@@ -85,11 +85,11 @@ namespace CSRedis.Internal
 
         public Task<bool> ConnectAsync()
         {
-            if (!_asyncConnectionStarted && !Connected)
+            if (!_asyncConnectionStarted && !IsConnected)
             {
                 lock (_connectArgs)
                 {
-                    if (!_asyncConnectionStarted && !Connected)
+                    if (!_asyncConnectionStarted && !IsConnected)
                     {
                         _asyncConnectionStarted = true;
                         InitSocket();
@@ -108,7 +108,7 @@ namespace CSRedis.Internal
 
             try
             {
-                if (Pipelined)
+                if (IsPipelined)
                     return _pipeline.Write(command);
 
                 _writer.Write(command, _stream);
@@ -243,7 +243,7 @@ namespace CSRedis.Internal
 
         void ConnectIfNotConnected()
         {
-            if (!Connected)
+            if (!IsConnected)
                 Connect();
         }
 
@@ -253,10 +253,7 @@ namespace CSRedis.Internal
             while (attempts++ < ReconnectAttempts || ReconnectAttempts == -1)
             {
                 if (Connect())
-                {
-                    OnReconnected();
                     return;
-                }
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(ReconnectWait));
             }
@@ -315,10 +312,10 @@ namespace CSRedis.Internal
             }
         }
 
-        void OnReconnected()
+        void OnConnected()
         {
-            if (Reconnected != null)
-                Reconnected(this, new EventArgs());
+            if (Connected != null)
+                Connected(this, new EventArgs());
         }
 
         void InitSocket()
@@ -341,6 +338,7 @@ namespace CSRedis.Internal
             _reader = new RedisReader (_encoding, _stream);
             _pipeline = new RedisPipeline(_stream, _encoding, _reader);
             _connectionTaskSource.SetResult(_socket.Connected);
+            OnConnected();
         }
 
         

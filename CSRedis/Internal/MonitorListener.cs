@@ -27,7 +27,7 @@ namespace CSRedis.Internal
 
         protected override bool Continue()
         {
-            return Connection.Connected;
+            return Connection.IsConnected;
         }
 
         void OnMonitorReceived(object message)

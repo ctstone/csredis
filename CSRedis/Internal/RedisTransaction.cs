@@ -60,12 +60,12 @@ namespace CSRedis.Internal
         {
             _active = false;
 
-            if (_connector.Connected && _connector.Pipelined)
+            if (_connector.IsConnected && _connector.IsPipelined)
             {
                 _connector.Call(_execCommand);
                 object[] response = _connector.EndPipe();
-                for (int i = 0; i < response.Length - 1; i++)
-                    OnTransactionQueued(_pipeCommands[i].Item1, _pipeCommands[i].Item2, response[i].ToString());
+                for (int i = 1; i < response.Length - 1; i++)
+                    OnTransactionQueued(_pipeCommands[i - 1].Item1, _pipeCommands[i - 1].Item2, response[i - 1].ToString());
                 
                 object transaction_response = response[response.Length - 1];
                 if (!(transaction_response is object[]))
@@ -97,7 +97,7 @@ namespace CSRedis.Internal
 
         void OnTransactionQueued<T>(RedisCommand<T> command, string response)
         {
-            if (_connector.Pipelined)
+            if (_connector.IsPipelined)
                 _pipeCommands.Add(Tuple.Create(command.Command, command.Arguments));
             else
                 OnTransactionQueued(command.Command, command.Arguments, response);
