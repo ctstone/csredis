@@ -55,7 +55,7 @@ namespace CSRedis.Tests
             {
                 Assert.AreEqual("OK", redis.Quit());
                 Assert.AreEqual("*1\r\n$4\r\nQUIT\r\n", mock.GetMessage());
-                Assert.IsFalse(redis.Connected);
+                Assert.IsFalse(redis.IsConnected);
             }
         }
 
