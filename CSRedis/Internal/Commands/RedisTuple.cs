@@ -60,8 +60,8 @@ namespace CSRedis.Internal.Commands
 
             static Tuple<T1, T2> Create(RedisReader reader)
             {
-                T1 item1 = (T1)converter1.Value.ConvertFrom(reader.ReadBulkString());
-                T2 item2 = (T2)converter2.Value.ConvertFrom(reader.ReadBulkString());
+                T1 item1 = (T1)converter1.Value.ConvertFromInvariantString(reader.ReadBulkString());
+                T2 item2 = (T2)converter2.Value.ConvertFromInvariantString(reader.ReadBulkString());
 
                 return Tuple.Create(item1, item2);
             }

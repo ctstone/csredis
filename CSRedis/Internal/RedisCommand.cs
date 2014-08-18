@@ -86,7 +86,7 @@ namespace CSRedis
         }
         public static RedisInt.Nullable Object(RedisObjectSubCommand subCommand, params string[] arguments)
         {
-            object[] args = RedisArgs.Concat(subCommand.ToString().ToUpper(), arguments);
+            object[] args = RedisArgs.Concat(subCommand.ToString().ToUpperInvariant(), arguments);
             return new RedisInt.Nullable("OBJECT", args);
         }
         public static RedisBool Persist(string key)
@@ -140,7 +140,7 @@ namespace CSRedis
             foreach (var pattern in get)
                 args.AddRange(new[] { "GET", pattern });
             if (dir.HasValue)
-                args.Add(dir.ToString().ToUpper());
+                args.Add(dir.ToString().ToUpperInvariant());
             if (isAlpha.HasValue && isAlpha.Value)
                 args.Add("ALPHA");
             return new RedisArray.Generic<Dictionary<string,string>>(new RedisHash("SORT", args.ToArray()));
@@ -156,7 +156,7 @@ namespace CSRedis
             foreach (var pattern in get)
                 args.AddRange(new[] { "GET", pattern });
             if (dir.HasValue)
-                args.Add(dir.ToString().ToUpper());
+                args.Add(dir.ToString().ToUpperInvariant());
             if (isAlpha.HasValue && isAlpha.Value)
                 args.Add("ALPHA");
             return new RedisArray.Strings("SORT", args.ToArray());
@@ -172,7 +172,7 @@ namespace CSRedis
             foreach (var pattern in get)
                 args.AddRange(new[] { "GET", pattern });
             if (dir.HasValue)
-                args.Add(dir.ToString().ToUpper());
+                args.Add(dir.ToString().ToUpperInvariant());
             if (isAlpha.HasValue && isAlpha.Value)
                 args.Add("ALPHA");
             args.AddRange(new[] { "STORE", destination });
@@ -345,7 +345,7 @@ namespace CSRedis
         }
         public static RedisInt LInsert(string key, RedisInsert insertType, string pivot, object value)
         {
-            return new RedisInt("LINSERT", key, insertType.ToString().ToUpper(), pivot, value);
+            return new RedisInt("LINSERT", key, insertType.ToString().ToUpperInvariant(), pivot, value);
         }
         public static RedisInt LLen(string key)
         {
@@ -524,7 +524,7 @@ namespace CSRedis
             if (aggregate != null)
             {
                 args.Add("AGGREGATE");
-                args.Add(aggregate.ToString().ToUpper());
+                args.Add(aggregate.ToString().ToUpperInvariant());
             }
             return new RedisInt("ZINTERSTORE", args.ToArray());
         }
@@ -653,7 +653,7 @@ namespace CSRedis
             if (aggregate != null)
             {
                 args.Add("AGGREGATE");
-                args.Add(aggregate.ToString().ToUpper());
+                args.Add(aggregate.ToString().ToUpperInvariant());
             }
             return new RedisInt("ZUNIONSTORE", args.ToArray());
         }
@@ -774,7 +774,7 @@ namespace CSRedis
         }
         public static RedisInt BitOp(RedisBitOp operation, string destKey, params string[] keys)
         {
-            string[] args = RedisArgs.Concat(new[] { operation.ToString().ToUpper(), destKey }, keys);
+            string[] args = RedisArgs.Concat(new[] { operation.ToString().ToUpperInvariant(), destKey }, keys);
             return new RedisInt("BITOP", args);
         }
         public static RedisInt BitPos(string key, bool bit, long? start = null, long? end = null)
@@ -879,7 +879,7 @@ namespace CSRedis
             if (expirationMilliseconds != null)
                 args.AddRange(new[] { "PX", expirationMilliseconds.ToString() });
             if (exists != null)
-                args.AddRange(new[] { exists.ToString().ToUpper() });
+                args.AddRange(new[] { exists.ToString().ToUpperInvariant() });
             return new RedisStatus.Nullable("SET", args.ToArray());
         }
         public static RedisBool SetBit(string key, uint offset, bool value)

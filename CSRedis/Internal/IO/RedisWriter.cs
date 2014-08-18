@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -44,7 +45,7 @@ namespace CSRedis.Internal
                 sb.Append(Bulk).Append(part.Length).Append(EOL).Append(part).Append(EOL);
 
             foreach (var arg in command.Arguments)
-                sb.Append(Bulk).Append(arg.ToString().Length).Append(EOL).Append(arg).Append(EOL);
+                sb.Append(Bulk).Append(String.Format(CultureInfo.InvariantCulture, "{0}", arg).Length).Append(EOL).Append(arg).Append(EOL);
 
             return sb.ToString();
         }
