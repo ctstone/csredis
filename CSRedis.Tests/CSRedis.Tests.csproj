@@ -34,14 +34,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
+  <PropertyGroup  Condition=" '$(APPVEYOR)' == '' ">
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>csredis.public.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>csredis.public.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  <PropertyGroup>
-    <DelaySign>true</DelaySign>
+  <PropertyGroup  Condition=" '$(APPVEYOR)' == 'True' ">
+    <DelaySign>false</DelaySign>
+    <AssemblyKeyContainerName>csredis</AssemblyKeyContainerName>
+    <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
