@@ -37,15 +37,9 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
-  <PropertyGroup  Condition=" '$(APPVEYOR)' == '' ">
-    <DelaySign>true</DelaySign>
-    <AssemblyOriginatorKeyFile>csredis.public.snk</AssemblyOriginatorKeyFile>
+  <PropertyGroup Condition=" '$(APPVEYOR)' == 'True' ">
     <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup  Condition=" '$(APPVEYOR)' == 'True' ">
-    <DelaySign>false</DelaySign>
-    <AssemblyKeyContainerName>csredis</AssemblyKeyContainerName>
-    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(StrongNameKeyPath)</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -115,7 +109,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="CSRedis.nuspec" />
-    <None Include="csredis.public.snk" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
