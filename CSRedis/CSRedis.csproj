@@ -37,14 +37,15 @@
   <PropertyGroup>
     <StartupObject />
   </PropertyGroup>
-  <PropertyGroup>
+  <PropertyGroup  Condition=" '$(APPVEYOR )' == '' ">
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>csredis.public.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
-  <PropertyGroup>
-    <DelaySign>true</DelaySign>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>csredis.public.snk</AssemblyOriginatorKeyFile>
+  <PropertyGroup  Condition=" '$(APPVEYOR)' != '' ">
+    <DelaySign>false</DelaySign>
+    <AssemblyKeyContainerName>csredis</AssemblyKeyContainerName>
+    <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
