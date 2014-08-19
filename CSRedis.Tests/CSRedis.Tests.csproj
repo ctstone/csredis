@@ -34,6 +34,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(APPVEYOR)' == 'True' ">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(StrongNameKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(APPVEYOR)' == '' ">
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>..\csredis.pub.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -51,20 +60,46 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="ConnectionTests.cs" />
-    <Compile Include="HashTests.cs" />
-    <Compile Include="HyperLogLogTests.cs" />
-    <Compile Include="KeyTests.cs" />
-    <Compile Include="ListTests.cs" />
+    <Compile Include="ConnectionTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="HashTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="HyperLogLogTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="KeyTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ListTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PubSubTests.cs" />
-    <Compile Include="ScriptingTests.cs" />
-    <Compile Include="SentinelTests.cs" />
-    <Compile Include="ServerTests.cs" />
-    <Compile Include="SetTests.cs" />
-    <Compile Include="SortedSetTests.cs" />
-    <Compile Include="StringTests.cs" />
-    <Compile Include="TransactionTests.cs" />
+    <Compile Include="PubSubTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ScriptingTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SentinelTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ServerTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SetTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="SortedSetTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="StringTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="TransactionTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CSRedis\CSRedis.csproj">
