@@ -34,6 +34,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>csredis.public.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DelaySign>true</DelaySign>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -51,20 +60,23 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="SentinelTests.cs" />
-    <Compile Include="StringTests.cs" />
-    <Compile Include="ServerTests.cs" />
-    <Compile Include="ScriptingTests.cs" />
-    <Compile Include="TransactionTests.cs" />
-    <Compile Include="PubSubTests.cs" />
-    <Compile Include="HyperLogLogTests.cs" />
     <Compile Include="ConnectionTests.cs" />
-    <Compile Include="SortedSetTests.cs" />
-    <Compile Include="SetTests.cs" />
-    <Compile Include="ListTests.cs" />
     <Compile Include="HashTests.cs" />
+    <Compile Include="HyperLogLogTests.cs" />
     <Compile Include="KeyTests.cs" />
+    <Compile Include="ListTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PubSubTests.cs" />
+    <Compile Include="ScriptingTests.cs" />
+    <Compile Include="SentinelTests.cs" />
+    <Compile Include="ServerTests.cs" />
+    <Compile Include="SetTests.cs" />
+    <Compile Include="SortedSetTests.cs" />
+    <Compile Include="StringTests.cs" />
+    <Compile Include="TransactionTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="csredis.public.snk" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CSRedis\CSRedis.csproj">
@@ -72,7 +84,6 @@
       <Name>CSRedis</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
