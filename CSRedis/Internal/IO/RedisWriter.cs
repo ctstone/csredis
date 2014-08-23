@@ -34,7 +34,7 @@ namespace CSRedis.Internal
             return _encoding.Encoding.GetBytes(prepared, 0, prepared.Length, buffer, offset);
         }
 
-        static string Prepare(RedisCommand command)
+        string Prepare(RedisCommand command)
         {
             var parts = command.Command.Split(' ');
             int length = parts.Length + command.Arguments.Length;
@@ -42,10 +42,13 @@ namespace CSRedis.Internal
             sb.Append(MultiBulk).Append(length).Append(EOL);
 
             foreach (var part in parts)
-                sb.Append(Bulk).Append(part.Length).Append(EOL).Append(part).Append(EOL);
+                sb.Append(Bulk).Append(_encoding.Encoding.GetByteCount(part)).Append(EOL).Append(part).Append(EOL);
 
             foreach (var arg in command.Arguments)
-                sb.Append(Bulk).Append(String.Format(CultureInfo.InvariantCulture, "{0}", arg).Length).Append(EOL).Append(arg).Append(EOL);
+            {
+                string str = String.Format(CultureInfo.InvariantCulture, "{0}", arg);
+                sb.Append(Bulk).Append(_encoding.Encoding.GetByteCount(str)).Append(EOL).Append(str).Append(EOL);
+            }
 
             return sb.ToString();
         }
