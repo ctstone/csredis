@@ -142,7 +142,7 @@ namespace CSRedis.Internal.IO
             switch (type)
             {
                 case RedisMessage.Bulk:
-                    return ReadBulkString(false);
+                    return ReadBulk(false);
 
                 case RedisMessage.Int:
                     return ReadInt(false);
