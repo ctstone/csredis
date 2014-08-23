@@ -1,3 +1,7 @@
+##csredis 3.2.1
+**[fix]** Encoding issues  
+**[new]** Strongname signed assembly available on NuGet  
+
 ##csredis 3.1.0.0
 **[breaking]** Changed RedisClient.Connected property to RedisClient.IsConnected  
 **[breaking]** Changed RedisClient.Reconnected event to RedisClient.Connected. Event is now raised when the connection is first established as well as when the connection reconnects  
