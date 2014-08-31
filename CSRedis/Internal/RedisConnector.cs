@@ -12,13 +12,114 @@ using System.Threading.Tasks;
 
 namespace CSRedis.Internal
 {
+    interface IRedisSocket : IDisposable
+    {
+        bool Connected { get; }
+        int ReceiveTimeout { get; set; }
+        int SendTimeout { get; set; }
+        bool Connect(EndPoint endpoint);
+        bool ConnectAsync(SocketAsyncEventArgs args);
+        bool SendAsync(SocketAsyncEventArgs args);
+        Stream CreateStream();
+    }
+
+    class FakeRedisSocket : IRedisSocket
+    {
+        bool _connected;
+
+        public bool Connected { get { return _connected; } }
+
+        public int ReceiveTimeout { get; set;}
+
+        public int SendTimeout{ get; set;}
+
+        public FakeRedisSocket()
+        {
+        }
+
+        public void Connect(EndPoint endpoint)
+        {
+            _connected = true;
+        }
+
+        public bool ConnectAsync(SocketAsyncEventArgs args)
+        {
+            args.
+            return _socket.ConnectAsync(args);
+        }
+
+        public bool SendAsync(SocketAsyncEventArgs args)
+        {
+            return _socket.SendAsync(args);
+        }
+
+        public Stream CreateStream()
+        {
+            return new NetworkStream(_socket);
+        }
+
+        public void Dispose()
+        {
+            _socket.Dispose();
+        }
+    }
+
+    class RedisSocket : IRedisSocket
+    {
+        readonly Socket _socket;
+
+        public bool Connected { get { return _socket.Connected; } }
+
+        public int ReceiveTimeout
+        {
+            get { return _socket.ReceiveTimeout; }
+            set { _socket.ReceiveTimeout = value; }
+        }
+
+        public int SendTimeout
+        {
+            get { return _socket.SendTimeout; }
+            set { _socket.SendTimeout = value; }
+        }
+
+        public RedisSocket()
+        {
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        }
+
+        public void Connect(EndPoint endpoint)
+        {
+            _socket.Connect(endpoint);
+        }
+
+        public bool ConnectAsync(SocketAsyncEventArgs args)
+        {
+            return _socket.ConnectAsync(args);
+        }
+
+        public bool SendAsync(SocketAsyncEventArgs args)
+        {
+            return _socket.SendAsync(args);
+        }
+
+        public Stream CreateStream()
+        {
+            return new NetworkStream(_socket);
+        }
+
+        public void Dispose()
+        {
+            _socket.Dispose();
+        }
+    }
+
     class RedisConnector : IRedisConnector
     {
         readonly DnsEndPoint _endpoint;
-        readonly SocketAsyncEventArgs _connectArgs; // TODO: lazy
-        readonly Lazy<SocketAsyncPool> _transferPool; // TODO: lazy
-        readonly ConcurrentQueue<IRedisAsyncCommandToken> _readQueue; // TODO: lazy
-        readonly ConcurrentQueue<IRedisAsyncCommandToken> _writeQueue; // TODO: lazy
+        readonly SocketAsyncEventArgs _asyncConnectArgs; // TODO: lazy
+        readonly Lazy<SocketAsyncPool> _asyncTransferPool;
+        readonly ConcurrentQueue<IRedisAsyncCommandToken> _asyncReadQueue; // TODO: lazy
+        readonly ConcurrentQueue<IRedisAsyncCommandToken> _asyncWriteQueue; // TODO: lazy
         readonly object _readLock; 
         readonly object _writeLock;
         readonly RedisWriter _writer;
@@ -55,7 +156,7 @@ namespace CSRedis.Internal
             get { return _encoding.Encoding; }
             set { _encoding.Encoding = value; }
         }
-        SocketAsyncPool TransferPool { get { return _transferPool.Value; } }
+        SocketAsyncPool TransferPool { get { return _asyncTransferPool.Value; } }
         
 
         public RedisConnector(string host, int port, int concurrency, int bufferSize)
@@ -64,14 +165,14 @@ namespace CSRedis.Internal
             _bufferSize = bufferSize;
             _endpoint = new DnsEndPoint(host, port);
             _encoding = new RedisEncoding();
-            _transferPool = new Lazy<SocketAsyncPool>(SocketAsyncPoolFactory);
-            _readQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
-            _writeQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
+            _asyncTransferPool = new Lazy<SocketAsyncPool>(SocketAsyncPoolFactory);
+            _asyncReadQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
+            _asyncWriteQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
             _readLock = new object();
             _writeLock = new object();
             _writer = new RedisWriter(_encoding);
-            _connectArgs = new SocketAsyncEventArgs { RemoteEndPoint = _endpoint };
-            _connectArgs.Completed += OnSocketCompleted;
+            _asyncConnectArgs = new SocketAsyncEventArgs { RemoteEndPoint = _endpoint };
+            _asyncConnectArgs.Completed += OnSocketCompleted;
         }
 
         
@@ -91,14 +192,14 @@ namespace CSRedis.Internal
         {
             if (!_asyncConnectionStarted && !IsConnected)
             {
-                lock (_connectArgs)
+                lock (_asyncConnectArgs)
                 {
                     if (!_asyncConnectionStarted && !IsConnected)
                     {
                         _asyncConnectionStarted = true;
                         InitSocket();
-                        if (!_socket.ConnectAsync(_connectArgs))
-                            OnSocketConnected(_connectArgs);
+                        if (!_socket.ConnectAsync(_asyncConnectArgs))
+                            OnSocketConnected(_asyncConnectArgs);
                     }
                 }
             }
@@ -130,7 +231,7 @@ namespace CSRedis.Internal
         public Task<T> CallAsync<T>(RedisCommand<T> command)
         {
             var token = new RedisAsyncCommandToken<T>(command);
-            _writeQueue.Enqueue(token);
+            _asyncWriteQueue.Enqueue(token);
             ConnectAsync().ContinueWith(CallAsyncDeferred);
             return token.TaskSource.Task;
         }
@@ -204,8 +305,9 @@ namespace CSRedis.Internal
 
         public void Dispose()
         {
-            _connectArgs.Dispose();
-            TransferPool.Dispose();
+            _asyncConnectArgs.Dispose();
+            if (_asyncTransferPool.IsValueCreated)
+                _asyncTransferPool.Value.Dispose();
 
             if (_pipeline != null)
                 _pipeline.Dispose();
@@ -223,10 +325,10 @@ namespace CSRedis.Internal
             lock (_writeLock)
             {
                 IRedisAsyncCommandToken token;
-                if (!_writeQueue.TryDequeue(out token))
+                if (!_asyncWriteQueue.TryDequeue(out token))
                     throw new Exception();
 
-                _readQueue.Enqueue(token);
+                _asyncReadQueue.Enqueue(token);
 
                 var args = TransferPool.Acquire();
                 int bytes;
@@ -294,7 +396,7 @@ namespace CSRedis.Internal
             IRedisAsyncCommandToken token;
             lock (_readLock)
             {
-                if (_readQueue.TryDequeue(out token))
+                if (_asyncReadQueue.TryDequeue(out token))
                 {
                     try
                     {
@@ -305,7 +407,7 @@ namespace CSRedis.Internal
                         if (ReconnectAttempts == 0)
                             throw;
                         Reconnect();
-                        _writeQueue.Enqueue(token);
+                        _asyncWriteQueue.Enqueue(token);
                         ConnectAsync().ContinueWith(CallAsyncDeferred);
                     }
                     catch (Exception e)
