@@ -15,10 +15,10 @@ namespace CSRedis.Internal
     class RedisConnector : IRedisConnector
     {
         readonly DnsEndPoint _endpoint;
-        readonly SocketAsyncEventArgs _connectArgs; // TODO: lazy
-        readonly Lazy<SocketAsyncPool> _transferPool; // TODO: lazy
-        readonly ConcurrentQueue<IRedisAsyncCommandToken> _readQueue; // TODO: lazy
-        readonly ConcurrentQueue<IRedisAsyncCommandToken> _writeQueue; // TODO: lazy
+        readonly Lazy<SocketAsyncEventArgs> _asyncConnectArgs;
+        readonly Lazy<SocketAsyncPool> _asyncTransferPool;
+        readonly Lazy<ConcurrentQueue<IRedisAsyncCommandToken>> _asyncReadQueue;
+        readonly Lazy<ConcurrentQueue<IRedisAsyncCommandToken>> _asyncWriteQueue;
         readonly object _readLock; 
         readonly object _writeLock;
         readonly RedisWriter _writer;
@@ -55,7 +55,11 @@ namespace CSRedis.Internal
             get { return _encoding.Encoding; }
             set { _encoding.Encoding = value; }
         }
-        SocketAsyncPool TransferPool { get { return _transferPool.Value; } }
+        SocketAsyncPool AsyncTransferPool { get { return _asyncTransferPool.Value; } }
+        SocketAsyncEventArgs AsyncConnectArgs { get { return _asyncConnectArgs.Value; } }
+        ConcurrentQueue<IRedisAsyncCommandToken> AsyncReadQueue { get { return _asyncReadQueue.Value; } }
+        ConcurrentQueue<IRedisAsyncCommandToken> AsyncWriteQueue { get { return _asyncWriteQueue.Value; } }
+
         
 
         public RedisConnector(string host, int port, int concurrency, int bufferSize)
@@ -64,17 +68,16 @@ namespace CSRedis.Internal
             _bufferSize = bufferSize;
             _endpoint = new DnsEndPoint(host, port);
             _encoding = new RedisEncoding();
-            _transferPool = new Lazy<SocketAsyncPool>(SocketAsyncPoolFactory);
-            _readQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
-            _writeQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
+            _asyncTransferPool = new Lazy<SocketAsyncPool>(SocketAsyncPoolFactory);
+            _asyncReadQueue = new Lazy<ConcurrentQueue<IRedisAsyncCommandToken>>(AsyncQueueFactory);
+            _asyncWriteQueue = new Lazy<ConcurrentQueue<IRedisAsyncCommandToken>>(AsyncQueueFactory);
             _readLock = new object();
             _writeLock = new object();
             _writer = new RedisWriter(_encoding);
-            _connectArgs = new SocketAsyncEventArgs { RemoteEndPoint = _endpoint };
-            _connectArgs.Completed += OnSocketCompleted;
+            _asyncConnectArgs = new Lazy<SocketAsyncEventArgs>(SocketAsyncConnectFactory);
         }
 
-        
+       
 
         public bool Connect()
         {
@@ -91,14 +94,14 @@ namespace CSRedis.Internal
         {
             if (!_asyncConnectionStarted && !IsConnected)
             {
-                lock (_connectArgs)
+                lock (_asyncConnectArgs)
                 {
                     if (!_asyncConnectionStarted && !IsConnected)
                     {
                         _asyncConnectionStarted = true;
                         InitSocket();
-                        if (!_socket.ConnectAsync(_connectArgs))
-                            OnSocketConnected(_connectArgs);
+                        if (!_socket.ConnectAsync(AsyncConnectArgs))
+                            OnSocketConnected(AsyncConnectArgs);
                     }
                 }
             }
@@ -130,7 +133,7 @@ namespace CSRedis.Internal
         public Task<T> CallAsync<T>(RedisCommand<T> command)
         {
             var token = new RedisAsyncCommandToken<T>(command);
-            _writeQueue.Enqueue(token);
+            AsyncWriteQueue.Enqueue(token);
             ConnectAsync().ContinueWith(CallAsyncDeferred);
             return token.TaskSource.Task;
         }
@@ -204,8 +207,11 @@ namespace CSRedis.Internal
 
         public void Dispose()
         {
-            _connectArgs.Dispose();
-            TransferPool.Dispose();
+            if (_asyncConnectArgs.IsValueCreated)
+                _asyncConnectArgs.Value.Dispose();
+
+            if (_asyncTransferPool.IsValueCreated)
+                _asyncTransferPool.Value.Dispose();
 
             if (_pipeline != null)
                 _pipeline.Dispose();
@@ -223,12 +229,12 @@ namespace CSRedis.Internal
             lock (_writeLock)
             {
                 IRedisAsyncCommandToken token;
-                if (!_writeQueue.TryDequeue(out token))
+                if (!AsyncWriteQueue.TryDequeue(out token))
                     throw new Exception();
 
-                _readQueue.Enqueue(token);
+                AsyncReadQueue.Enqueue(token);
 
-                var args = TransferPool.Acquire();
+                var args = AsyncTransferPool.Acquire();
                 int bytes;
                 try
                 {
@@ -289,12 +295,12 @@ namespace CSRedis.Internal
 
         void OnSocketSent(SocketAsyncEventArgs args)
         {
-            TransferPool.Release(args);
+            AsyncTransferPool.Release(args);
 
             IRedisAsyncCommandToken token;
             lock (_readLock)
             {
-                if (_readQueue.TryDequeue(out token))
+                if (AsyncReadQueue.TryDequeue(out token))
                 {
                     try
                     {
@@ -305,7 +311,7 @@ namespace CSRedis.Internal
                         if (ReconnectAttempts == 0)
                             throw;
                         Reconnect();
-                        _writeQueue.Enqueue(token);
+                        AsyncWriteQueue.Enqueue(token);
                         ConnectAsync().ContinueWith(CallAsyncDeferred);
                     }
                     catch (Exception e)
@@ -350,6 +356,18 @@ namespace CSRedis.Internal
             SocketAsyncPool pool = new SocketAsyncPool(_concurrency, _bufferSize);
             pool.Completed += OnSocketCompleted;
             return pool;
-        }        
+        }
+
+        ConcurrentQueue<IRedisAsyncCommandToken> AsyncQueueFactory()
+        {
+            return new ConcurrentQueue<IRedisAsyncCommandToken>();
+        }
+
+        SocketAsyncEventArgs SocketAsyncConnectFactory()
+        {
+            SocketAsyncEventArgs args = new SocketAsyncEventArgs { RemoteEndPoint = _endpoint };
+            args.Completed += OnSocketCompleted;
+            return args;
+        }
     }
 }
