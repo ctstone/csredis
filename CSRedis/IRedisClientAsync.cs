@@ -9,7 +9,7 @@ namespace CSRedis
     /// <summary>
     /// Interface for asyncronous RedisClient methods
     /// </summary>
-    interface IRedisClientAsync : IDisposable
+    public interface IRedisClientAsync : IDisposable
     {
         /// <summary>
         /// Open connection to redis server
