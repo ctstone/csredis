@@ -57,7 +57,6 @@ namespace CSRedis.Internal.IO
                     if (!_asyncConnectionStarted && !_redisSocket.Connected)
                     {
                         _asyncConnectionStarted = true;
-                        //InitConnection();
                         if (!_redisSocket.ConnectAsync(_asyncConnectArgs))
                             OnSocketConnected(_asyncConnectArgs);
                     }
