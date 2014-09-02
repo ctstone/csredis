@@ -1,7 +1,9 @@
 ﻿using CSRedis.Internal;
 using CSRedis.Internal.Commands;
+using CSRedis.Internal.IO;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Runtime.Serialization;
 using System.Text;
 
@@ -15,7 +17,7 @@ namespace CSRedis
         const int DefaultPort = 26379;
         const int DefaultConcurrency = 1000;
         const int DefaultBufferSize = 1024;
-        readonly IRedisConnector _connector;
+        readonly RedisConnector _connector;
         readonly SubscriptionListener _subscription;
 
         /// <summary>
@@ -103,12 +105,16 @@ namespace CSRedis
         /// <param name="host">Redis sentinel hostname</param>
         /// <param name="port">Redis sentinel port</param>
         public RedisSentinelClient(string host, int port)
-            : this(new RedisConnector(host, port, DefaultConcurrency, DefaultBufferSize))
+            : this(new RedisSocket(), new DnsEndPoint(host, port), DefaultConcurrency, DefaultBufferSize)
         { }
 
-        internal RedisSentinelClient(IRedisConnector connector)
+        internal RedisSentinelClient(IRedisSocket socket, EndPoint endpoint)
+            : this(socket, endpoint, DefaultConcurrency, DefaultBufferSize)
+        { }
+
+        internal RedisSentinelClient(IRedisSocket socket, EndPoint endpoint, int concurrency, int bufferSize)
         {
-            _connector = connector;
+            _connector = new RedisConnector(endpoint, socket, concurrency, bufferSize);
             _subscription = new SubscriptionListener(_connector);
 
             _subscription.MessageReceived += OnSubscriptionReceived;

@@ -17,12 +17,12 @@ namespace CSRedis.Internal
 
         public bool Active { get; private set; }
 
-        internal RedisPipeline(Stream destination, RedisEncoding encoding, RedisReader reader)
+        internal RedisPipeline(RedisIO io)
         {
-            _reader = reader;
-            _destination = destination;
+            _reader = io.Reader;
+            _destination = io.Stream;
             _buffer = new MemoryStream();
-            _writer = new RedisWriter(encoding);
+            _writer = new RedisWriter(io);
             _parsers = new Queue<Func<object>>();
         }
 

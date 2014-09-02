@@ -10,7 +10,7 @@ namespace CSRedis.Internal.Commands
 
         public override byte[] Parse(RedisReader reader)
         {
-            return reader.ReadBulk();
+            return reader.ReadBulkBytes(true);
         }
     }
 }

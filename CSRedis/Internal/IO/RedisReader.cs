@@ -7,12 +7,12 @@ namespace CSRedis.Internal.IO
     class RedisReader
     {
         readonly Stream _stream;
-        readonly RedisEncoding _encoding;
+        readonly RedisIO _io;
 
-        public RedisReader(RedisEncoding encoding, Stream stream)
+        public RedisReader(RedisIO io)
         {
-            _stream = stream;
-            _encoding = encoding;
+            _stream = io.Stream;
+            _io = io;
         }
 
         public RedisMessage ReadType()
@@ -39,10 +39,19 @@ namespace CSRedis.Internal.IO
             return Int64.Parse(line.ToString());
         }
 
-        public byte[] ReadBulk(bool checkType = true)
+        public object ReadBulk(bool checkType = true, bool asString = false)
+        {
+            if (asString)
+                return ReadBulkString(checkType);
+            else
+                return ReadBulkBytes(checkType);
+        }
+
+        public byte[] ReadBulkBytes(bool checkType = true)
         {
             if (checkType)
                 ExpectType(RedisMessage.Bulk);
+
             int size = (int)ReadInt(false);
             if (size == -1)
                 return null;
@@ -59,7 +68,7 @@ namespace CSRedis.Internal.IO
             return bulk;
         }
 
-        public void ReadBulk(Stream destination, int bufferSize, bool checkType = true)
+        public void ReadBulkBytes(Stream destination, int bufferSize, bool checkType = true)
         {
             if (checkType)
                 ExpectType(RedisMessage.Bulk);
@@ -87,10 +96,10 @@ namespace CSRedis.Internal.IO
 
         public string ReadBulkString(bool checkType = true)
         {
-            byte[] bulk = ReadBulk(checkType);
+            byte[] bulk = ReadBulkBytes(checkType);
             if (bulk == null)
                 return null;
-            return _encoding.Encoding.GetString(bulk);
+            return _io.Encoding.GetString(bulk);
         }
 
         public void ExpectType(RedisMessage expectedType)
@@ -122,7 +131,7 @@ namespace CSRedis.Internal.IO
                 throw new RedisProtocolException(String.Format("Expecting CRLF; got bytes: {0}, {1}", r, n));
         }
 
-        public object[] ReadMultiBulk(bool checkType = true)
+        public object[] ReadMultiBulk(bool checkType = true, bool bulkAsString = false)
         {
             if (checkType)
                 ExpectType(RedisMessage.MultiBulk);
@@ -132,23 +141,23 @@ namespace CSRedis.Internal.IO
 
             object[] lines = new object[count];
             for (int i = 0; i < count; i++)
-                lines[i] = Read();
+                lines[i] = Read(bulkAsString);
             return lines;
         }
 
-        public object Read()
+        public object Read(bool bulkAsString = false)
         {
             RedisMessage type = ReadType();
             switch (type)
             {
                 case RedisMessage.Bulk:
-                    return ReadBulk(false);
+                    return ReadBulk(false, bulkAsString);
 
                 case RedisMessage.Int:
                     return ReadInt(false);
 
                 case RedisMessage.MultiBulk:
-                    return ReadMultiBulk(false);
+                    return ReadMultiBulk(false, bulkAsString);
 
                 case RedisMessage.Status:
                     return ReadStatus(false);
@@ -163,7 +172,7 @@ namespace CSRedis.Internal.IO
 
         string ReadLine()
         {
-             StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             char c;
             bool should_break = false;
             while (true)

@@ -732,15 +732,15 @@ namespace CSRedis
         #endregion
 
         #region Scripting
-        public static RedisObject Eval(string script, string[] keys, params string[] arguments)
+        public static RedisObject.Strings Eval(string script, string[] keys, params string[] arguments)
         {
             string[] args = RedisArgs.Concat(new object[] { script, keys.Length }, keys, arguments);
-            return new RedisObject("EVAL", args);
+            return new RedisObject.Strings("EVAL", args);
         }
-        public static RedisObject EvalSHA(string sha1, string[] keys, params string[] arguments)
+        public static RedisObject.Strings EvalSHA(string sha1, string[] keys, params string[] arguments)
         {
             string[] args = RedisArgs.Concat(new object[] { sha1, keys.Length }, keys, arguments);
-            return new RedisObject("EVALSHA", args);
+            return new RedisObject.Strings("EVALSHA", args);
         }
         public static RedisArray.Generic<bool> ScriptExists(params string[] scripts)
         {

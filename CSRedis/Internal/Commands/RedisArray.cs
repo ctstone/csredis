@@ -17,7 +17,7 @@ namespace CSRedis.Internal.Commands
         public override object[] Parse(RedisReader reader)
         {
             if (_parsers.Count == 0)
-                return reader.ReadMultiBulk();
+                return reader.ReadMultiBulk(bulkAsString: true);
 
             reader.ExpectType(RedisMessage.MultiBulk);
             long count = reader.ReadInt(false);

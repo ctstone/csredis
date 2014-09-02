@@ -1,8 +1,10 @@
 ﻿using CSRedis.Internal;
+using CSRedis.Internal.Fakes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -285,10 +287,10 @@ namespace CSRedis.Tests
 
 
 
-        static void TestSentinel<T>(string reply, Func<RedisSentinelClient, T> syncFunc, Func<RedisSentinelClient, Task<T>> asyncFunc, Action<MockConnector, T> test)
+        static void TestSentinel<T>(string reply, Func<RedisSentinelClient, T> syncFunc, Func<RedisSentinelClient, Task<T>> asyncFunc, Action<FakeRedisSocket, T> test)
         {
-            using (var mock = new MockConnector("MockHost", 9999, reply, reply))
-            using (var sentinel = new RedisSentinelClient(mock))
+            using (var mock = new FakeRedisSocket(reply, reply))
+            using (var sentinel = new RedisSentinelClient(mock, new DnsEndPoint("fakehost", 9999)))
             {
                 var sync_result = syncFunc(sentinel);
                 var async_result = asyncFunc(sentinel);
