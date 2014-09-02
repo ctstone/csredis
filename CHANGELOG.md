@@ -1,3 +1,6 @@
+##csredis 3.2.1
+**[fix]** Unnecessary memory allocation when not using async methods  
+
 ##csredis 3.1.18
 **[fix]** Encoding issues  
 **[new]** Strongname signed assembly available on NuGet  
