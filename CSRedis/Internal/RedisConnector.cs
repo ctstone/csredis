@@ -29,14 +29,14 @@ namespace CSRedis.Internal
         readonly int _bufferSize;
         readonly Lazy<AsyncConnector> _asyncConnector;
         readonly IRedisSocket _redisSocket;
-        readonly EndPoint _endpoint;
+        readonly EndPoint _endPoint;
         readonly RedisIO _io;
 
         public event EventHandler Connected;
 
         public bool IsConnected { get { return _redisSocket.Connected; } }
-        public string Host { get { return _endpoint is DnsEndPoint ? (_endpoint as DnsEndPoint).Host : null; } }
-        public int Port { get { return _endpoint is DnsEndPoint ? (_endpoint as DnsEndPoint).Port : 0; } }
+        public string Host { get { return _endPoint is DnsEndPoint ? (_endPoint as DnsEndPoint).Host : null; } }
+        public int Port { get { return _endPoint is DnsEndPoint ? (_endPoint as DnsEndPoint).Port : 0; } }
         public bool IsPipelined { get { return _io.Pipeline == null ? false : _io.Pipeline.Active; } }
         public int ReconnectAttempts { get; set; }
         public int ReconnectWait { get; set; }
@@ -58,11 +58,11 @@ namespace CSRedis.Internal
         public AsyncConnector Async { get { return _asyncConnector.Value; } }
         
 
-        public RedisConnector(EndPoint endoint, IRedisSocket socket, int concurrency, int bufferSize)
+        public RedisConnector(EndPoint endPoint, IRedisSocket socket, int concurrency, int bufferSize)
         {
             _concurrency = concurrency;
             _bufferSize = bufferSize;
-            _endpoint = endoint;
+            _endPoint = endPoint;
             _redisSocket = socket;
             _io = new RedisIO();
             _asyncConnector = new Lazy<AsyncConnector>(AsyncConnectorFactory);
@@ -70,14 +70,14 @@ namespace CSRedis.Internal
 
         AsyncConnector AsyncConnectorFactory()
         {
-            var connector = new AsyncConnector(_redisSocket, _endpoint, _io, _concurrency, _bufferSize);
+            var connector = new AsyncConnector(_redisSocket, _endPoint, _io, _concurrency, _bufferSize);
             connector.Connected += OnAsyncConnected;
             return connector;
         }
 
         public bool Connect()
         {
-            _redisSocket.Connect(_endpoint);
+            _redisSocket.Connect(_endPoint);
 
             if (_redisSocket.Connected)
                 OnConnected();
