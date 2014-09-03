@@ -90,7 +90,7 @@ namespace CSRedis.Tests
         [TestMethod, TestCategory("PubSub")]
         public void PubSubNumSubTest()
         {
-            using (var mock = new FakeRedisSocket("*4\r\n$5\r\ntest1\r\n$1\r\n1\r\n$5\r\ntest2\r\n$1\r\n5\r\n"))
+            using (var mock = new FakeRedisSocket("*4\r\n$5\r\ntest1\r\n:1\r\n$5\r\ntest2\r\n:5\r\n"))
             using (var redis = new RedisClient(mock, new DnsEndPoint("fakehost", 9999)))
             {
                 var response = redis.PubSubNumSub("channel1", "channel2");
