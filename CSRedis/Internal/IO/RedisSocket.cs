@@ -46,7 +46,7 @@ namespace CSRedis.Internal.IO
             return _socket.SendAsync(args);
         }
 
-        public Stream CreateStream()
+        public Stream GetStream()
         {
             return new NetworkStream(_socket);
         }

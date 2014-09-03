@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CSRedis.Internal.IO;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -50,7 +51,7 @@ namespace CSRedis.Internal.Fakes
             return false;
         }
 
-        public Stream CreateStream()
+        public Stream GetStream()
         {
             return _stream;
         }

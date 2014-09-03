@@ -12,17 +12,6 @@ using System.Threading.Tasks;
 
 namespace CSRedis.Internal
 {
-    interface IRedisSocket : IDisposable
-    {
-        bool Connected { get; }
-        int ReceiveTimeout { get; set; }
-        int SendTimeout { get; set; }
-        void Connect(EndPoint endpoint);
-        bool ConnectAsync(SocketAsyncEventArgs args);
-        bool SendAsync(SocketAsyncEventArgs args);
-        Stream CreateStream();
-    }
-
     class RedisConnector
     {
         readonly int _concurrency;
@@ -34,6 +23,7 @@ namespace CSRedis.Internal
 
         public event EventHandler Connected;
 
+        public AsyncConnector Async { get { return _asyncConnector.Value; } }
         public bool IsConnected { get { return _redisSocket.Connected; } }
         public EndPoint EndPoint { get { return _endPoint; } }
         public bool IsPipelined { get { return _io.IsPipelined; } }
@@ -54,7 +44,6 @@ namespace CSRedis.Internal
             get { return _io.Encoding; }
             set { _io.Encoding = value; }
         }
-        public AsyncConnector Async { get { return _asyncConnector.Value; } }
         
 
         public RedisConnector(EndPoint endPoint, IRedisSocket socket, int concurrency, int bufferSize)
@@ -65,13 +54,6 @@ namespace CSRedis.Internal
             _redisSocket = socket;
             _io = new RedisIO();
             _asyncConnector = new Lazy<AsyncConnector>(AsyncConnectorFactory);
-        }
-
-        AsyncConnector AsyncConnectorFactory()
-        {
-            var connector = new AsyncConnector(_redisSocket, _endPoint, _io, _concurrency, _bufferSize);
-            connector.Connected += OnAsyncConnected;
-            return connector;
         }
 
         public bool Connect()
@@ -213,11 +195,10 @@ namespace CSRedis.Internal
 
             throw new IOException("Could not reconnect after " + attempts + " attempts");
         }
-        
 
         void OnConnected()
         {
-            _io.SetStream(_redisSocket.CreateStream());
+            _io.SetStream(_redisSocket.GetStream());
             if (Connected != null)
                 Connected(this, new EventArgs());
         }
@@ -225,6 +206,13 @@ namespace CSRedis.Internal
         void OnAsyncConnected(object sender, EventArgs args)
         {
             OnConnected();
+        }
+
+        AsyncConnector AsyncConnectorFactory()
+        {
+            var connector = new AsyncConnector(_redisSocket, _endPoint, _io, _concurrency, _bufferSize);
+            connector.Connected += OnAsyncConnected;
+            return connector;
         }
     }
 }
