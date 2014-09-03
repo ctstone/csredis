@@ -99,6 +99,8 @@ namespace CSRedis.Internal
 
         public void Write(RedisCommand command)
         {
+            ConnectIfNotConnected();
+
             try
             {
                 _io.Writer.Write(command, _io.Stream);
@@ -114,6 +116,8 @@ namespace CSRedis.Internal
 
         public T Read<T>(Func<RedisReader, T> func)
         {
+            ExpectConnected();
+
             try
             {
                 return func(_io.Reader);
@@ -129,6 +133,8 @@ namespace CSRedis.Internal
 
         public void Read(Stream destination, int bufferSize)
         {
+            ExpectConnected();
+
             try
             {
                 _io.Reader.ExpectType(RedisMessage.Bulk);
@@ -151,6 +157,8 @@ namespace CSRedis.Internal
 
         public object[] EndPipe()
         {
+            ExpectConnected();
+
             try
             {
                 return _io.Pipeline.Flush();
@@ -174,12 +182,6 @@ namespace CSRedis.Internal
             if (_redisSocket != null)
                 _redisSocket.Dispose();
 
-        }
-
-        void ConnectIfNotConnected()
-        {
-            if (!IsConnected)
-                Connect();
         }
 
         void Reconnect()
@@ -213,6 +215,18 @@ namespace CSRedis.Internal
             var connector = new AsyncConnector(_redisSocket, _endPoint, _io, _concurrency, _bufferSize);
             connector.Connected += OnAsyncConnected;
             return connector;
+        }
+
+        void ConnectIfNotConnected()
+        {
+            if (!IsConnected)
+                Connect();
+        }
+
+        void ExpectConnected()
+        {
+            if (!IsConnected)
+                throw new RedisClientException("Client is not connected");
         }
     }
 }

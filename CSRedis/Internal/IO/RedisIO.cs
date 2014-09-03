@@ -14,16 +14,16 @@ namespace CSRedis.Internal.IO
         BufferedStream _stream;
 
         public RedisWriter Writer { get { return _writer; } }
-        public RedisReader Reader { get { return _reader; } }
+        public RedisReader Reader { get { return GetOrThrow(_reader); } }
         public Encoding Encoding { get; set; }
-        public RedisPipeline Pipeline { get { return _pipeline; } }
-        public Stream Stream { get { return _stream; } }
+        public RedisPipeline Pipeline { get { return GetOrThrow(_pipeline); } }
+        public Stream Stream { get { return GetOrThrow(_stream); } }
         public bool IsPipelined { get { return Pipeline == null ? false : Pipeline.Active; } }
 
         public RedisIO()
         {
             _writer = new RedisWriter(this);
-            Encoding = Encoding.UTF8;
+            Encoding = new UTF8Encoding(false);
         }
 
         public void SetStream(Stream stream)
@@ -42,6 +42,13 @@ namespace CSRedis.Internal.IO
                 _pipeline.Dispose();
             if (_stream != null)
                 _stream.Dispose();
+        }
+
+        static T GetOrThrow<T>(T obj)
+        {
+            if (obj == null)
+                throw new RedisClientException("Connection was not opened");
+            return obj;
         }
     }
 }
