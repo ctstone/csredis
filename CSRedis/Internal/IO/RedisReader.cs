@@ -111,6 +111,12 @@ namespace CSRedis.Internal.IO
                 throw new RedisProtocolException(String.Format("Unexpected response type: {0} (expecting {1})", type, expectedType));
         }
 
+        public void ExpectMultiBulk(long expectedSize)
+        {
+            ExpectType(RedisMessage.MultiBulk);
+            ExpectSize(expectedSize);
+        }
+
         public void ExpectSize(long expectedSize)
         {
             long size = ReadInt(false);
