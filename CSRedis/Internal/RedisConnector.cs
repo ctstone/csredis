@@ -35,9 +35,8 @@ namespace CSRedis.Internal
         public event EventHandler Connected;
 
         public bool IsConnected { get { return _redisSocket.Connected; } }
-        public string Host { get { return _endPoint is DnsEndPoint ? (_endPoint as DnsEndPoint).Host : null; } }
-        public int Port { get { return _endPoint is DnsEndPoint ? (_endPoint as DnsEndPoint).Port : 0; } }
-        public bool IsPipelined { get { return _io.Pipeline == null ? false : _io.Pipeline.Active; } }
+        public EndPoint EndPoint { get { return _endPoint; } }
+        public bool IsPipelined { get { return _io.IsPipelined; } }
         public int ReconnectAttempts { get; set; }
         public int ReconnectWait { get; set; }
         public int ReceiveTimeout 

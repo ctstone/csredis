@@ -38,12 +38,12 @@ namespace CSRedis
         /// <summary>
         /// Get the Redis sentinel hostname
         /// </summary>
-        public string Host { get { return _connector.Host; } }
+        public string Host { get { return GetHost(); } }
 
         /// <summary>
         /// Get the Redis sentinel port
         /// </summary>
-        public int Port { get { return _connector.Port; } }
+        public int Port { get { return GetPort(); } }
 
         /// <summary>
         /// Get a value indicating whether the Redis sentinel client is connected to the server
@@ -147,6 +147,26 @@ namespace CSRedis
         {
             if (Reconnected != null)
                 Reconnected(this, args);
+        }
+
+        string GetHost()
+        {
+            if (_connector.EndPoint is IPEndPoint)
+                return (_connector.EndPoint as IPEndPoint).Address.ToString();
+            else if (_connector.EndPoint is DnsEndPoint)
+                return (_connector.EndPoint as DnsEndPoint).Host;
+            else
+                return null;
+        }
+
+        int GetPort()
+        {
+            if (_connector.EndPoint is IPEndPoint)
+                return (_connector.EndPoint as IPEndPoint).Port;
+            else if (_connector.EndPoint is DnsEndPoint)
+                return (_connector.EndPoint as DnsEndPoint).Port;
+            else
+                return -1;
         }
     }
 }
