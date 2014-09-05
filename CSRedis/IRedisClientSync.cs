@@ -2,85 +2,64 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace CSRedis
 {
     /// <summary>
-    /// Interface for asyncronous RedisClient methods
+    /// Interface for syncronous RedisClient methods
     /// </summary>
-    public interface IRedisClientAsync : IRedisClient
+    public interface IRedisClientSync : IRedisClient
     {
         /// <summary>
-        /// Open connection to redis server
+        /// Connect to the remote host
         /// </summary>
-        /// <returns>True on success</returns>
-        Task<bool> ConnectAsync();
-
-
+        /// <param name="timeout">Connection timeout in milliseconds</param>
+        /// <returns>True if connected</returns>
+        bool Connect(int timeout);
 
 
         /// <summary>
-        /// Call arbitrary redis command
+        /// Call arbitrary Redis command
         /// </summary>
-        /// <param name="command"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        Task<object> CallAsync(string command, params string[] args);
-
-
-
-
-
-
+        /// <param name="command">Command name</param>
+        /// <param name="args">Command arguments</param>
+        /// <returns>Redis object</returns>
+        object Call(string command, params string[] args);
 
 
         #region Connection
         /// <summary>
         /// Authenticate to the server
         /// </summary>
-        /// <param name="password">Server password</param>
-        /// <returns>Task associated with status message</returns>
-        Task<string> AuthAsync(string password);
-
-
-
+        /// <param name="password">Redis server password</param>
+        /// <returns>Status message</returns>
+        string Auth(string password);
 
         /// <summary>
         /// Echo the given string
         /// </summary>
         /// <param name="message">Message to echo</param>
-        /// <returns>Task associated with echo response</returns>
-        Task<string> EchoAsync(string message);
-
-
-
+        /// <returns>Message</returns>
+        string Echo(string message);
 
         /// <summary>
         /// Ping the server
         /// </summary>
-        /// <returns>Task associated with status message</returns>
-        Task<string> PingAsync();
-
-
-
+        /// <returns>Status message</returns>
+        string Ping();
 
         /// <summary>
         /// Close the connection
         /// </summary>
-        /// <returns>Task associated with status message</returns>
-        Task<string> QuitAsync();
-
+        /// <returns>Status message</returns>
+        string Quit();
 
         /// <summary>
         /// Change the selected database for the current connection
         /// </summary>
         /// <param name="index">Zero-based database index</param>
         /// <returns>Status message</returns>
-        Task<string> SelectAsync(int index);
-
-
-
+        string Select(int index);
         #endregion
 
         #region Keys
@@ -88,52 +67,42 @@ namespace CSRedis
         /// Delete a key
         /// </summary>
         /// <param name="keys">Keys to delete</param>
-        /// <returns></returns>
-        Task<long> DelAsync(params string[] keys);
-
-
+        /// <returns>Number of keys removed</returns>
+        long Del(params string[] keys);
 
 
         /// <summary>
         /// Return a serialized version of the value stored at the specified key
         /// </summary>
         /// <param name="key">Key to dump</param>
-        /// <returns></returns>
-        Task<byte[]> DumpAsync(string key);
-
-
+        /// <returns>Serialized value</returns>
+        byte[] Dump(string key);
 
 
         /// <summary>
         /// Determine if a key exists
         /// </summary>
         /// <param name="key">Key to check</param>
-        /// <returns></returns>
-        Task<bool> ExistsAsync(string key);
-
-
-
-
-        /// <summary>
-        /// Set a key's time to live in seconds
-        /// </summary>
-        /// <param name="key">Key to modify</param>
-        /// <param name="expiration">Expiration (nearest second)</param>
-        /// <returns></returns>
-        Task<bool> ExpireAsync(string key, int expiration);
-
-
+        /// <returns>True if key exists</returns>
+        bool Exists(string key);
 
 
         /// <summary>
         /// Set a key's time to live in seconds
         /// </summary>
         /// <param name="key">Key to modify</param>
-        /// <param name="expiration">Expiration in seconds</param>
-        /// <returns></returns>
-        Task<bool> ExpireAsync(string key, TimeSpan expiration);
+        /// <param name="expiration">Expiration (nearest second);</param>
+        /// <returns>True if timeout was set; false if key does not exist or timeout could not be set</returns>
+        bool Expire(string key, TimeSpan expiration);
 
 
+        /// <summary>
+        /// Set a key's time to live in seconds
+        /// </summary>
+        /// <param name="key">Key to modify</param>
+        /// <param name="seconds">Expiration in seconds</param>
+        /// <returns>True if timeout was set; false if key does not exist or timeout could not be set</returns>
+        bool Expire(string key, int seconds);
 
 
         /// <summary>
@@ -141,31 +110,37 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to modify</param>
         /// <param name="expirationDate">Date of expiration, to nearest second</param>
-        /// <returns></returns>
-        Task<bool> ExpireAtAsync(string key, DateTime expirationDate);
-
-
+        /// <returns>True if timeout was set; false if key does not exist or timeout could not be set</returns>
+        bool ExpireAt(string key, DateTime expirationDate);
 
 
         /// <summary>
         /// Set the expiration for a key as a UNIX timestamp
         /// </summary>
         /// <param name="key">Key to modify</param>
-        /// <param name="timestamp"></param>
-        /// <returns></returns>
-        Task<bool> ExpireAtAsync(string key, int timestamp);
-
-
+        /// <param name="timestamp">UNIX timestamp</param>
+        /// <returns>True if timeout was set; false if key does not exist or timeout could not be set</returns>
+        bool ExpireAt(string key, int timestamp);
 
 
         /// <summary>
         /// Find all keys matching the given pattern
         /// </summary>
         /// <param name="pattern">Pattern to match</param>
-        /// <returns></returns>
-        Task<string[]> KeysAsync(string pattern);
+        /// <returns>Array of keys matching pattern</returns>
+        string[] Keys(string pattern);
 
 
+        /// <summary>
+        /// Atomically transfer a key from a Redis instance to another one
+        /// </summary>
+        /// <param name="host">Remote Redis host</param>
+        /// <param name="port">Remote Redis port</param>
+        /// <param name="key">Key to migrate</param>
+        /// <param name="destinationDb">Remote database ID</param>
+        /// <param name="timeoutMilliseconds">Timeout in milliseconds</param>
+        /// <returns>Status message</returns>
+        string Migrate(string host, int port, string key, int destinationDb, int timeoutMilliseconds);
 
 
         /// <summary>
@@ -176,24 +151,8 @@ namespace CSRedis
         /// <param name="key">Key to migrate</param>
         /// <param name="destinationDb">Remote database ID</param>
         /// <param name="timeout">Timeout in milliseconds</param>
-        /// <returns></returns>
-        Task<string> MigrateAsync(string host, int port, string key, int destinationDb, int timeout);
-
-
-
-
-        /// <summary>
-        /// Atomically transfer a key from a Redis instance to another one
-        /// </summary>
-        /// <param name="host">Remote Redis host</param>
-        /// <param name="port">Remote Redis port</param>
-        /// <param name="key">Key to migrate</param>
-        /// <param name="destinationDb">Remote database ID</param>
-        /// <param name="timeout">Timeout in milliseconds</param>
-        /// <returns></returns>
-        Task<string> MigrateAsync(string host, int port, string key, int destinationDb, TimeSpan timeout);
-
-
+        /// <returns>Status message</returns>
+        string Migrate(string host, int port, string key, int destinationDb, TimeSpan timeout);
 
 
         /// <summary>
@@ -201,10 +160,8 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to move</param>
         /// <param name="database">Database destination ID</param>
-        /// <returns></returns>
-        Task<bool> MoveAsync(string key, int database);
-
-
+        /// <returns>True if key was moved</returns>
+        bool Move(string key, int database);
 
 
         /// <summary>
@@ -212,9 +169,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="arguments">Subcommand arguments</param>
         /// <returns>The type of internal representation used to store the value at the specified key</returns>
-        Task<string> ObjectEncodingAsync(params string[] arguments);
-
-
+        string ObjectEncoding(params string[] arguments);
 
 
         /// <summary>
@@ -223,30 +178,24 @@ namespace CSRedis
         /// <param name="subCommand">Type of Object command to send</param>
         /// <param name="arguments">Subcommand arguments</param>
         /// <returns>Varies depending on subCommand</returns>
-        Task<long?> ObjectAsync(RedisObjectSubCommand subCommand, params string[] arguments);
-
-
+        long? Object(RedisObjectSubCommand subCommand, params string[] arguments);
 
 
         /// <summary>
         /// Remove the expiration from a key
         /// </summary>
         /// <param name="key">Key to modify</param>
-        /// <returns></returns>
-        Task<bool> PersistAsync(string key);
-
-
+        /// <returns>True if timeout was removed</returns>
+        bool Persist(string key);
 
 
         /// <summary>
         /// Set a key's time to live in milliseconds
         /// </summary>
         /// <param name="key">Key to modify</param>
-        /// <param name="expiration">Expiration (nearest millisecond)</param>
-        /// <returns></returns>
-        Task<bool> PExpireAsync(string key, TimeSpan expiration);
-
-
+        /// <param name="expiration">Expiration (nearest millisecond);</param>
+        /// <returns>True if timeout was set</returns>
+        bool PExpire(string key, TimeSpan expiration);
 
 
         /// <summary>
@@ -254,10 +203,8 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key</param>
         /// <param name="milliseconds">Expiration in milliseconds</param>
-        /// <returns></returns>
-        Task<bool> PExpireAsync(string key, long milliseconds);
-
-
+        /// <returns>True if timeout was set</returns>
+        bool PExpire(string key, long milliseconds);
 
 
         /// <summary>
@@ -265,40 +212,31 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to modify</param>
         /// <param name="date">Expiration date</param>
-        /// <returns></returns>
-        Task<bool> PExpireAtAsync(string key, DateTime date);
-
-
+        /// <returns>True if timeout was set</returns>
+        bool PExpireAt(string key, DateTime date);
 
 
         /// <summary>
         /// Set the expiration for a key as a UNIX timestamp specified in milliseconds
         /// </summary>
         /// <param name="key">Key to modify</param>
-        /// <param name="timestamp">Expiration timestamp (milliseconds)</param>
-        /// <returns></returns>
-        Task<bool> PExpireAtAsync(string key, long timestamp);
-
-
-
+        /// <param name="timestamp">Expiration timestamp (milliseconds);</param>
+        /// <returns>True if timeout was set</returns>
+        bool PExpireAt(string key, long timestamp);
 
         /// <summary>
         /// Get the time to live for a key in milliseconds
         /// </summary>
         /// <param name="key">Key to check</param>
-        /// <returns></returns>
-        Task<long> PTtlAsync(string key);
-
-
+        /// <returns>Time-to-live in milliseconds</returns>
+        long PTtl(string key);
 
 
         /// <summary>
         /// Return a random key from the keyspace
         /// </summary>
-        /// <returns></returns>
-        Task<string> RandomKeyAsync();
-
-
+        /// <returns>A random key</returns>
+        string RandomKey();
 
 
         /// <summary>
@@ -306,10 +244,8 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to rename</param>
         /// <param name="newKey">New key name</param>
-        /// <returns></returns>
-        Task<string> RenameAsync(string key, string newKey);
-
-
+        /// <returns>Status code</returns>
+        string Rename(string key, string newKey);
 
 
         /// <summary>
@@ -317,10 +253,8 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to rename</param>
         /// <param name="newKey">New key name</param>
-        /// <returns></returns>
-        Task<bool> RenameNxAsync(string key, string newKey);
-
-
+        /// <returns>True if key was renamed</returns>
+        bool RenameNx(string key, string newKey);
 
 
         /// <summary>
@@ -329,11 +263,8 @@ namespace CSRedis
         /// <param name="key">Key to restore</param>
         /// <param name="ttl">Time-to-live in milliseconds</param>
         /// <param name="serializedValue">Serialized value from DUMP</param>
-        /// <returns></returns>
-        Task<string> RestoreAsync(string key, long ttl, string serializedValue);
-
-
-
+        /// <returns>Status code</returns>
+        string Restore(string key, long ttl, string serializedValue);
 
         /// <summary>
         /// Sort the elements in a list, set or sorted set
@@ -345,10 +276,8 @@ namespace CSRedis
         /// <param name="dir">Sort direction</param>
         /// <param name="isAlpha">Sort lexicographically</param>
         /// <param name="get">Retrieve external keys</param>
-        /// <returns></returns>
-        Task<string[]> SortAsync(string key, long? offset = null, long? count = null, string by = null, RedisSortDir? dir = null, bool? isAlpha = null, params string[] get);
-
-
+        /// <returns>The sorted list</returns>
+        string[] Sort(string key, long? offset = null, long? count = null, string by = null, RedisSortDir? dir = null, bool? isAlpha = null, params string[] get);
 
 
         /// <summary>
@@ -362,30 +291,34 @@ namespace CSRedis
         /// <param name="dir">Sort direction</param>
         /// <param name="isAlpha">Sort lexicographically</param>
         /// <param name="get">Retrieve external keys</param>
-        /// <returns></returns>
-        Task<long> SortAndStoreAsync(string key, string destination, long? offset = null, long? count = null, string by = null, RedisSortDir? dir = null, bool? isAlpha = null, params string[] get);
-
-
+        /// <returns>Number of elements stored</returns>
+        long SortAndStore(string key, string destination, long? offset = null, long? count = null, string by = null, RedisSortDir? dir = null, bool? isAlpha = false, params string[] get);
 
 
         /// <summary>
         /// Get the time to live for a key
         /// </summary>
         /// <param name="key">Key to check</param>
-        /// <returns></returns>
-        Task<long> TtlAsync(string key);
-
-
+        /// <returns>Time-to-live in seconds</returns>
+        long Ttl(string key);
 
 
         /// <summary>
         /// Determine the type stored at key
         /// </summary>
         /// <param name="key">Key to check</param>
-        /// <returns></returns>
-        Task<string> TypeAsync(string key);
+        /// <returns>Type of key</returns>
+        string Type(string key);
 
 
+        /// <summary>
+        /// Iterate the set of keys in the currently selected Redis database
+        /// </summary>
+        /// <param name="cursor">The cursor returned by the server in the previous call, or 0 if this is the first call</param>
+        /// <param name="pattern">Glob-style pattern to filter returned elements</param>
+        /// <param name="count">Set the maximum number of elements to return</param>
+        /// <returns>Updated cursor and result set</returns>
+        RedisScan<string> Scan(long cursor, string pattern = null, long? count = null);
 
         #endregion
 
@@ -396,9 +329,7 @@ namespace CSRedis
         /// <param name="key">Hash key</param>
         /// <param name="fields">Fields to delete</param>
         /// <returns>Number of fields removed from hash</returns>
-        Task<long> HDelAsync(string key, params string[] fields);
-
-
+        long HDel(string key, params string[] fields);
 
 
         /// <summary>
@@ -407,9 +338,7 @@ namespace CSRedis
         /// <param name="key">Hash key</param>
         /// <param name="field">Field to check</param>
         /// <returns>True if hash field exists</returns>
-        Task<bool> HExistsAsync(string key, string field);
-
-
+        bool HExists(string key, string field);
 
 
         /// <summary>
@@ -418,9 +347,7 @@ namespace CSRedis
         /// <param name="key">Hash key</param>
         /// <param name="field">Field to get</param>
         /// <returns>Value of hash field</returns>
-        Task<string> HGetAsync(string key, string field);
-
-
+        string HGet(string key, string field);
 
 
         /// <summary>
@@ -429,20 +356,15 @@ namespace CSRedis
         /// <typeparam name="T">Object to map hash</typeparam>
         /// <param name="key">Hash key</param>
         /// <returns>Strongly typed object mapped from hash</returns>
-        Task<T> HGetAllAsync<T>(string key)
+        T HGetAll<T>(string key)
                     where T : class;
-
-
-
 
         /// <summary>
         /// Get all the fields and values in a hash
         /// </summary>
         /// <param name="key">Hash key</param>
         /// <returns>Dictionary mapped from string</returns>
-        Task<Dictionary<string, string>> HGetAllAsync(string key);
-
-
+        Dictionary<string, string> HGetAll(string key);
 
 
         /// <summary>
@@ -452,9 +374,7 @@ namespace CSRedis
         /// <param name="field">Field to increment</param>
         /// <param name="increment">Increment value</param>
         /// <returns>Value of field after increment</returns>
-        Task<long> HIncrByAsync(string key, string field, long increment);
-
-
+        long HIncrBy(string key, string field, long increment);
 
 
         /// <summary>
@@ -464,9 +384,7 @@ namespace CSRedis
         /// <param name="field">Field to increment</param>
         /// <param name="increment">Increment value</param>
         /// <returns>Value of field after increment</returns>
-        Task<double> HIncrByFloatAsync(string key, string field, double increment);
-
-
+        double HIncrByFloat(string key, string field, double increment);
 
 
         /// <summary>
@@ -474,9 +392,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Hash key</param>
         /// <returns>All hash field names</returns>
-        Task<string[]> HKeysAsync(string key);
-
-
+        string[] HKeys(string key);
 
 
         /// <summary>
@@ -484,9 +400,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Hash key</param>
         /// <returns>Number of fields in hash</returns>
-        Task<long> HLenAsync(string key);
-
-
+        long HLen(string key);
 
 
         /// <summary>
@@ -495,9 +409,7 @@ namespace CSRedis
         /// <param name="key">Hash key</param>
         /// <param name="fields">Fields to return</param>
         /// <returns>Values of given fields</returns>
-        Task<string[]> HMGetAsync(string key, params string[] fields);
-
-
+        string[] HMGet(string key, params string[] fields);
 
 
         /// <summary>
@@ -506,9 +418,7 @@ namespace CSRedis
         /// <param name="key">Hash key</param>
         /// <param name="dict">Dictionary mapping of hash</param>
         /// <returns>Status code</returns>
-        Task<string> HMSetAsync(string key, Dictionary<string, string> dict);
-
-
+        string HMSet(string key, Dictionary<string, string> dict);
 
 
         /// <summary>
@@ -518,10 +428,8 @@ namespace CSRedis
         /// <param name="key">Hash key</param>
         /// <param name="obj">Object mapping of hash</param>
         /// <returns>Status code</returns>
-        Task<string> HMSetAsync<T>(string key, T obj)
+        string HMSet<T>(string key, T obj)
                     where T : class;
-
-
 
 
         /// <summary>
@@ -530,9 +438,7 @@ namespace CSRedis
         /// <param name="key">Hash key</param>
         /// <param name="keyValues">Array of [key,value,key,value,..]</param>
         /// <returns>Status code</returns>
-        Task<string> HMSetAsync(string key, params string[] keyValues);
-
-
+        string HMSet(string key, params string[] keyValues);
 
 
         /// <summary>
@@ -542,9 +448,7 @@ namespace CSRedis
         /// <param name="field">Hash field to set</param>
         /// <param name="value">Value to set</param>
         /// <returns>True if field is new</returns>
-        Task<bool> HSetAsync(string key, string field, object value);
-
-
+        bool HSet(string key, string field, object value);
 
 
         /// <summary>
@@ -554,9 +458,7 @@ namespace CSRedis
         /// <param name="field">Hash field to set</param>
         /// <param name="value">Value to set</param>
         /// <returns>True if field was set to value</returns>
-        Task<bool> HSetNxAsync(string key, string field, object value);
-
-
+        bool HSetNx(string key, string field, object value);
 
 
         /// <summary>
@@ -564,22 +466,121 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Hash key</param>
         /// <returns>Array of all values in hash</returns>
-        Task<string[]> HValsAsync(string key);
+        string[] HVals(string key);
 
 
+        /// <summary>
+        /// Iterate the keys and values of a hash field
+        /// </summary>
+        /// <param name="key">Hash key</param>
+        /// <param name="cursor">The cursor returned by the server in the previous call, or 0 if this is the first call</param>
+        /// <param name="pattern">Glob-style pattern to filter returned elements</param>
+        /// <param name="count">Maximum number of elements to return</param>
+        /// <returns>Updated cursor and result set</returns>
+        RedisScan<Tuple<string, string>> HScan(string key, long cursor, string pattern = null, long? count = null);
 
         #endregion
 
         #region Lists
+        /// <summary>
+        /// Remove and get the first element and key in a list, or block until one is available
+        /// </summary>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <param name="keys">List keys</param>
+        /// <returns>List key and list value</returns>
+        Tuple<string, string> BLPopWithKey(int timeout, params string[] keys);
+
+
+        /// <summary>
+        /// Remove and get the first element and key in a list, or block until one is available
+        /// </summary>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <param name="keys">List keys</param>
+        /// <returns>List key and list value</returns>
+        Tuple<string, string> BLPopWithKey(TimeSpan timeout, params string[] keys);
+
+
+        /// <summary>
+        /// Remove and get the first element value in a list, or block until one is available
+        /// </summary>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <param name="keys">List keys</param>
+        /// <returns>List value</returns>
+        string BLPop(int timeout, params string[] keys);
+
+
+        /// <summary>
+        /// Remove and get the first element value in a list, or block until one is available
+        /// </summary>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <param name="keys">List keys</param>
+        /// <returns>List value</returns>
+        string BLPop(TimeSpan timeout, params string[] keys);
+
+
+        /// <summary>
+        /// Remove and get the last element and key in a list, or block until one is available
+        /// </summary>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <param name="keys">List keys</param>
+        /// <returns>List key and list value</returns>
+        Tuple<string, string> BRPopWithKey(int timeout, params string[] keys);
+
+
+        /// <summary>
+        /// Remove and get the last element and key in a list, or block until one is available
+        /// </summary>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <param name="keys">List keys</param>
+        /// <returns>List key and list value</returns>
+        Tuple<string, string> BRPopWithKey(TimeSpan timeout, params string[] keys);
+
+
+        /// <summary>
+        /// Remove and get the last element value in a list, or block until one is available
+        /// </summary>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <param name="keys">List value</param>
+        /// <returns></returns>
+        string BRPop(int timeout, params string[] keys);
+
+
+        /// <summary>
+        /// Remove and get the last element value in a list, or block until one is available
+        /// </summary>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <param name="keys">List keys</param>
+        /// <returns>List value</returns>
+        string BRPop(TimeSpan timeout, params string[] keys);
+
+
+        /// <summary>
+        /// Pop a value from a list, push it to another list and return it; or block until one is available
+        /// </summary>
+        /// <param name="source">Source list key</param>
+        /// <param name="destination">Destination key</param>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <returns>Element popped</returns>
+        string BRPopLPush(string source, string destination, int timeout);
+
+
+        /// <summary>
+        /// Pop a value from a list, push it to another list and return it; or block until one is available
+        /// </summary>
+        /// <param name="source">Source list key</param>
+        /// <param name="destination">Destination key</param>
+        /// <param name="timeout">Timeout in seconds</param>
+        /// <returns>Element popped</returns>
+        string BRPopLPush(string source, string destination, TimeSpan timeout);
+
+
         /// <summary>
         /// Get an element from a list by its index
         /// </summary>
         /// <param name="key">List key</param>
         /// <param name="index">Zero-based index of item to return</param>
         /// <returns>Element at index</returns>
-        Task<string> LIndexAsync(string key, long index);
-
-
+        string LIndex(string key, long index);
 
 
         /// <summary>
@@ -590,9 +591,7 @@ namespace CSRedis
         /// <param name="pivot">Relative element</param>
         /// <param name="value">Element to insert</param>
         /// <returns>Length of list after insert or -1 if pivot not found</returns>
-        Task<long> LInsertAsync(string key, RedisInsert insertType, string pivot, object value);
-
-
+        long LInsert(string key, RedisInsert insertType, string pivot, object value);
 
 
         /// <summary>
@@ -600,9 +599,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">List key</param>
         /// <returns>Length of list at key</returns>
-        Task<long> LLenAsync(string key);
-
-
+        long LLen(string key);
 
 
         /// <summary>
@@ -610,9 +607,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">List key</param>
         /// <returns>First element in list</returns>
-        Task<string> LPopAsync(string key);
-
-
+        string LPop(string key);
 
 
         /// <summary>
@@ -621,10 +616,7 @@ namespace CSRedis
         /// <param name="key">List key</param>
         /// <param name="values">Values to push</param>
         /// <returns>Length of list after push</returns>
-        Task<long> LPushAsync(string key, params object[] values);
-
-
-
+        long LPush(string key, params object[] values);
 
         /// <summary>
         /// Prepend a value to a list, only if the list exists
@@ -632,9 +624,7 @@ namespace CSRedis
         /// <param name="key">List key</param>
         /// <param name="value">Value to push</param>
         /// <returns>Length of list after push</returns>
-        Task<long> LPushXAsync(string key, object value);
-
-
+        long LPushX(string key, object value);
 
 
         /// <summary>
@@ -644,9 +634,7 @@ namespace CSRedis
         /// <param name="start">Start offset</param>
         /// <param name="stop">Stop offset</param>
         /// <returns>List of elements in range</returns>
-        Task<string[]> LRangeAsync(string key, long start, long stop);
-
-
+        string[] LRange(string key, long start, long stop);
 
 
         /// <summary>
@@ -656,9 +644,7 @@ namespace CSRedis
         /// <param name="count">&gt;0: remove N elements from head to tail; &lt;0: remove N elements from tail to head; =0: remove all elements</param>
         /// <param name="value">Remove elements equal to value</param>
         /// <returns>Number of removed elements</returns>
-        Task<long> LRemAsync(string key, long count, object value);
-
-
+        long LRem(string key, long count, object value);
 
 
         /// <summary>
@@ -668,10 +654,7 @@ namespace CSRedis
         /// <param name="index">List index to modify</param>
         /// <param name="value">New element value</param>
         /// <returns>Status code</returns>
-        Task<string> LSetAsync(string key, long index, object value);
-
-
-
+        string LSet(string key, long index, object value);
 
         /// <summary>
         /// Trim a list to the specified range
@@ -680,19 +663,14 @@ namespace CSRedis
         /// <param name="start">Zero-based start index</param>
         /// <param name="stop">Zero-based stop index</param>
         /// <returns>Status code</returns>
-        Task<string> LTrimAsync(string key, long start, long stop);
-
-
-
+        string LTrim(string key, long start, long stop);
 
         /// <summary>
         /// Remove and get the last elment in a list
         /// </summary>
         /// <param name="key">List key</param>
         /// <returns>Value of last list element</returns>
-        Task<string> RPopAsync(string key);
-
-
+        string RPop(string key);
 
 
         /// <summary>
@@ -701,10 +679,7 @@ namespace CSRedis
         /// <param name="source">List source key</param>
         /// <param name="destination">Destination key</param>
         /// <returns>Element being popped and pushed</returns>
-        Task<string> RPopLPushAsync(string source, string destination);
-
-
-
+        string RPopLPush(string source, string destination);
 
         /// <summary>
         /// Append one or multiple values to a list
@@ -712,10 +687,7 @@ namespace CSRedis
         /// <param name="key">List key</param>
         /// <param name="values">Values to push</param>
         /// <returns>Length of list after push</returns>
-        Task<long> RPushAsync(string key, params object[] values);
-
-
-
+        long RPush(string key, params object[] values);
 
         /// <summary>
         /// Append a value to a list, only if the list exists
@@ -723,10 +695,7 @@ namespace CSRedis
         /// <param name="key">List key</param>
         /// <param name="values">Values to push</param>
         /// <returns>Length of list after push</returns>
-        Task<long> RPushXAsync(string key, params object[] values);
-
-
-
+        long RPushX(string key, params object[] values);
         #endregion
 
         #region Sets
@@ -736,30 +705,21 @@ namespace CSRedis
         /// <param name="key">Set key</param>
         /// <param name="members">Members to add to set</param>
         /// <returns>Number of elements added to set</returns>
-        Task<long> SAddAsync(string key, params object[] members);
-
-
-
+        long SAdd(string key, params object[] members);
 
         /// <summary>
         /// Get the number of members in a set
         /// </summary>
         /// <param name="key">Set key</param>
         /// <returns>Number of elements in set</returns>
-        Task<long> SCardAsync(string key);
-
-
-
+        long SCard(string key);
 
         /// <summary>
         /// Subtract multiple sets
         /// </summary>
         /// <param name="keys">Set keys to subtract</param>
         /// <returns>Array of elements in resulting set</returns>
-        Task<string[]> SDiffAsync(params string[] keys);
-
-
-
+        string[] SDiff(params string[] keys);
 
         /// <summary>
         /// Subtract multiple sets and store the resulting set in a key
@@ -767,9 +727,7 @@ namespace CSRedis
         /// <param name="destination">Destination key</param>
         /// <param name="keys">Set keys to subtract</param>
         /// <returns>Number of elements in the resulting set</returns>
-        Task<long> SDiffStoreAsync(string destination, params string[] keys);
-
-
+        long SDiffStore(string destination, params string[] keys);
 
 
         /// <summary>
@@ -777,7 +735,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="keys">Set keys to intersect</param>
         /// <returns>Array of elements in resulting set</returns>
-        Task<string[]> SInterAsync(params string[] keys);
+        string[] SInter(params string[] keys);
 
 
 
@@ -788,7 +746,7 @@ namespace CSRedis
         /// <param name="destination">Destination key</param>
         /// <param name="keys">Set keys to intersect</param>
         /// <returns>Number of elements in resulting set</returns>
-        Task<long> SInterStoreAsync(string destination, params string[] keys);
+        long SInterStore(string destination, params string[] keys);
 
 
 
@@ -799,7 +757,7 @@ namespace CSRedis
         /// <param name="key">Set key</param>
         /// <param name="member">Member to lookup</param>
         /// <returns>True if member exists in set</returns>
-        Task<bool> SIsMemberAsync(string key, object member);
+        bool SIsMember(string key, object member);
 
 
 
@@ -809,7 +767,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Set key</param>
         /// <returns>All elements in the set</returns>
-        Task<string[]> SMembersAsync(string key);
+        string[] SMembers(string key);
 
 
 
@@ -821,17 +779,17 @@ namespace CSRedis
         /// <param name="destination">Destination key</param>
         /// <param name="member">Member to move</param>
         /// <returns>True if element was moved</returns>
-        Task<bool> SMoveAsync(string source, string destination, object member);
+        bool SMove(string source, string destination, object member);
 
 
 
 
         /// <summary>
-        /// Remove and return a random member from a set
+        /// Remove and
         /// </summary>
         /// <param name="key">Set key</param>
         /// <returns>The removed element</returns>
-        Task<string> SPopAsync(string key);
+        string SPop(string key);
 
 
 
@@ -841,7 +799,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Set key</param>
         /// <returns>One random element from set</returns>
-        Task<string> SRandMemberAsync(string key);
+        string SRandMember(string key);
 
 
 
@@ -852,7 +810,7 @@ namespace CSRedis
         /// <param name="key">Set key</param>
         /// <param name="count">Number of elements to return</param>
         /// <returns>One or more random elements from set</returns>
-        Task<string[]> SRandMemberAsync(string key, long count);
+        string[] SRandMember(string key, long count);
 
 
 
@@ -863,7 +821,7 @@ namespace CSRedis
         /// <param name="key">Set key</param>
         /// <param name="members">Set members to remove</param>
         /// <returns>Number of elements removed from set</returns>
-        Task<long> SRemAsync(string key, params object[] members);
+        long SRem(string key, params object[] members);
 
 
 
@@ -873,7 +831,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="keys">Set keys to union</param>
         /// <returns>Array of elements in resulting set</returns>
-        Task<string[]> SUnionAsync(params string[] keys);
+        string[] SUnion(params string[] keys);
 
 
 
@@ -884,7 +842,20 @@ namespace CSRedis
         /// <param name="destination">Destination key</param>
         /// <param name="keys">Set keys to union</param>
         /// <returns>Number of elements in resulting set</returns>
-        Task<long> SUnionStoreAsync(string destination, params string[] keys);
+        long SUnionStore(string destination, params string[] keys);
+
+
+
+
+        /// <summary>
+        /// Iterate the elements of a set field
+        /// </summary>
+        /// <param name="key">Set key</param>
+        /// <param name="cursor">The cursor returned by the server in the previous call, or 0 if this is the first call</param>
+        /// <param name="pattern">Glob-style pattern to filter returned elements</param>
+        /// <param name="count">Maximum number of elements to return</param>
+        /// <returns>Updated cursor and result set</returns>
+        RedisScan<string> SScan(string key, long cursor, string pattern = null, long? count = null);
 
 
 
@@ -896,8 +867,8 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="memberScores">Array of member scores to add to sorted set</param>
-        /// <returns>Number of elements added to the sorted set (not including member updates)</returns>
-        Task<long> ZAddAsync<TScore, TMember>(string key, params Tuple<TScore, TMember>[] memberScores);
+        /// <returns>Number of elements added to the sorted set (not including member updates);</returns>
+        long ZAdd<TScore, TMember>(string key, params Tuple<TScore, TMember>[] memberScores);
 
 
 
@@ -907,8 +878,8 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="memberScores">Array of member scores [s1, m1, s2, m2, ..]</param>
-        /// <returns>Number of elements added to the sorted set (not including member updates)</returns>
-        Task<long> ZAddAsync(string key, params string[] memberScores);
+        /// <returns>Number of elements added to the sorted set (not including member updates);</returns>
+        long ZAdd(string key, params string[] memberScores);
 
 
 
@@ -918,7 +889,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <returns>Number of elements in the sorted set</returns>
-        Task<long> ZCardAsync(string key);
+        long ZCard(string key);
 
 
 
@@ -932,7 +903,7 @@ namespace CSRedis
         /// <param name="exclusiveMin">Minimum score is exclusive</param>
         /// <param name="exclusiveMax">Maximum score is exclusive</param>
         /// <returns>Number of elements in the specified score range</returns>
-        Task<long> ZCountAsync(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false);
+        long ZCount(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false);
 
 
 
@@ -944,7 +915,7 @@ namespace CSRedis
         /// <param name="min">Minimum score</param>
         /// <param name="max">Maximum score</param>
         /// <returns>Number of elements in the specified score range</returns>
-        Task<long> ZCountAsync(string key, string min, string max);
+        long ZCount(string key, string min, string max);
 
 
 
@@ -956,7 +927,7 @@ namespace CSRedis
         /// <param name="increment">Increment by value</param>
         /// <param name="member">Sorted set member to increment</param>
         /// <returns>New score of member</returns>
-        Task<double> ZIncrByAsync(string key, double increment, string member);
+        double ZIncrBy(string key, double increment, string member);
 
 
 
@@ -969,7 +940,7 @@ namespace CSRedis
         /// <param name="aggregate">Aggregation function of resulting set</param>
         /// <param name="keys">Sorted set keys to intersect</param>
         /// <returns>Number of elements in the resulting sorted set</returns>
-        Task<long> ZInterStoreAsync(string destination, double[] weights = null, RedisAggregate? aggregate = null, params string[] keys);
+        long ZInterStore(string destination, double[] weights = null, RedisAggregate? aggregate = null, params string[] keys);
 
 
 
@@ -980,38 +951,38 @@ namespace CSRedis
         /// <param name="destination">Destination key</param>
         /// <param name="keys">Sorted set keys to intersect</param>
         /// <returns>Number of elements in the resulting sorted set</returns>
-        Task<long> ZInterStoreAsync(string destination, params string[] keys);
+        long ZInterStore(string destination, params string[] keys);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by index
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="start">Start offset</param>
         /// <param name="stop">Stop offset</param>
         /// <param name="withScores">Include scores in result</param>
-        /// <returns>Array of elements in the specified range (with optional scores)</returns>
-        Task<string[]> ZRangeAsync(string key, long start, long stop, bool withScores = false);
+        /// <returns>Array of elements in the specified range (with optional scores);</returns>
+        string[] ZRange(string key, long start, long stop, bool withScores = false);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by index, with scores
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="start">Start offset</param>
         /// <param name="stop">Stop offset</param>
         /// <returns>Array of elements in the specified range with scores</returns>
-        Task<Tuple<string, double>[]> ZRangeWithScoresAsync(string key, long start, long stop);
+        Tuple<string, double>[] ZRangeWithScores(string key, long start, long stop);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by score
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="min">Minimum score</param>
@@ -1021,14 +992,14 @@ namespace CSRedis
         /// <param name="exclusiveMax">Maximum score is exclusive</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
-        /// <returns>List of elements in the specified range (with optional scores)</returns>
-        Task<string[]> ZRangeByScoreAsync(string key, double min, double max, bool withScores = false, bool exclusiveMin = false, bool exclusiveMax = false, long? offset = null, long? count = null);
+        /// <returns>List of elements in the specified range (with optional scores);</returns>
+        string[] ZRangeByScore(string key, double min, double max, bool withScores = false, bool exclusiveMin = false, bool exclusiveMax = false, long? offset = null, long? count = null);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by score
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="min">Minimum score</param>
@@ -1036,14 +1007,14 @@ namespace CSRedis
         /// <param name="withScores">Include scores in result</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
-        /// <returns>List of elements in the specified range (with optional scores)</returns>
-        Task<string[]> ZRangeByScoreAsync(string key, string min, string max, bool withScores = false, long? offset = null, long? count = null);
+        /// <returns>List of elements in the specified range (with optional scores);</returns>
+        string[] ZRangeByScore(string key, string min, string max, bool withScores = false, long? offset = null, long? count = null);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by score, with scores
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="min">Minimum score</param>
@@ -1052,22 +1023,22 @@ namespace CSRedis
         /// <param name="exclusiveMax">Maximum score is exclusive</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
-        /// <returns>List of elements in the specified range (with optional scores)</returns>
-        Task<Tuple<string, double>[]> ZRangeByScoreWithScoresAsync(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false, long? offset = null, long? count = null);
+        /// <returns>List of elements in the specified range (with optional scores);</returns>
+        Tuple<string, double>[] ZRangeByScoreWithScores(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false, long? offset = null, long? count = null);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by score, with scores
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="min">Minimum score</param>
         /// <param name="max">Maximum score</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
-        /// <returns>List of elements in the specified range (with optional scores)</returns>
-        Task<Tuple<string, double>[]> ZRangeByScoreWithScoresAsync(string key, string min, string max, long? offset = null, long? count = null);
+        /// <returns>List of elements in the specified range (with optional scores);</returns>
+        Tuple<string, double>[] ZRangeByScoreWithScores(string key, string min, string max, long? offset = null, long? count = null);
 
 
 
@@ -1078,7 +1049,7 @@ namespace CSRedis
         /// <param name="key">Sorted set key</param>
         /// <param name="member">Member to lookup</param>
         /// <returns>Rank of member or null if key does not exist</returns>
-        Task<long?> ZRankAsync(string key, string member);
+        long? ZRank(string key, string member);
 
 
 
@@ -1089,7 +1060,7 @@ namespace CSRedis
         /// <param name="key">Sorted set key</param>
         /// <param name="members">Members to remove</param>
         /// <returns>Number of elements removed</returns>
-        Task<long> ZRemAsync(string key, params object[] members);
+        long ZRem(string key, params object[] members);
 
 
 
@@ -1101,7 +1072,7 @@ namespace CSRedis
         /// <param name="start">Start offset</param>
         /// <param name="stop">Stop offset</param>
         /// <returns>Number of elements removed</returns>
-        Task<long> ZRemRangeByRankAsync(string key, long start, long stop);
+        long ZRemRangeByRank(string key, long start, long stop);
 
 
 
@@ -1115,38 +1086,38 @@ namespace CSRedis
         /// <param name="exclusiveMin">Minimum score is exclusive</param>
         /// <param name="exclusiveMax">Maximum score is exclusive</param>
         /// <returns>Number of elements removed</returns>
-        Task<long> ZRemRangeByScoreAsync(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false);
+        long ZRemRangeByScore(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by index, with scores ordered from high to low
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="start">Start offset</param>
         /// <param name="stop">Stop offset</param>
         /// <param name="withScores">Include scores in result</param>
-        /// <returns>List of elements in the specified range (with optional scores)</returns>
-        Task<string[]> ZRevRangeAsync(string key, long start, long stop, bool withScores = false);
+        /// <returns>List of elements in the specified range (with optional scores);</returns>
+        string[] ZRevRange(string key, long start, long stop, bool withScores = false);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by index, with scores ordered from high to low
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="start">Start offset</param>
         /// <param name="stop">Stop offset</param>
-        /// <returns>List of elements in the specified range (with optional scores)</returns>
-        Task<Tuple<string, double>[]> ZRevRangeWithScoresAsync(string key, long start, long stop);
+        /// <returns>List of elements in the specified range (with optional scores);</returns>
+        Tuple<string, double>[] ZRevRangeWithScores(string key, long start, long stop);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by score, with scores ordered from high to low
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="max">Maximum score</param>
@@ -1156,14 +1127,14 @@ namespace CSRedis
         /// <param name="exclusiveMin">Minimum score is exclusive</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
-        /// <returns>List of elements in the specified score range (with optional scores)</returns>
-        Task<string[]> ZRevRangeByScoreAsync(string key, double max, double min, bool withScores = false, bool exclusiveMax = false, bool exclusiveMin = false, long? offset = null, long? count = null);
+        /// <returns>List of elements in the specified score range (with optional scores);</returns>
+        string[] ZRevRangeByScore(string key, double max, double min, bool withScores = false, bool exclusiveMax = false, bool exclusiveMin = false, long? offset = null, long? count = null);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by score, with scores ordered from high to low
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="max">Maximum score</param>
@@ -1171,14 +1142,14 @@ namespace CSRedis
         /// <param name="withScores">Include scores in result</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
-        /// <returns>List of elements in the specified score range (with optional scores)</returns>
-        Task<string[]> ZRevRangeByScoreAsync(string key, string max, string min, bool withScores = false, long? offset = null, long? count = null);
+        /// <returns>List of elements in the specified score range (with optional scores);</returns>
+        string[] ZRevRangeByScore(string key, string max, string min, bool withScores = false, long? offset = null, long? count = null);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by score, with scores ordered from high to low
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="max">Maximum score</param>
@@ -1187,22 +1158,22 @@ namespace CSRedis
         /// <param name="exclusiveMin">Minimum score is exclusive</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
-        /// <returns>List of elements in the specified score range (with optional scores)</returns>
-        Task<Tuple<string, double>[]> ZRevRangeByScoreWithScoresAsync(string key, double max, double min, bool exclusiveMax = false, bool exclusiveMin = false, long? offset = null, long? count = null);
+        /// <returns>List of elements in the specified score range (with optional scores);</returns>
+        Tuple<string, double>[] ZRevRangeByScoreWithScores(string key, double max, double min, bool exclusiveMax = false, bool exclusiveMin = false, long? offset = null, long? count = null);
 
 
 
 
         /// <summary>
-        /// Return a range of members in a sorted set, by score, with scores ordered from high to low
+        ///
         /// </summary>
         /// <param name="key">Sorted set key</param>
         /// <param name="max">Maximum score</param>
         /// <param name="min">Minimum score</param>
         /// <param name="offset">Start offset</param>
         /// <param name="count">Number of elements to return</param>
-        /// <returns>List of elements in the specified score range (with optional scores)</returns>
-        Task<Tuple<string, double>[]> ZRevRangeByScoreWithScoresAsync(string key, string max, string min, long? offset = null, long? count = null);
+        /// <returns>List of elements in the specified score range (with optional scores);</returns>
+        Tuple<string, double>[] ZRevRangeByScoreWithScores(string key, string max, string min, long? offset = null, long? count = null);
 
 
 
@@ -1213,7 +1184,7 @@ namespace CSRedis
         /// <param name="key">Sorted set key</param>
         /// <param name="member">Member to lookup</param>
         /// <returns>Rank of member, or null if member does not exist</returns>
-        Task<long?> ZRevRankAsync(string key, string member);
+        long? ZRevRank(string key, string member);
 
 
 
@@ -1224,7 +1195,7 @@ namespace CSRedis
         /// <param name="key">Sorted set key</param>
         /// <param name="member">Member to lookup</param>
         /// <returns>Score of member, or null if member does not exist</returns>
-        Task<double?> ZScoreAsync(string key, string member);
+        double? ZScore(string key, string member);
 
 
 
@@ -1237,7 +1208,18 @@ namespace CSRedis
         /// <param name="aggregate">Aggregation function of resulting set</param>
         /// <param name="keys">Sorted set keys to union</param>
         /// <returns>Number of elements in the resulting sorted set</returns>
-        Task<long> ZUnionStoreAsync(string destination, double[] weights = null, RedisAggregate? aggregate = null, params string[] keys);
+        long ZUnionStore(string destination, double[] weights = null, RedisAggregate? aggregate = null, params string[] keys);
+
+
+
+
+        /// <summary>
+        /// Add multiple sorted sets and store the resulting sorted set in a new key
+        /// </summary>
+        /// <param name="destination">Destination key</param>
+        /// <param name="keys">Sorted set keys to union</param>
+        /// <returns>Number of elements in the resulting sorted set</returns>
+        long ZUnionStore(string destination, params string[] keys);
 
 
 
@@ -1250,7 +1232,7 @@ namespace CSRedis
         /// <param name="pattern">Glob-style pattern to filter returned elements</param>
         /// <param name="count">Maximum number of elements to return</param>
         /// <returns>Updated cursor and result set</returns>
-        Task<RedisScan<Tuple<string, double>>> ZScanAsync(string key, long cursor, string pattern = null, long? count = null);
+        RedisScan<Tuple<string, double>> ZScan(string key, long cursor, string pattern = null, long? count = null);
 
 
 
@@ -1264,7 +1246,7 @@ namespace CSRedis
         /// <param name="offset">Limit result set by offset</param>
         /// <param name="count">Limimt result set by size</param>
         /// <returns>List of elements in the specified range</returns>
-        Task<string[]> ZRangeByLexAsync(string key, string min, string max, long? offset = null, long? count = null);
+        string[] ZRangeByLex(string key, string min, string max, long? offset = null, long? count = null);
 
 
 
@@ -1276,7 +1258,7 @@ namespace CSRedis
         /// <param name="min">Lexagraphic start value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
         /// <param name="max">Lexagraphic stop value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
         /// <returns>Number of elements removed</returns>
-        Task<long> ZRemRangeByLexAsync(string key, string min, string max);
+        long ZRemRangeByLex(string key, string min, string max);
 
 
 
@@ -1288,7 +1270,7 @@ namespace CSRedis
         /// <param name="min">Lexagraphic start value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
         /// <param name="max">Lexagraphic stop value. Prefix value with '(' to indicate exclusive; '[' to indicate inclusive. Use '-' or '+' to specify infinity.</param>
         /// <returns>Number of elements in the specified score range</returns>
-        Task<long> ZLexCountAsync(string key, string min, string max);
+        long ZLexCount(string key, string min, string max);
 
 
 
@@ -1296,12 +1278,20 @@ namespace CSRedis
 
         #region Pub/Sub
         /// <summary>
+        /// Listen for messages published to channels matching the given patterns
+        /// </summary>
+        /// <param name="channelPatterns">Patterns to subscribe</param>
+        void PSubscribe(params string[] channelPatterns);
+
+
+
+        /// <summary>
         /// Post a message to a channel
         /// </summary>
         /// <param name="channel">Channel to post message</param>
         /// <param name="message">Message to send</param>
         /// <returns>Number of clients that received the message</returns>
-        Task<long> PublishAsync(string channel, string message);
+        long Publish(string channel, string message);
 
 
 
@@ -1309,28 +1299,53 @@ namespace CSRedis
         /// <summary>
         /// List the currently active channels
         /// </summary>
-        /// <param name="pattern">Glob-style channel pattern</param>
-        /// <returns>Active channel names</returns>
-        Task<string[]> PubSubChannelsAsync(string pattern = null);
+        /// <param name="pattern">Return only channels matching this pattern</param>
+        /// <returns>Array of channel names</returns>
+        string[] PubSubChannels(string pattern = null);
 
 
 
 
         /// <summary>
-        /// Return the number of subscribers (not counting clients subscribed to patterns) for the specified channels
+        ///
         /// </summary>
-        /// <param name="channels">Channels to query</param>
-        /// <returns>Channel names and counts</returns>
-        Task<Tuple<string, long>[]> PubSubNumSubAsync(params string[] channels);
+        /// <param name="channels">Channel names</param>
+        /// <returns>Array of channel/count tuples</returns>
+        Tuple<string, long>[] PubSubNumSub(params string[] channels);
 
 
 
 
         /// <summary>
-        /// Return the number of subscriptions to patterns
+        ///
         /// </summary>
-        /// <returns>The number of patterns all the clients are subscribed to</returns>
-        Task<long> PubSubNumPatAsync();
+        /// <returns>Number of patterns all clients are subscribed to</returns>
+        long PubSubNumPat();
+
+
+
+
+        /// <summary>
+        /// Stop listening for messages posted to channels matching the given patterns
+        /// </summary>
+        /// <param name="channelPatterns">Patterns to unsubscribe</param>
+        void PUnsubscribe(params string[] channelPatterns);
+
+
+
+        /// <summary>
+        /// Listen for messages published to the given channels
+        /// </summary>
+        /// <param name="channels">Channels to subscribe</param>
+        void Subscribe(params string[] channels);
+
+
+
+        /// <summary>
+        /// Stop listening for messages posted to the given channels
+        /// </summary>
+        /// <param name="channels">Channels to unsubscribe</param>
+        void Unsubscribe(params string[] channels);
 
 
 
@@ -1344,7 +1359,7 @@ namespace CSRedis
         /// <param name="keys">Keys used by script</param>
         /// <param name="arguments">Arguments to pass to script</param>
         /// <returns>Redis object</returns>
-        Task<object> EvalAsync(string script, string[] keys, params string[] arguments);
+        object Eval(string script, string[] keys, params string[] arguments);
 
 
 
@@ -1356,7 +1371,7 @@ namespace CSRedis
         /// <param name="keys">Keys used by script</param>
         /// <param name="arguments">Arguments to pass to script</param>
         /// <returns>Redis object</returns>
-        Task<object> EvalSHAAsync(string sha1, string[] keys, params string[] arguments);
+        object EvalSHA(string sha1, string[] keys, params string[] arguments);
 
 
 
@@ -1366,7 +1381,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="scripts">SHA1 script hashes</param>
         /// <returns>Array of boolean values indicating script existence on server</returns>
-        Task<bool[]> ScriptExistsAsync(params string[] scripts);
+        bool[] ScriptExists(params string[] scripts);
 
 
 
@@ -1375,7 +1390,7 @@ namespace CSRedis
         /// Remove all scripts from the script cache
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> ScriptFlushAsync();
+        string ScriptFlush();
 
 
 
@@ -1384,7 +1399,7 @@ namespace CSRedis
         /// Kill the script currently in execution
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> ScriptKillAsync();
+        string ScriptKill();
 
 
 
@@ -1394,7 +1409,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="script">Lua script to load</param>
         /// <returns>SHA1 hash of script</returns>
-        Task<string> ScriptLoadAsync(string script);
+        string ScriptLoad(string script);
 
 
 
@@ -1407,7 +1422,7 @@ namespace CSRedis
         /// <param name="key">Key to modify</param>
         /// <param name="value">Value to append to key</param>
         /// <returns>Length of string after append</returns>
-        Task<long> AppendAsync(string key, object value);
+        long Append(string key, object value);
 
 
 
@@ -1419,7 +1434,7 @@ namespace CSRedis
         /// <param name="start">Start offset</param>
         /// <param name="end">Stop offset</param>
         /// <returns>Number of bits set to 1</returns>
-        Task<long> BitCountAsync(string key, long? start = null, long? end = null);
+        long BitCount(string key, long? start = null, long? end = null);
 
 
 
@@ -1431,7 +1446,7 @@ namespace CSRedis
         /// <param name="destKey">Store result in destination key</param>
         /// <param name="keys">Keys to operate</param>
         /// <returns>Size of string stored in the destination key</returns>
-        Task<long> BitOpAsync(RedisBitOp operation, string destKey, params string[] keys);
+        long BitOp(RedisBitOp operation, string destKey, params string[] keys);
 
 
 
@@ -1440,11 +1455,11 @@ namespace CSRedis
         /// Find first bit set or clear in a string
         /// </summary>
         /// <param name="key">Key to examine</param>
-        /// <param name="bit">Bit value (1 or 0)</param>
+        /// <param name="bit">Bit value (1 or 0);</param>
         /// <param name="start">Examine string at specified byte offset</param>
         /// <param name="end">Examine string to specified byte offset</param>
         /// <returns>Position of the first bit set to the specified value</returns>
-        Task<long> BitPosAsync(string key, bool bit, long? start = null, long? end = null);
+        long BitPos(string key, bool bit, long? start = null, long? end = null);
 
 
 
@@ -1454,7 +1469,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to modify</param>
         /// <returns>Value of key after decrement</returns>
-        Task<long> DecrAsync(string key);
+        long Decr(string key);
 
 
 
@@ -1465,7 +1480,7 @@ namespace CSRedis
         /// <param name="key">Key to modify</param>
         /// <param name="decrement">Decrement value</param>
         /// <returns>Value of key after decrement</returns>
-        Task<long> DecrByAsync(string key, long decrement);
+        long DecrBy(string key, long decrement);
 
 
 
@@ -1475,7 +1490,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to lookup</param>
         /// <returns>Value of key</returns>
-        Task<string> GetAsync(string key);
+        string Get(string key);
 
 
 
@@ -1486,7 +1501,7 @@ namespace CSRedis
         /// <param name="key">Key to lookup</param>
         /// <param name="offset">Offset of key to check</param>
         /// <returns>Bit value stored at offset</returns>
-        Task<bool> GetBitAsync(string key, uint offset);
+        bool GetBit(string key, uint offset);
 
 
 
@@ -1498,18 +1513,18 @@ namespace CSRedis
         /// <param name="start">Start offset</param>
         /// <param name="end">End offset</param>
         /// <returns>Substring in the specified range</returns>
-        Task<string> GetRangeAsync(string key, long start, long end);
+        string GetRange(string key, long start, long end);
 
 
 
 
         /// <summary>
-        /// Set the string value of a key and return its old value
+        /// Set the string value of a key and
         /// </summary>
         /// <param name="key">Key to modify</param>
         /// <param name="value">Value to set</param>
         /// <returns>Old value stored at key, or null if key did not exist</returns>
-        Task<string> GetSetAsync(string key, object value);
+        string GetSet(string key, object value);
 
 
 
@@ -1519,7 +1534,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to modify</param>
         /// <returns>Value of key after increment</returns>
-        Task<long> IncrAsync(string key);
+        long Incr(string key);
 
 
 
@@ -1530,7 +1545,7 @@ namespace CSRedis
         /// <param name="key">Key to modify</param>
         /// <param name="increment">Increment amount</param>
         /// <returns>Value of key after increment</returns>
-        Task<long> IncrByAsync(string key, long increment);
+        long IncrBy(string key, long increment);
 
 
 
@@ -1541,7 +1556,7 @@ namespace CSRedis
         /// <param name="key">Key to modify</param>
         /// <param name="increment">Increment amount</param>
         /// <returns>Value of key after increment</returns>
-        Task<double> IncrByFloatAsync(string key, double increment);
+        double IncrByFloat(string key, double increment);
 
 
 
@@ -1551,7 +1566,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="keys">Keys to lookup</param>
         /// <returns>Array of values at the specified keys</returns>
-        Task<string[]> MGetAsync(params string[] keys);
+        string[] MGet(params string[] keys);
 
 
 
@@ -1561,7 +1576,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="keyValues">Key values to set</param>
         /// <returns>Status code</returns>
-        Task<string> MSetAsync(params Tuple<string, string>[] keyValues);
+        string MSet(params Tuple<string, string>[] keyValues);
 
 
 
@@ -1571,7 +1586,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="keyValues">Key values to set [k1, v1, k2, v2, ..]</param>
         /// <returns>Status code</returns>
-        Task<string> MSetAsync(params string[] keyValues);
+        string MSet(params string[] keyValues);
 
 
 
@@ -1581,7 +1596,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="keyValues">Key values to set</param>
         /// <returns>True if all keys were set</returns>
-        Task<bool> MSetNxAsync(params Tuple<string, string>[] keyValues);
+        bool MSetNx(params Tuple<string, string>[] keyValues);
 
 
 
@@ -1591,7 +1606,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="keyValues">Key values to set [k1, v1, k2, v2, ..]</param>
         /// <returns>True if all keys were set</returns>
-        Task<bool> MSetNxAsync(params string[] keyValues);
+        bool MSetNx(params string[] keyValues);
 
 
 
@@ -1603,7 +1618,7 @@ namespace CSRedis
         /// <param name="milliseconds">Expiration in milliseconds</param>
         /// <param name="value">Value to set</param>
         /// <returns>Status code</returns>
-        Task<string> PSetExAsync(string key, long milliseconds, object value);
+        string PSetEx(string key, long milliseconds, object value);
 
 
 
@@ -1614,7 +1629,7 @@ namespace CSRedis
         /// <param name="key">Key to modify</param>
         /// <param name="value">Value to set</param>
         /// <returns>Status code</returns>
-        Task<string> SetAsync(string key, object value);
+        string Set(string key, object value);
 
 
 
@@ -1627,7 +1642,7 @@ namespace CSRedis
         /// <param name="expiration">Set expiration to nearest millisecond</param>
         /// <param name="condition">Set key if existence condition</param>
         /// <returns>Status code, or null if condition not met</returns>
-        Task<string> SetAsync(string key, object value, TimeSpan expiration, RedisExistence? condition = null);
+        string Set(string key, object value, TimeSpan expiration, RedisExistence? condition = null);
 
 
 
@@ -1640,7 +1655,7 @@ namespace CSRedis
         /// <param name="expirationSeconds">Set expiration to nearest second</param>
         /// <param name="condition">Set key if existence condition</param>
         /// <returns>Status code, or null if condition not met</returns>
-        Task<string> SetAsync(string key, object value, int? expirationSeconds = null, RedisExistence? condition = null);
+        string Set(string key, object value, int? expirationSeconds = null, RedisExistence? condition = null);
 
 
 
@@ -1653,7 +1668,7 @@ namespace CSRedis
         /// <param name="expirationMilliseconds">Set expiration to nearest millisecond</param>
         /// <param name="condition">Set key if existence condition</param>
         /// <returns>Status code, or null if condition not met</returns>
-        Task<string> SetAsync(string key, object value, long? expirationMilliseconds = null, RedisExistence? condition = null);
+        string Set(string key, object value, long? expirationMilliseconds = null, RedisExistence? condition = null);
 
 
 
@@ -1663,9 +1678,9 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to modify</param>
         /// <param name="offset">Modify key at offset</param>
-        /// <param name="value">Value to set (on or off)</param>
+        /// <param name="value">Value to set (on or off);</param>
         /// <returns>Original bit stored at offset</returns>
-        Task<bool> SetBitAsync(string key, uint offset, bool value);
+        bool SetBit(string key, uint offset, bool value);
 
 
 
@@ -1677,7 +1692,7 @@ namespace CSRedis
         /// <param name="seconds">Expiration in seconds</param>
         /// <param name="value">Value to set</param>
         /// <returns>Status code</returns>
-        Task<string> SetExAsync(string key, long seconds, object value);
+        string SetEx(string key, long seconds, object value);
 
 
 
@@ -1688,7 +1703,7 @@ namespace CSRedis
         /// <param name="key">Key to modify</param>
         /// <param name="value">Value to set</param>
         /// <returns>True if key was set</returns>
-        Task<bool> SetNxAsync(string key, object value);
+        bool SetNx(string key, object value);
 
 
 
@@ -1700,7 +1715,7 @@ namespace CSRedis
         /// <param name="offset">Start offset</param>
         /// <param name="value">Value to write at offset</param>
         /// <returns>Length of string after operation</returns>
-        Task<long> SetRangeAsync(string key, uint offset, object value);
+        long SetRange(string key, uint offset, object value);
 
 
 
@@ -1710,7 +1725,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="key">Key to lookup</param>
         /// <returns>Length of string at key</returns>
-        Task<long> StrLenAsync(string key);
+        long StrLen(string key);
 
 
 
@@ -1721,7 +1736,7 @@ namespace CSRedis
         /// Asyncronously rewrite the append-only file
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> BgRewriteAofAsync();
+        string BgRewriteAof();
 
 
 
@@ -1730,16 +1745,7 @@ namespace CSRedis
         /// Asynchronously save the dataset to disk
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> BgSaveAsync();
-
-
-
-
-        /// <summary>
-        /// Get the current connection name
-        /// </summary>
-        /// <returns>Connection name</returns>
-        Task<string> ClientGetNameAsync();
+        string BgSave();
 
 
 
@@ -1750,7 +1756,7 @@ namespace CSRedis
         /// <param name="ip">Client IP returned from CLIENT LIST</param>
         /// <param name="port">Client port returned from CLIENT LIST</param>
         /// <returns>Status code</returns>
-        Task<string> ClientKillAsync(string ip, int port);
+        string ClientKill(string ip, int port);
 
 
 
@@ -1758,12 +1764,12 @@ namespace CSRedis
         /// <summary>
         /// Kill the connection of a client
         /// </summary>
-        /// <param name="addr">Client address</param>
-        /// <param name="id">Client ID</param>
-        /// <param name="type">Client type</param>
-        /// <param name="skipMe">Set to true to skip calling client</param>
-        /// <returns>The number of clients killed</returns>
-        Task<long> ClientKillAsync(string addr = null, string id = null, string type = null, bool? skipMe = null);
+        /// <param name="addr">client's ip:port</param>
+        /// <param name="id">client's unique ID</param>
+        /// <param name="type">client type (normal|slave|pubsub);</param>
+        /// <param name="skipMe">do not kill the calling client</param>
+        /// <returns>Nummber of clients killed</returns>
+        long ClientKill(string addr = null, string id = null, string type = null, bool? skipMe = null);
 
 
 
@@ -1772,27 +1778,36 @@ namespace CSRedis
         /// Get the list of client connections
         /// </summary>
         /// <returns>Formatted string of clients</returns>
-        Task<string> ClientListAsync();
+        string ClientList();
 
 
 
 
         /// <summary>
-        /// Suspend all the Redis clients for the specified amount of time 
+        /// Suspend all Redis clients for the specified amount of time
         /// </summary>
-        /// <param name="milliseconds">Time in milliseconds to suspend</param>
+        /// <param name="milliseconds">Time to pause in milliseconds</param>
         /// <returns>Status code</returns>
-        Task<string> ClientPauseAsync(int milliseconds);
+        string ClientPause(int milliseconds);
 
 
 
 
         /// <summary>
-        /// Suspend all the Redis clients for the specified amount of time 
+        /// Suspend all Redis clients for the specified amount of time
         /// </summary>
-        /// <param name="timeout">Time to suspend</param>
+        /// <param name="timeout">Time to pause</param>
         /// <returns>Status code</returns>
-        Task<string> ClientPauseAsync(TimeSpan timeout);
+        string ClientPause(TimeSpan timeout);
+
+
+
+
+        /// <summary>
+        /// Get the current connection name
+        /// </summary>
+        /// <returns>Connection name</returns>
+        string ClientGetName();
 
 
 
@@ -1800,9 +1815,9 @@ namespace CSRedis
         /// <summary>
         /// Set the current connection name
         /// </summary>
-        /// <param name="connectionName">Name of connection (no spaces)</param>
+        /// <param name="connectionName">Name of connection (no spaces);</param>
         /// <returns>Status code</returns>
-        Task<string> ClientSetNameAsync(string connectionName);
+        string ClientSetName(string connectionName);
 
 
 
@@ -1812,7 +1827,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="parameter">Configuration parameter to lookup</param>
         /// <returns>Configuration value</returns>
-        Task<Tuple<string, string>[]> ConfigGetAsync(string parameter);
+        Tuple<string, string>[] ConfigGet(string parameter);
 
 
 
@@ -1821,16 +1836,16 @@ namespace CSRedis
         /// Reset the stats returned by INFO
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> ConfigResetStatAsync();
+        string ConfigResetStat();
 
 
 
 
         /// <summary>
-        /// Rewrites the redis.conf file
+        /// Rewrite the redis.conf file the server was started with, applying the minimal changes needed to make it reflect current configuration
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> ConfigRewriteAsync();
+        string ConfigRewrite();
 
 
 
@@ -1841,16 +1856,16 @@ namespace CSRedis
         /// <param name="parameter">Parameter to set</param>
         /// <param name="value">Value to set</param>
         /// <returns>Status code</returns>
-        Task<string> ConfigSetAsync(string parameter, string value);
+        string ConfigSet(string parameter, string value);
 
 
 
 
         /// <summary>
-        /// Return the number of keys in the selected database
+        ///
         /// </summary>
         /// <returns>Number of keys</returns>
-        Task<long> DbSizeAsync();
+        long DbSize();
 
 
 
@@ -1859,7 +1874,7 @@ namespace CSRedis
         /// Make the server crash :(
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> DebugSegFaultAsync();
+        string DebugSegFault();
 
 
 
@@ -1868,7 +1883,7 @@ namespace CSRedis
         /// Remove all keys from all databases
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> FlushAllAsync();
+        string FlushAll();
 
 
 
@@ -1877,7 +1892,7 @@ namespace CSRedis
         /// Remove all keys from the current database
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> FlushDbAsync();
+        string FlushDb();
 
 
 
@@ -1887,7 +1902,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="section">all|default|server|clients|memory|persistence|stats|replication|cpu|commandstats|cluster|keyspace</param>
         /// <returns>Formatted string</returns>
-        Task<string> InfoAsync(string section = null);
+        string Info(string section = null);
 
 
 
@@ -1896,16 +1911,25 @@ namespace CSRedis
         /// Get the timestamp of the last successful save to disk
         /// </summary>
         /// <returns>Date of last save</returns>
-        Task<DateTime> LastSaveAsync();
+        DateTime LastSave();
 
 
 
 
         /// <summary>
-        /// Provide information on the role of a Redis instance in the context of replication
+        /// Listen for all requests received by the server in real time
         /// </summary>
-        /// <returns>Role information</returns>
-        Task<RedisRole> RoleAsync();
+        /// <returns>Status code</returns>
+        string Monitor();
+
+
+
+
+        /// <summary>
+        /// Get role information for the current Redis instance
+        /// </summary>
+        /// <returns>RedisMasterRole|RedisSlaveRole|RedisSentinelRole</returns>
+        RedisRole Role();
 
 
 
@@ -1914,7 +1938,7 @@ namespace CSRedis
         /// Syncronously save the dataset to disk
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> SaveAsync();
+        string Save();
 
 
 
@@ -1924,7 +1948,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="save">Force a DB saving operation even if no save points are configured</param>
         /// <returns>Status code</returns>
-        Task<string> ShutdownAsync(bool? save = null);
+        string Shutdown(bool? save = null);
 
 
 
@@ -1935,7 +1959,7 @@ namespace CSRedis
         /// <param name="host">Master host</param>
         /// <param name="port">master port</param>
         /// <returns>Status code</returns>
-        Task<string> SlaveOfAsync(string host, int port);
+        string SlaveOf(string host, int port);
 
 
 
@@ -1944,7 +1968,7 @@ namespace CSRedis
         /// Turn off replication, turning the Redis server into a master
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> SlaveOfNoOneAsync();
+        string SlaveOfNoOne();
 
 
 
@@ -1954,7 +1978,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="count">Limit entries returned</param>
         /// <returns>Slow log entries</returns>
-        Task<RedisSlowLogEntry[]> SlowLogGetAsync(long? count = null);
+        RedisSlowLogEntry[] SlowLogGet(long? count = null);
 
 
 
@@ -1963,7 +1987,7 @@ namespace CSRedis
         /// Get the length of the slow log
         /// </summary>
         /// <returns>Slow log length</returns>
-        Task<long> SlowLogLenAsync();
+        long SlowLogLen();
 
 
 
@@ -1972,7 +1996,7 @@ namespace CSRedis
         /// Reset the slow log
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> SlowLogResetAsync();
+        string SlowLogReset();
 
 
 
@@ -1981,16 +2005,16 @@ namespace CSRedis
         /// Internal command used for replication
         /// </summary>
         /// <returns>Byte array of Redis sync data</returns>
-        Task<byte[]> SyncAsync();
+        byte[] Sync();
 
 
 
 
         /// <summary>
-        /// Return the current server time
+        ///
         /// </summary>
         /// <returns>Server time</returns>
-        Task<DateTime> TimeAsync();
+        DateTime Time();
 
 
 
@@ -1998,19 +2022,10 @@ namespace CSRedis
 
         #region Transactions
         /// <summary>
-        /// Mark the start of a transaction block
-        /// </summary>
-        /// <returns>Status code</returns>
-        Task<string> MultiAsync();
-
-
-
-
-        /// <summary>
         /// Discard all commands issued after MULTI
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> DiscardAsync();
+        string Discard();
 
 
 
@@ -2019,7 +2034,16 @@ namespace CSRedis
         /// Execute all commands issued after MULTI
         /// </summary>
         /// <returns>Array of output from all transaction commands</returns>
-        Task<object[]> ExecAsync();
+        object[] Exec();
+
+
+
+
+        /// <summary>
+        /// Mark the start of a transaction block
+        /// </summary>
+        /// <returns>Status code</returns>
+        string Multi();
 
 
 
@@ -2028,7 +2052,7 @@ namespace CSRedis
         /// Forget about all watched keys
         /// </summary>
         /// <returns>Status code</returns>
-        Task<string> UnwatchAsync();
+        string Unwatch();
 
 
 
@@ -2038,7 +2062,7 @@ namespace CSRedis
         /// </summary>
         /// <param name="keys">Keys to watch</param>
         /// <returns>Status code</returns>
-        Task<string> WatchAsync(params string[] keys);
+        string Watch(params string[] keys);
 
 
 
@@ -2051,16 +2075,18 @@ namespace CSRedis
         /// <param name="key">Key to update</param>
         /// <param name="elements">Elements to add</param>
         /// <returns>1 if at least 1 HyperLogLog internal register was altered. 0 otherwise.</returns>
-        Task<bool> PfAddAsync(string key, params object[] elements);
+        bool PfAdd(string key, params object[] elements);
+
 
 
 
         /// <summary>
-        /// Return the approximated cardinality of the set(s) observed by the HyperLogLog at key(s);
+        ///
         /// </summary>
         /// <param name="keys">One or more HyperLogLog keys to examine</param>
         /// <returns>Approximated number of unique elements observed via PFADD</returns>
-        Task<long> PfCountAsync(params string[] keys);
+        long PfCount(params string[] keys);
+
 
 
 
@@ -2070,11 +2096,10 @@ namespace CSRedis
         /// <param name="destKey">Where to store the merged HyperLogLogs</param>
         /// <param name="sourceKeys">The HyperLogLogs keys that will be combined</param>
         /// <returns>Status code</returns>
-        Task<string> PfMergeAsync(string destKey, params string[] sourceKeys);
+        string PfMerge(string destKey, params string[] sourceKeys);
 
 
 
         #endregion
-
     }
 }
