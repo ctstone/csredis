@@ -65,7 +65,10 @@
     <Compile Include="Internal\Fakes\FakeRedisSocket.cs" />
     <Compile Include="Internal\Fakes\FakeStream.cs" />
     <Compile Include="Internal\IO\AsyncConnector.cs" />
+    <Compile Include="Internal\IO\SocketPool.cs" />
     <Compile Include="Internal\IO\IRedisSocket.cs" />
+    <Compile Include="Internal\IO\RedisPooledSocket.cs" />
+    <Compile Include="RedisConnectionPool.cs" />
     <Compile Include="Internal\IO\RedisIO.cs" />
     <Compile Include="Internal\IO\RedisSocket.cs" />
     <Compile Include="Internal\IO\RedisAsyncCommandToken.cs" />
