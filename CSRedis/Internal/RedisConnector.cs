@@ -135,7 +135,7 @@ namespace CSRedis.Internal
             var token = new RedisAsyncCommandToken<T>(command);
             AsyncWriteQueue.Enqueue(token);
             ConnectAsync().ContinueWith(CallAsyncDeferred);
-            return token.TaskSource.Task;
+            return token.Task;
         }
 
         public void Write(RedisCommand command)
@@ -316,7 +316,7 @@ namespace CSRedis.Internal
                     }
                     catch (Exception e)
                     {
-                        token.SetException(e);
+                        token.TrySetException(e);
                     }
                 }
             }
