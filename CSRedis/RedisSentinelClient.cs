@@ -103,7 +103,17 @@ namespace CSRedis
         /// <param name="host">Redis sentinel hostname</param>
         /// <param name="port">Redis sentinel port</param>
         public RedisSentinelClient(string host, int port)
-            : this(new RedisConnector(host, port, DefaultConcurrency, DefaultBufferSize))
+            : this(host, port, false)
+        { }
+
+        /// <summary>
+        /// Create a new RedisSentinelClient using default encoding
+        /// </summary>
+        /// <param name="host">Redis sentinel hostname</param>
+        /// <param name="port">Redis sentinel port</param>
+        /// <param name="ssl">Set true if Redis sentinel expects SSL</param>
+        public RedisSentinelClient(string host, int port, bool ssl)
+            : this(new RedisConnector(host, port, ssl, DefaultConcurrency, DefaultBufferSize))
         { }
 
         internal RedisSentinelClient(IRedisConnector connector)

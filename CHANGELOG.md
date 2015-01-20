@@ -1,3 +1,6 @@
+##csredis 3.2.5
+**[new]** Added SSL support  
+
 ##csredis 3.2.1
 **[fix]** Unnecessary memory allocation when not using async methods  
 
