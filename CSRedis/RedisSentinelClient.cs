@@ -15,6 +15,7 @@ namespace CSRedis
     public partial class RedisSentinelClient : IDisposable
     {
         const int DefaultPort = 26379;
+        const bool DefaultSSL = false;
         const int DefaultConcurrency = 1000;
         const int DefaultBufferSize = 1024;
         readonly RedisConnector _connector;
@@ -105,7 +106,17 @@ namespace CSRedis
         /// <param name="host">Redis sentinel hostname</param>
         /// <param name="port">Redis sentinel port</param>
         public RedisSentinelClient(string host, int port)
-            : this(new RedisSocket(), new DnsEndPoint(host, port), DefaultConcurrency, DefaultBufferSize)
+            : this(host, port, DefaultSSL)
+        { }
+
+        /// <summary>
+        /// Create a new RedisSentinelClient using default encoding
+        /// </summary>
+        /// <param name="host">Redis sentinel hostname</param>
+        /// <param name="port">Redis sentinel port</param>
+        /// <param name="ssl">Set to true if remote Redis server expects SSL</param>
+        public RedisSentinelClient(string host, int port, bool ssl)
+            : this(new RedisSocket(ssl), new DnsEndPoint(host, port), DefaultConcurrency, DefaultBufferSize)
         { }
 
         internal RedisSentinelClient(IRedisSocket socket, EndPoint endpoint)

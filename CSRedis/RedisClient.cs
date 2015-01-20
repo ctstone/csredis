@@ -16,6 +16,7 @@ namespace CSRedis
     public partial class RedisClient : IRedisClientSync, IRedisClientAsync
     {
         const int DefaultPort = 6379;
+        const bool DefaultSSL = false;
         const int DefaultConcurrency = 1000;
         const int DefaultBufferSize = 10240;
         readonly RedisConnector _connector;
@@ -125,7 +126,17 @@ namespace CSRedis
         /// <param name="host">Redis server hostname</param>
         /// <param name="port">Redis server port</param>
         public RedisClient(string host, int port)
-            : this(host, port, DefaultConcurrency, DefaultBufferSize)
+            : this(host, port, DefaultSSL)
+        { }
+
+        /// <summary>
+        /// Create a new RedisClient
+        /// </summary>
+        /// <param name="host">Redis server hostname</param>
+        /// <param name="port">Redis server port</param>
+        /// <param name="ssl">Set to true if remote Redis server expects SSL</param>
+        public RedisClient(string host, int port, bool ssl)
+            : this(host, port, ssl, DefaultConcurrency, DefaultBufferSize)
         { }
 
         /// <summary>
@@ -133,7 +144,16 @@ namespace CSRedis
         /// </summary>
         /// <param name="endpoint">Redis server</param>
         public RedisClient(EndPoint endpoint)
-            : this(endpoint, DefaultConcurrency, DefaultBufferSize)
+            : this(endpoint, DefaultSSL)
+        { }
+
+        /// <summary>
+        /// Create a new RedisClient
+        /// </summary>
+        /// <param name="endpoint">Redis server</param>
+        /// <param name="ssl">Set to true if remote Redis server expects SSL</param>
+        public RedisClient(EndPoint endpoint, bool ssl)
+            : this(endpoint, ssl, DefaultConcurrency, DefaultBufferSize)
         { }
 
         /// <summary>
@@ -144,7 +164,19 @@ namespace CSRedis
         /// <param name="asyncConcurrency">Max concurrent threads (default 1000)</param>
         /// <param name="asyncBufferSize">Async thread buffer size (default 10240 bytes)</param>
         public RedisClient(string host, int port, int asyncConcurrency, int asyncBufferSize)
-            : this(new DnsEndPoint(host, port), asyncConcurrency, asyncBufferSize)
+            : this(host, port, DefaultSSL, asyncConcurrency, asyncBufferSize)
+        { }
+
+        /// <summary>
+        /// Create a new RedisClient with specific async concurrency settings
+        /// </summary>
+        /// <param name="host">Redis server hostname</param>
+        /// <param name="port">Redis server port</param>
+        /// <param name="ssl">Set to true if remote Redis server expects SSL</param>
+        /// <param name="asyncConcurrency">Max concurrent threads (default 1000)</param>
+        /// <param name="asyncBufferSize">Async thread buffer size (default 10240 bytes)</param>
+        public RedisClient(string host, int port, bool ssl, int asyncConcurrency, int asyncBufferSize)
+            : this(new DnsEndPoint(host, port), ssl, asyncConcurrency, asyncBufferSize)
         { }
 
         /// <summary>
@@ -154,7 +186,18 @@ namespace CSRedis
         /// <param name="asyncConcurrency">Max concurrent threads (default 1000)</param>
         /// <param name="asyncBufferSize">Async thread buffer size (default 10240 bytes)</param>
         public RedisClient(EndPoint endpoint, int asyncConcurrency, int asyncBufferSize)
-            : this (new RedisSocket(), endpoint, asyncConcurrency, asyncBufferSize)
+            : this (endpoint, DefaultSSL, asyncConcurrency, asyncBufferSize)
+        { }
+
+        /// <summary>
+        /// Create a new RedisClient with specific async concurrency settings
+        /// </summary>
+        /// <param name="endpoint">Redis server</param>
+        /// <param name="ssl">Set to true if remote Redis server expects SSL</param>
+        /// <param name="asyncConcurrency">Max concurrent threads (default 1000)</param>
+        /// <param name="asyncBufferSize">Async thread buffer size (default 10240 bytes)</param>
+        public RedisClient(EndPoint endpoint, bool ssl, int asyncConcurrency, int asyncBufferSize)
+            : this(new RedisSocket(ssl), endpoint, asyncConcurrency, asyncBufferSize)
         { }
 
         internal RedisClient(IRedisSocket socket, EndPoint endpoint)

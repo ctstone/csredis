@@ -1,3 +1,6 @@
+##csredis 3.2.6
+**[new]** SSL Support
+
 ##csredis 3.2.5
 **[new]** RedisConnectionPool: a pooled collection of Redis connections
 **[fix]** Public interface inheritance
