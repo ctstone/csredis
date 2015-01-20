@@ -9,7 +9,7 @@ namespace CSRedis.Internal
     {
         public event EventHandler<RedisMonitorEventArgs> MonitorReceived;
 
-        public MonitorListener(IRedisConnector connection)
+        public MonitorListener(RedisConnector connection)
             : base(connection)
         { }
 

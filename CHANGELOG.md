@@ -1,3 +1,10 @@
+##csredis 3.2.5
+**[new]** RedisConnectionPool: a pooled collection of Redis connections
+**[fix]** Public interface inheritance
+**[change]** Compatibility for sever 2.8.14
+**[new]** Exposing host/port
+**[fix]** Internal reorganization
+
 ##csredis 3.2.1
 **[fix]** Unnecessary memory allocation when not using async methods  
 

@@ -17,7 +17,7 @@ namespace CSRedis.Internal.Commands
         public override object[] Parse(RedisReader reader)
         {
             if (_parsers.Count == 0)
-                return reader.ReadMultiBulk();
+                return reader.ReadMultiBulk(bulkAsString: true);
 
             reader.ExpectType(RedisMessage.MultiBulk);
             long count = reader.ReadInt(false);
@@ -37,14 +37,14 @@ namespace CSRedis.Internal.Commands
 
         public class Generic<T> : RedisCommand<T[]>
         {
-            readonly RedisCommand<T> _command;
+            readonly RedisCommand<T> _memberCommand;
 
-            protected RedisCommand<T> Subcommand { get { return _command; } }
+            protected RedisCommand<T> MemberCommand { get { return _memberCommand; } }
 
-            public Generic(RedisCommand<T> command)
-                : base(command.Command, command.Arguments)
+            public Generic(RedisCommand<T> memberCommand)
+                : base(memberCommand.Command, memberCommand.Arguments)
             {
-                _command = command;
+                _memberCommand = memberCommand;
             }
 
             public override T[] Parse(RedisReader reader)
@@ -58,7 +58,7 @@ namespace CSRedis.Internal.Commands
             {
                 T[] array = new T[count];
                 for (int i = 0; i < array.Length; i++)
-                    array[i] = _command.Parse(reader);
+                    array[i] = _memberCommand.Parse(reader);
                 return array;
             }
         }
@@ -93,19 +93,26 @@ namespace CSRedis.Internal.Commands
             { }
         }
 
-        public class Tuples<T1, T2> : Generic<Tuple<T1, T2>>
+        public class StrongPairs<T1, T2> : Generic<Tuple<T1, T2>>
         {
-            public Tuples(string command, params object[] args)
-                : base(new RedisTuple.Generic<T1, T2>.Bulk(command, args))
+            public StrongPairs(RedisCommand<T1> command1, RedisCommand<T2> command2, string command, params object[] args)
+                : base(new RedisTuple.Generic<T1, T2>.Repeating(command1, command2, command, args))
             { }
 
             protected override Tuple<T1, T2>[] Read(long count, RedisReader reader)
             {
                 var array = new Tuple<T1, T2>[count / 2];
                 for (int i = 0; i < count; i += 2)
-                    array[i / 2] = Subcommand.Parse(reader);
+                    array[i / 2] = MemberCommand.Parse(reader);
                 return array;
             }
+        }
+
+        public class WeakPairs<T1, T2> : StrongPairs<T1, T2>
+        {
+            public WeakPairs(string command, params object[] args)
+                : base(new RedisString.Converter<T1>(null), new RedisString.Converter<T2>(null), command, args)
+            { }
         }
     }
 }

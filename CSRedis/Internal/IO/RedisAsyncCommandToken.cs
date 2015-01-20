@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CSRedis.Internal
+namespace CSRedis.Internal.IO
 {
     interface IRedisAsyncCommandToken
     {

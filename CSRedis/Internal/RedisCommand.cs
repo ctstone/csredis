@@ -288,7 +288,7 @@ namespace CSRedis
             if (count != null)
                 args.AddRange(new object[] { "COUNT", count });
             return new RedisScanCommand<Tuple<string, string>>(
-                new RedisArray.Tuples<string, string>("HSCAN", args.ToArray()));
+                new RedisArray.WeakPairs<string, string>("HSCAN", args.ToArray()));
                 //new RedisArray.Generic<Tuple<string, string>>(
                     //new RedisTuple.Generic<string, string>.Bulk("HSCAN", args.ToArray())));
         }
@@ -535,9 +535,9 @@ namespace CSRedis
                 : new[] { key, start.ToString(), stop.ToString() };
             return new RedisArray.Strings("ZRANGE", args);
         }
-        public static RedisArray.Tuples<string, double> ZRangeWithScores(string key, long start, long stop)
+        public static RedisArray.WeakPairs<string, double> ZRangeWithScores(string key, long start, long stop)
         {
-            return new RedisArray.Tuples<string, double>("ZRANGE", key, start, stop, "WITHSCORES");
+            return new RedisArray.WeakPairs<string, double>("ZRANGE", key, start, stop, "WITHSCORES");
         }
         public static RedisArray.Strings ZRangeByScore(string key, double min, double max, bool withScores = false, bool exclusiveMin = false, bool exclusiveMax = false, long? offset = null, long? count = null)
         {
@@ -545,7 +545,7 @@ namespace CSRedis
             string max_score = RedisArgs.GetScore(max, exclusiveMax);
             return ZRangeByScore(key, min_score, max_score, withScores, offset, count);
         }
-        public static RedisArray.Tuples<string, double> ZRangeByScoreWithScores(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false, long? offset = null, long? count = null)
+        public static RedisArray.WeakPairs<string, double> ZRangeByScoreWithScores(string key, double min, double max, bool exclusiveMin = false, bool exclusiveMax = false, long? offset = null, long? count = null)
         {
             string min_score = RedisArgs.GetScore(min, exclusiveMin);
             string max_score = RedisArgs.GetScore(max, exclusiveMax);
@@ -561,13 +561,13 @@ namespace CSRedis
 
             return new RedisArray.Strings("ZRANGEBYSCORE", args);
         }
-        public static RedisArray.Tuples<string, double> ZRangeByScoreWithScores(string key, string min, string max, long? offset = null, long? count = null) 
+        public static RedisArray.WeakPairs<string, double> ZRangeByScoreWithScores(string key, string min, string max, long? offset = null, long? count = null) 
         {
             string[] args = new[] { key, min, max, "WITHSCORES" };
             if (offset.HasValue && count.HasValue)
                 args = RedisArgs.Concat(args, new[] { "LIMIT", offset.Value.ToString(), count.Value.ToString() });
 
-            return new RedisArray.Tuples<string, double>("ZRANGEBYSCORE", args);
+            return new RedisArray.WeakPairs<string, double>("ZRANGEBYSCORE", args);
         }
         public static RedisInt.Nullable ZRank(string key, string member) 
         {
@@ -596,9 +596,9 @@ namespace CSRedis
                 : new[] { key, start.ToString(), stop.ToString() };
             return new RedisArray.Strings("ZREVRANGE", args);
         }
-        public static RedisArray.Tuples<string, double> ZRevRangeWithScores(string key, long start, long stop)
+        public static RedisArray.WeakPairs<string, double> ZRevRangeWithScores(string key, long start, long stop)
         {
-            return new RedisArray.Tuples<string, double>("ZREVRANGE", key, start.ToString(), stop.ToString(), "WITHSCORES");
+            return new RedisArray.WeakPairs<string, double>("ZREVRANGE", key, start.ToString(), stop.ToString(), "WITHSCORES");
         }
         public static RedisArray.Strings ZRevRangeByScore(string key, double max, double min, bool withScores = false, bool exclusiveMax = false, bool exclusiveMin = false, long? offset = null, long? count = null)
         {
@@ -616,19 +616,19 @@ namespace CSRedis
 
             return new RedisArray.Strings("ZREVRANGEBYSCORE", args);
         }
-        public static RedisArray.Tuples<string, double> ZRevRangeByScoreWithScores(string key, double max, double min, bool exclusiveMax = false, bool exclusiveMin = false, long? offset = null, long? count = null)
+        public static RedisArray.WeakPairs<string, double> ZRevRangeByScoreWithScores(string key, double max, double min, bool exclusiveMax = false, bool exclusiveMin = false, long? offset = null, long? count = null)
         {
             string min_score = RedisArgs.GetScore(min, exclusiveMin);
             string max_score = RedisArgs.GetScore(max, exclusiveMax);
             return ZRevRangeByScoreWithScores(key, max_score, min_score, offset, count);
         }
-        public static RedisArray.Tuples<string, double> ZRevRangeByScoreWithScores(string key, string max, string min, long? offset = null, long? count = null)
+        public static RedisArray.WeakPairs<string, double> ZRevRangeByScoreWithScores(string key, string max, string min, long? offset = null, long? count = null)
         {
             string[] args = new[] { key, max, min, "WITHSCORES" };
             if (offset.HasValue && count.HasValue)
                 args = RedisArgs.Concat(args, new[] { "LIMIT", offset.Value.ToString(), count.Value.ToString() });
 
-            return new RedisArray.Tuples<string, double>("ZREVRANGEBYSCORE", args);
+            return new RedisArray.WeakPairs<string, double>("ZREVRANGEBYSCORE", args);
         }
         public static RedisInt.Nullable ZRevRank(string key, string member)
         {
@@ -667,7 +667,7 @@ namespace CSRedis
             if (count != null)
                 args.AddRange(new object[] { "COUNT", count });
             return new RedisScanCommand<Tuple<string, double>>(
-                new RedisArray.Tuples<string, double>("ZSCAN", args.ToArray()));
+                new RedisArray.WeakPairs<string, double>("ZSCAN", args.ToArray()));
                     //<Tuple<string, double>>(
                     //new RedisTuple.Generic<string, double>.Bulk("ZSCAN", args.ToArray())));
         }
@@ -708,10 +708,11 @@ namespace CSRedis
                 args.Add(pattern);
             return new RedisArray.Strings("PUBSUB", args.ToArray());
         }
-        public static RedisArray.Tuples<string, long> PubSubNumSub(params string[] channels)
+        public static RedisArray.StrongPairs<string, long> PubSubNumSub(params string[] channels)
         {
             string[] args = RedisArgs.Concat("NUMSUB", channels);
-            return new RedisArray.Tuples<string, long>("PUBSUB", args);
+            return new RedisArray.StrongPairs<string, long>(
+                new RedisString(null), new RedisInt(null), "PUBSUB", args);
         }
         public static RedisInt PubSubNumPat()
         {
@@ -732,15 +733,15 @@ namespace CSRedis
         #endregion
 
         #region Scripting
-        public static RedisObject Eval(string script, string[] keys, params string[] arguments)
+        public static RedisObject.Strings Eval(string script, string[] keys, params string[] arguments)
         {
             string[] args = RedisArgs.Concat(new object[] { script, keys.Length }, keys, arguments);
-            return new RedisObject("EVAL", args);
+            return new RedisObject.Strings("EVAL", args);
         }
-        public static RedisObject EvalSHA(string sha1, string[] keys, params string[] arguments)
+        public static RedisObject.Strings EvalSHA(string sha1, string[] keys, params string[] arguments)
         {
             string[] args = RedisArgs.Concat(new object[] { sha1, keys.Length }, keys, arguments);
-            return new RedisObject("EVALSHA", args);
+            return new RedisObject.Strings("EVALSHA", args);
         }
         public static RedisArray.Generic<bool> ScriptExists(params string[] scripts)
         {
@@ -950,9 +951,9 @@ namespace CSRedis
         {
             return new RedisStatus("CLIENT SETNAME", connectionName);
         }
-        public static RedisArray.Tuples<string, string> ConfigGet(string parameter)
+        public static RedisArray.WeakPairs<string, string> ConfigGet(string parameter)
         {
-            return new RedisArray.Tuples<string, string>("CONFIG GET", parameter);
+            return new RedisArray.WeakPairs<string, string>("CONFIG GET", parameter);
         }
         public static RedisStatus ConfigResetStat()
         {
@@ -1110,9 +1111,10 @@ namespace CSRedis
             {
                 return new RedisIsMasterDownByAddrCommand("SENTINEL", "is-master-down-by-addr", ip, port, currentEpoch, runId);
             }
-            public static RedisTuple.Generic<string, int>.MultiBulk GetMasterAddrByName(string masterName)
+            public static RedisTuple.Generic<string, int>.Single GetMasterAddrByName(string masterName)
             {
-                return new RedisTuple.Generic<string, int>.MultiBulk("SENTINEL", "get-master-addr-by-name", masterName);
+                return new RedisTuple.Generic<string, int>.Single(
+                    new RedisString(null), new RedisString.Integer(null), "SENTINEL", new[] { "get-master-addr-by-name", masterName });
             }
             public static RedisInt Reset(string pattern)
             {

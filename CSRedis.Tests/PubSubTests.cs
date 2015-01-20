@@ -1,8 +1,10 @@
 ﻿using CSRedis.Internal;
+using CSRedis.Internal.Fakes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,12 +16,12 @@ namespace CSRedis.Tests
         /*[TestMethod, TestCategory("PubSub")]
         public void PSubscriptionTest()
         {
-            using (var mock = new MockConnector("MockHost", 9999, true,
+            using (var mock = new FakeRedisSocket(true,
                 "*3\r\n$10\r\npsubscribe\r\n$2\r\nf*\r\n:1\r\n"
                     + "*3\r\n$10\r\npsubscribe\r\n$2\r\ns*\r\n:2\r\n"
                     + "*4\r\n$8\r\npmessage\r\n$2\r\nf*\r\n$5\r\nfirst\r\n$5\r\nHello\r\n",
                 "*3\r\n$12\r\npunsubscribe\r\n$2\r\ns*\r\n:1\r\n*3\r\n$12\r\npunsubscribe\r\n$2\r\nf*\r\n:0\r\n"))
-            using (var redis = new RedisClient(mock))
+            using (var redis = new RedisClient(mock, new DnsEndPoint("fakehost", 9999)))
             {
                 var changes = new List<RedisSubscriptionChannel>();
                 var messages = new List<RedisSubscriptionMessage>();
@@ -63,8 +65,8 @@ namespace CSRedis.Tests
         [TestMethod, TestCategory("PubSub")]
         public void PublishTest()
         {
-            using (var mock = new MockConnector("MockHost", 9999,":3\r\n"))
-            using (var redis = new RedisClient(mock))
+            using (var mock = new FakeRedisSocket(":3\r\n"))
+            using (var redis = new RedisClient(mock, new DnsEndPoint("fakehost", 9999)))
             {
                 Assert.AreEqual(3, redis.Publish("test", "message"));
                 Assert.AreEqual("*3\r\n$7\r\nPUBLISH\r\n$4\r\ntest\r\n$7\r\nmessage\r\n", mock.GetMessage());
@@ -74,8 +76,8 @@ namespace CSRedis.Tests
         [TestMethod, TestCategory("PubSub")]
         public void PubSubChannelsTest()
         {
-            using (var mock = new MockConnector("MockHost", 9999, "*2\r\n$5\r\ntest1\r\n$5\r\ntest2\r\n"))
-            using (var redis = new RedisClient(mock))
+            using (var mock = new FakeRedisSocket("*2\r\n$5\r\ntest1\r\n$5\r\ntest2\r\n"))
+            using (var redis = new RedisClient(mock, new DnsEndPoint("fakehost", 9999)))
             {
                 var response = redis.PubSubChannels("pattern");
                 Assert.AreEqual(2, response.Length);
@@ -88,8 +90,8 @@ namespace CSRedis.Tests
         [TestMethod, TestCategory("PubSub")]
         public void PubSubNumSubTest()
         {
-            using (var mock = new MockConnector("MockHost", 9999, "*4\r\n$5\r\ntest1\r\n$1\r\n1\r\n$5\r\ntest2\r\n$1\r\n5\r\n"))
-            using (var redis = new RedisClient(mock))
+            using (var mock = new FakeRedisSocket("*4\r\n$5\r\ntest1\r\n:1\r\n$5\r\ntest2\r\n:5\r\n"))
+            using (var redis = new RedisClient(mock, new DnsEndPoint("fakehost", 9999)))
             {
                 var response = redis.PubSubNumSub("channel1", "channel2");
                 Assert.AreEqual(2, response.Length);
@@ -104,8 +106,8 @@ namespace CSRedis.Tests
         [TestMethod, TestCategory("PubSub")]
         public void PubSubNumPatTest()
         {
-            using (var mock = new MockConnector("MockHost", 9999, ":3\r\n"))
-            using (var redis = new RedisClient(mock))
+            using (var mock = new FakeRedisSocket(":3\r\n"))
+            using (var redis = new RedisClient(mock, new DnsEndPoint("fakehost", 9999)))
             {
                 Assert.AreEqual(3, redis.PubSubNumPat());
                 Assert.AreEqual("*2\r\n$6\r\nPUBSUB\r\n$6\r\nNUMPAT\r\n", mock.GetMessage());
@@ -115,12 +117,12 @@ namespace CSRedis.Tests
         /*[TestMethod, TestCategory("PubSub")]
         public void SubscriptionTest()
         {
-            using (var mock = new MockConnector("MockHost", 9999, true,
+            using (var mock = new FakeRedisSocket(true,
                 "*3\r\n$9\r\nsubscribe\r\n$5\r\nfirst\r\n:1\r\n"
                     + "*3\r\n$9\r\nsubscribe\r\n$6\r\nsecond\r\n:2\r\n"
                     + "*3\r\n$7\r\nmessage\r\n$5\r\nfirst\r\n$5\r\nHello\r\n",
                 "*3\r\n$11\r\nunsubscribe\r\n$6\r\nsecond\r\n:1\r\n*3\r\n$11\r\nunsubscribe\r\n$5\r\nfirst\r\n:0\r\n"))
-            using (var redis = new RedisClient(mock))
+            using (var redis = new RedisClient(mock, new DnsEndPoint("fakehost", 9999)))
             {
                 var changes = new List<RedisSubscriptionChannel>();
                 var messages = new List<RedisSubscriptionMessage>();

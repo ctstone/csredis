@@ -12,101 +12,63 @@ using System.Threading.Tasks;
 
 namespace CSRedis.Internal
 {
-    class RedisConnector : IRedisConnector
+    class RedisConnector
     {
-        readonly DnsEndPoint _endpoint;
-        readonly Lazy<SocketAsyncEventArgs> _asyncConnectArgs;
-        readonly Lazy<SocketAsyncPool> _asyncTransferPool;
-        readonly Lazy<ConcurrentQueue<IRedisAsyncCommandToken>> _asyncReadQueue;
-        readonly Lazy<ConcurrentQueue<IRedisAsyncCommandToken>> _asyncWriteQueue;
-        readonly object _readLock; 
-        readonly object _writeLock;
-        readonly RedisWriter _writer;
-        readonly RedisEncoding _encoding;
         readonly int _concurrency;
         readonly int _bufferSize;
-        Socket _socket;
-        BufferedStream _stream;
-        RedisReader _reader;
-        RedisPipeline _pipeline;
-        bool _asyncConnectionStarted;
-        TaskCompletionSource<bool> _connectionTaskSource;
+        readonly Lazy<AsyncConnector> _asyncConnector;
+        readonly IRedisSocket _redisSocket;
+        readonly EndPoint _endPoint;
+        readonly RedisIO _io;
 
         public event EventHandler Connected;
 
-        public bool IsConnected { get { return _socket == null ? false : _socket.Connected; } }
-        public string Host { get { return _endpoint.Host; } }
-        public int Port { get { return _endpoint.Port; } }
-        public bool IsPipelined { get { return _pipeline.Active; } }
+        public AsyncConnector Async { get { return _asyncConnector.Value; } }
+        public bool IsConnected { get { return _redisSocket.Connected; } }
+        public EndPoint EndPoint { get { return _endPoint; } }
+        public bool IsPipelined { get { return _io.IsPipelined; } }
         public int ReconnectAttempts { get; set; }
         public int ReconnectWait { get; set; }
         public int ReceiveTimeout 
-        { 
-            get { return _socket.ReceiveTimeout; }
-            set { _socket.ReceiveTimeout = value; }
+        {
+            get { return _redisSocket.ReceiveTimeout; }
+            set { _redisSocket.ReceiveTimeout = value; }
         }
         public int SendTimeout 
-        { 
-            get { return _socket.SendTimeout; }
-            set { _socket.SendTimeout = value; }
+        {
+            get { return _redisSocket.SendTimeout; }
+            set { _redisSocket.SendTimeout = value; }
         }
         public Encoding Encoding
         {
-            get { return _encoding.Encoding; }
-            set { _encoding.Encoding = value; }
+            get { return _io.Encoding; }
+            set { _io.Encoding = value; }
         }
-        SocketAsyncPool AsyncTransferPool { get { return _asyncTransferPool.Value; } }
-        SocketAsyncEventArgs AsyncConnectArgs { get { return _asyncConnectArgs.Value; } }
-        ConcurrentQueue<IRedisAsyncCommandToken> AsyncReadQueue { get { return _asyncReadQueue.Value; } }
-        ConcurrentQueue<IRedisAsyncCommandToken> AsyncWriteQueue { get { return _asyncWriteQueue.Value; } }
-
         
 
-        public RedisConnector(string host, int port, int concurrency, int bufferSize)
+        public RedisConnector(EndPoint endPoint, IRedisSocket socket, int concurrency, int bufferSize)
         {
             _concurrency = concurrency;
             _bufferSize = bufferSize;
-            _endpoint = new DnsEndPoint(host, port);
-            _encoding = new RedisEncoding();
-            _asyncTransferPool = new Lazy<SocketAsyncPool>(SocketAsyncPoolFactory);
-            _asyncReadQueue = new Lazy<ConcurrentQueue<IRedisAsyncCommandToken>>(AsyncQueueFactory);
-            _asyncWriteQueue = new Lazy<ConcurrentQueue<IRedisAsyncCommandToken>>(AsyncQueueFactory);
-            _readLock = new object();
-            _writeLock = new object();
-            _writer = new RedisWriter(_encoding);
-            _asyncConnectArgs = new Lazy<SocketAsyncEventArgs>(SocketAsyncConnectFactory);
+            _endPoint = endPoint;
+            _redisSocket = socket;
+            _io = new RedisIO();
+            _asyncConnector = new Lazy<AsyncConnector>(AsyncConnectorFactory);
         }
-
-       
 
         public bool Connect()
         {
-            InitSocket();
-            _socket.Connect(_endpoint);
+            _redisSocket.Connect(_endPoint);
 
-            if (_socket.Connected)
-                InitReader();
+            if (_redisSocket.Connected)
+                OnConnected();
 
-            return _socket.Connected;
+            return _redisSocket.Connected;
         }
 
         public Task<bool> ConnectAsync()
         {
-            if (!_asyncConnectionStarted && !IsConnected)
-            {
-                lock (_asyncConnectArgs)
-                {
-                    if (!_asyncConnectionStarted && !IsConnected)
-                    {
-                        _asyncConnectionStarted = true;
-                        InitSocket();
-                        if (!_socket.ConnectAsync(AsyncConnectArgs))
-                            OnSocketConnected(AsyncConnectArgs);
-                    }
-                }
-            }
-
-            return _connectionTaskSource.Task;
+            return Async.ConnectAsync();
         }
 
         public T Call<T>(RedisCommand<T> command)
@@ -116,10 +78,10 @@ namespace CSRedis.Internal
             try
             {
                 if (IsPipelined)
-                    return _pipeline.Write(command);
+                    return _io.Pipeline.Write(command);
 
-                _writer.Write(command, _stream);
-                return command.Parse(_reader);
+                _io.Writer.Write(command, _io.Stream);
+                return command.Parse(_io.Reader);
             }
             catch (IOException)
             {
@@ -132,17 +94,16 @@ namespace CSRedis.Internal
 
         public Task<T> CallAsync<T>(RedisCommand<T> command)
         {
-            var token = new RedisAsyncCommandToken<T>(command);
-            AsyncWriteQueue.Enqueue(token);
-            ConnectAsync().ContinueWith(CallAsyncDeferred);
-            return token.TaskSource.Task;
+            return Async.CallAsync(command);
         }
 
         public void Write(RedisCommand command)
         {
+            ConnectIfNotConnected();
+
             try
             {
-                _writer.Write(command, _stream);
+                _io.Writer.Write(command, _io.Stream);
             }
             catch (IOException)
             {
@@ -155,9 +116,11 @@ namespace CSRedis.Internal
 
         public T Read<T>(Func<RedisReader, T> func)
         {
+            ExpectConnected();
+
             try
             {
-                return func(_reader);
+                return func(_io.Reader);
             }
             catch (IOException)
             {
@@ -168,12 +131,14 @@ namespace CSRedis.Internal
             }
         }
 
-        public void Read(Stream destination, int bufferSize) // TODO: reconnect
+        public void Read(Stream destination, int bufferSize)
         {
+            ExpectConnected();
+
             try
             {
-                _reader.ExpectType(RedisMessage.Bulk);
-                _reader.ReadBulk(destination, bufferSize, false);
+                _io.Reader.ExpectType(RedisMessage.Bulk);
+                _io.Reader.ReadBulkBytes(destination, bufferSize, false);
             }
             catch (IOException)
             {
@@ -187,14 +152,16 @@ namespace CSRedis.Internal
         public void BeginPipe()
         {
             ConnectIfNotConnected();
-            _pipeline.Begin();
+            _io.Pipeline.Begin();
         }
 
         public object[] EndPipe()
         {
+            ExpectConnected();
+
             try
             {
-                return _pipeline.Flush();
+                return _io.Pipeline.Flush();
             }
             catch (IOException)
             {
@@ -207,54 +174,14 @@ namespace CSRedis.Internal
 
         public void Dispose()
         {
-            if (_asyncConnectArgs.IsValueCreated)
-                _asyncConnectArgs.Value.Dispose();
+            if (_asyncConnector.IsValueCreated)
+                _asyncConnector.Value.Dispose();
 
-            if (_asyncTransferPool.IsValueCreated)
-                _asyncTransferPool.Value.Dispose();
+            _io.Dispose();
 
-            if (_pipeline != null)
-                _pipeline.Dispose();
+            if (_redisSocket != null)
+                _redisSocket.Dispose();
 
-            if (_stream != null)
-                _stream.Dispose();
-
-            if (_socket != null)
-                _socket.Dispose();
-
-        }
-
-        void CallAsyncDeferred(Task t)
-        {
-            lock (_writeLock)
-            {
-                IRedisAsyncCommandToken token;
-                if (!AsyncWriteQueue.TryDequeue(out token))
-                    throw new Exception();
-
-                AsyncReadQueue.Enqueue(token);
-
-                var args = AsyncTransferPool.Acquire();
-                int bytes;
-                try
-                {
-                    bytes = _writer.Write(token.Command, args.Buffer, args.Offset);
-                }
-                catch (ArgumentException e)
-                {
-                    throw new RedisClientException("Could not write command '" + token.Command.Command + "'. Argument size exceeds buffer allocation of " + args.Count + ".", e);
-                }
-                args.SetBuffer(args.Offset, bytes);
-
-                if (!_socket.SendAsync(args))
-                    OnSocketSent(args);
-            }
-        }
-
-        void ConnectIfNotConnected()
-        {
-            if (!IsConnected)
-                Connect();
         }
 
         void Reconnect()
@@ -271,103 +198,35 @@ namespace CSRedis.Internal
             throw new IOException("Could not reconnect after " + attempts + " attempts");
         }
 
-        void OnSocketCompleted(object sender, SocketAsyncEventArgs e)
-        {
-            switch (e.LastOperation)
-            {
-                case SocketAsyncOperation.Connect:
-                    OnSocketConnected(e);
-                    break;
-                case SocketAsyncOperation.Send:
-                    OnSocketSent(e);
-                    break;
-                default:
-                    throw new InvalidOperationException();
-            }
-        }
-
-        void OnSocketConnected(SocketAsyncEventArgs args)
-        {
-            if (_socket.Connected)
-                InitReader();
-
-        }
-
-        void OnSocketSent(SocketAsyncEventArgs args)
-        {
-            AsyncTransferPool.Release(args);
-
-            IRedisAsyncCommandToken token;
-            lock (_readLock)
-            {
-                if (AsyncReadQueue.TryDequeue(out token))
-                {
-                    try
-                    {
-                        token.SetResult(_reader);
-                    }
-                    catch (IOException)
-                    {
-                        if (ReconnectAttempts == 0)
-                            throw;
-                        Reconnect();
-                        AsyncWriteQueue.Enqueue(token);
-                        ConnectAsync().ContinueWith(CallAsyncDeferred);
-                    }
-                    catch (Exception e)
-                    {
-                        token.SetException(e);
-                    }
-                }
-            }
-        }
-
         void OnConnected()
         {
+            _io.SetStream(_redisSocket.GetStream());
             if (Connected != null)
                 Connected(this, new EventArgs());
         }
 
-        void InitSocket()
+        void OnAsyncConnected(object sender, EventArgs args)
         {
-            if (_socket != null)
-                _socket.Dispose();
-            if (_connectionTaskSource != null)
-                _connectionTaskSource.TrySetResult(false);
-
-            _connectionTaskSource = new TaskCompletionSource<bool>();
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        }
-
-        void InitReader()
-        {
-            if (_stream != null)
-                _stream.Dispose();
-
-            _stream = new BufferedStream(new NetworkStream(_socket));
-            _reader = new RedisReader (_encoding, _stream);
-            _pipeline = new RedisPipeline(_stream, _encoding, _reader);
-            _connectionTaskSource.SetResult(_socket.Connected);
             OnConnected();
         }
 
-        SocketAsyncPool SocketAsyncPoolFactory()
+        AsyncConnector AsyncConnectorFactory()
         {
-            SocketAsyncPool pool = new SocketAsyncPool(_concurrency, _bufferSize);
-            pool.Completed += OnSocketCompleted;
-            return pool;
+            var connector = new AsyncConnector(_redisSocket, _endPoint, _io, _concurrency, _bufferSize);
+            connector.Connected += OnAsyncConnected;
+            return connector;
         }
 
-        ConcurrentQueue<IRedisAsyncCommandToken> AsyncQueueFactory()
+        void ConnectIfNotConnected()
         {
-            return new ConcurrentQueue<IRedisAsyncCommandToken>();
+            if (!IsConnected)
+                Connect();
         }
 
-        SocketAsyncEventArgs SocketAsyncConnectFactory()
+        void ExpectConnected()
         {
-            SocketAsyncEventArgs args = new SocketAsyncEventArgs { RemoteEndPoint = _endpoint };
-            args.Completed += OnSocketCompleted;
-            return args;
+            if (!IsConnected)
+                throw new RedisClientException("Client is not connected");
         }
     }
 }

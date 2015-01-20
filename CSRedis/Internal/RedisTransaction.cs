@@ -9,7 +9,7 @@ namespace CSRedis.Internal
 {
     class RedisTransaction
     {
-        readonly IRedisConnector _connector;
+        readonly RedisConnector _connector;
         readonly RedisArray _execCommand;
         readonly List<Tuple<string, object[]>> _pipeCommands = new List<Tuple<string, object[]>>();
 
@@ -18,7 +18,7 @@ namespace CSRedis.Internal
         bool _active;
         public bool Active { get { return _active; } }
 
-        public RedisTransaction(IRedisConnector connector)
+        public RedisTransaction(RedisConnector connector)
         {
             _connector = connector;
             _execCommand = RedisCommands.Exec();

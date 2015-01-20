@@ -5,18 +5,20 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using CSRedis.Internal.IO;
+using System.Net;
 
 namespace CSRedis
 {
     /// <summary>
     /// Represents a client connection to a Redis server instance
     /// </summary>
-    public partial class RedisClient : IRedisClient, IRedisClientAsync
+    public partial class RedisClient : IRedisClientSync, IRedisClientAsync
     {
         const int DefaultPort = 6379;
         const int DefaultConcurrency = 1000;
         const int DefaultBufferSize = 10240;
-        readonly IRedisConnector _connector;
+        readonly RedisConnector _connector;
         readonly RedisTransaction _transaction;
         readonly SubscriptionListener _subscription;
         readonly MonitorListener _monitor;
@@ -51,12 +53,12 @@ namespace CSRedis
         /// <summary>
         /// Get the Redis server hostname
         /// </summary>
-        public string Host { get { return _connector.Host; } }
+        public string Host { get { return GetHost(); } }
 
         /// <summary>
         /// Get the Redis server port
         /// </summary>
-        public int Port { get { return _connector.Port; } }
+        public int Port { get { return GetPort(); } }
 
         /// <summary>
         /// Get a value indicating whether the Redis client is connected to the server
@@ -127,6 +129,14 @@ namespace CSRedis
         { }
 
         /// <summary>
+        /// Create a new RedisClient
+        /// </summary>
+        /// <param name="endpoint">Redis server</param>
+        public RedisClient(EndPoint endpoint)
+            : this(endpoint, DefaultConcurrency, DefaultBufferSize)
+        { }
+
+        /// <summary>
         /// Create a new RedisClient with specific async concurrency settings
         /// </summary>
         /// <param name="host">Redis server hostname</param>
@@ -134,16 +144,30 @@ namespace CSRedis
         /// <param name="asyncConcurrency">Max concurrent threads (default 1000)</param>
         /// <param name="asyncBufferSize">Async thread buffer size (default 10240 bytes)</param>
         public RedisClient(string host, int port, int asyncConcurrency, int asyncBufferSize)
-            : this(new RedisConnector(host, port, asyncConcurrency, asyncBufferSize))
+            : this(new DnsEndPoint(host, port), asyncConcurrency, asyncBufferSize)
         { }
 
-        internal RedisClient(IRedisConnector connector)
+        /// <summary>
+        /// Create a new RedisClient with specific async concurrency settings
+        /// </summary>
+        /// <param name="endpoint">Redis server</param>
+        /// <param name="asyncConcurrency">Max concurrent threads (default 1000)</param>
+        /// <param name="asyncBufferSize">Async thread buffer size (default 10240 bytes)</param>
+        public RedisClient(EndPoint endpoint, int asyncConcurrency, int asyncBufferSize)
+            : this (new RedisSocket(), endpoint, asyncConcurrency, asyncBufferSize)
+        { }
+
+        internal RedisClient(IRedisSocket socket, EndPoint endpoint)
+            : this(socket, endpoint, DefaultConcurrency, DefaultBufferSize)
+        { }
+
+        internal RedisClient(IRedisSocket socket, EndPoint endpoint, int asyncConcurrency, int asyncBufferSize)
         {
             // use invariant culture - we have to set it explicitly for every thread we create to 
             // prevent any floating-point problems (mostly because of number formats in non en-US cultures).
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 
-            _connector = connector;
+            _connector = new RedisConnector(endpoint, socket, asyncConcurrency, asyncBufferSize);
             _transaction = new RedisTransaction(_connector);
             _subscription = new SubscriptionListener(_connector);
             _monitor = new MonitorListener(_connector);
@@ -190,7 +214,7 @@ namespace CSRedis
         /// <typeparam name="T">Response type</typeparam>
         /// <param name="destination">Destination stream</param>
         /// <param name="func">Client command to execute (BULK reply only)</param>
-        public void StreamTo<T>(Stream destination, Func<IRedisClient, T> func)
+        public void StreamTo<T>(Stream destination, Func<IRedisClientSync, T> func)
         {
             StreamTo(destination, DefaultBufferSize, func);
         }
@@ -202,7 +226,7 @@ namespace CSRedis
         /// <param name="destination">Destination stream</param>
         /// <param name="bufferSize">Size of buffer used to write server response</param>
         /// <param name="func">Client command to execute (BULK reply only)</param>
-        public void StreamTo<T>(Stream destination, int bufferSize, Func<IRedisClient, T> func)
+        public void StreamTo<T>(Stream destination, int bufferSize, Func<IRedisClientSync, T> func)
         {
             _streaming = true;
             func(this);
@@ -246,6 +270,26 @@ namespace CSRedis
         {
             if (TransactionQueued != null)
                 TransactionQueued(this, args);
+        }
+
+        string GetHost()
+        {
+            if (_connector.EndPoint is IPEndPoint)
+                return (_connector.EndPoint as IPEndPoint).Address.ToString();
+            else if (_connector.EndPoint is DnsEndPoint)
+                return (_connector.EndPoint as DnsEndPoint).Host;
+            else
+                return null;
+        }
+
+        int GetPort()
+        {
+            if (_connector.EndPoint is IPEndPoint)
+                return (_connector.EndPoint as IPEndPoint).Port;
+            else if (_connector.EndPoint is DnsEndPoint)
+                return (_connector.EndPoint as DnsEndPoint).Port;
+            else
+                return -1;
         }
     }
 }
