@@ -5,7 +5,6 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
-using System.ComponentModel;
 
 namespace CSRedis
 {
@@ -124,17 +123,7 @@ namespace CSRedis
         /// <param name="host">Redis server hostname</param>
         /// <param name="port">Redis server port</param>
         public RedisClient(string host, int port)
-            : this(host, port, false, DefaultConcurrency, DefaultBufferSize)
-        { }
-
-        /// <summary>
-        /// Create a new RedisClient using SSL
-        /// </summary>
-        /// <param name="host">Redis server hostname</param>
-        /// <param name="port">Redis server port</param>
-        /// <param name="ssl">Set true if Redis server expects SSL</param>
-        public RedisClient(string host, int port, bool ssl)
-            : this(host, port, ssl, DefaultConcurrency, DefaultBufferSize)
+            : this(host, port, DefaultConcurrency, DefaultBufferSize)
         { }
 
         /// <summary>
@@ -142,12 +131,10 @@ namespace CSRedis
         /// </summary>
         /// <param name="host">Redis server hostname</param>
         /// <param name="port">Redis server port</param>
-        /// <param name="ssl">Set true if Redis server expects SSL</param>
         /// <param name="asyncConcurrency">Max concurrent threads (default 1000)</param>
         /// <param name="asyncBufferSize">Async thread buffer size (default 10240 bytes)</param>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public RedisClient(string host, int port, bool ssl, int asyncConcurrency, int asyncBufferSize)
-            : this(new RedisConnector(host, port, ssl, asyncConcurrency, asyncBufferSize))
+        public RedisClient(string host, int port, int asyncConcurrency, int asyncBufferSize)
+            : this(new RedisConnector(host, port, asyncConcurrency, asyncBufferSize))
         { }
 
         internal RedisClient(IRedisConnector connector)

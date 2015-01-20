@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -26,7 +25,6 @@ namespace CSRedis.Internal
         readonly RedisEncoding _encoding;
         readonly int _concurrency;
         readonly int _bufferSize;
-        readonly bool _ssl;
         Socket _socket;
         BufferedStream _stream;
         RedisReader _reader;
@@ -64,7 +62,7 @@ namespace CSRedis.Internal
 
         
 
-        public RedisConnector(string host, int port, bool ssl, int concurrency, int bufferSize)
+        public RedisConnector(string host, int port, int concurrency, int bufferSize)
         {
             _concurrency = concurrency;
             _bufferSize = bufferSize;
@@ -77,7 +75,6 @@ namespace CSRedis.Internal
             _writeLock = new object();
             _writer = new RedisWriter(_encoding);
             _asyncConnectArgs = new Lazy<SocketAsyncEventArgs>(SocketAsyncConnectFactory);
-            _ssl = ssl;
         }
 
        
@@ -347,22 +344,11 @@ namespace CSRedis.Internal
             if (_stream != null)
                 _stream.Dispose();
 
-            _stream = new BufferedStream(GetNetworkStream());
-            _reader = new RedisReader(_encoding, _stream);
+            _stream = new BufferedStream(new NetworkStream(_socket));
+            _reader = new RedisReader (_encoding, _stream);
             _pipeline = new RedisPipeline(_stream, _encoding, _reader);
             _connectionTaskSource.SetResult(_socket.Connected);
             OnConnected();
-        }
-
-        Stream GetNetworkStream()
-        {
-            Stream netStream = new NetworkStream(_socket);
-
-            if (!_ssl) return netStream;
-
-            var sslStream = new SslStream(netStream, true);
-            sslStream.AuthenticateAsClient(_endpoint.Host);
-            return sslStream;
         }
 
         SocketAsyncPool SocketAsyncPoolFactory()
