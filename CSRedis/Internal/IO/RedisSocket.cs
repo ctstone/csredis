@@ -15,6 +15,8 @@ namespace CSRedis.Internal.IO
         Socket _socket;
         EndPoint _remote;
 
+        public bool SSL { get { return _ssl; } }
+
         public bool Connected { get { return _socket == null ? false : _socket.Connected; } }
 
         public int ReceiveTimeout
