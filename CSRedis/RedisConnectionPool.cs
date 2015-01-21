@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CSRedis
 {
@@ -95,6 +96,8 @@ namespace CSRedis
         readonly SocketPool _pool;
 
         public bool Connected { get { return _socket == null ? false : _socket.Connected; } }
+        public EndPoint EndPoint { get { return _pool.EndPoint;  } }
+        public bool SSL { get { return false;  } }
 
         public int ReceiveTimeout
         {
@@ -113,7 +116,7 @@ namespace CSRedis
             _pool = pool;
         }
 
-        public void Connect(EndPoint endpoint)
+        public void Connect()
         {
             _socket = _pool.Connect();
             System.Diagnostics.Debug.WriteLine("Got socket #{0}", _socket.Handle);
@@ -137,6 +140,11 @@ namespace CSRedis
         public void Dispose()
         {
             _pool.Release(_socket);
+        }
+
+        public Task<bool> ConnectAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }

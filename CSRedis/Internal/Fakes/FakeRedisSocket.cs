@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CSRedis.Internal.Fakes
 {
@@ -19,6 +20,22 @@ namespace CSRedis.Internal.Fakes
         public int ReceiveTimeout { get; set; }
 
         public int SendTimeout { get; set; }
+
+        public EndPoint EndPoint
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool SSL
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         public FakeRedisSocket(params string[] responses)
             : this(Encoding.UTF8, responses)
@@ -35,7 +52,7 @@ namespace CSRedis.Internal.Fakes
                 _stream.AddResponse(response);
         }
 
-        public void Connect(EndPoint endpoint)
+        public void Connect()
         {
             _connected = true;
         }
@@ -77,6 +94,11 @@ namespace CSRedis.Internal.Fakes
             for (int i = 0; i < strings.Length; i++)
                 set[i] = encoding.GetBytes(strings[i]);
             return set;
+        }
+
+        public Task<bool> ConnectAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }

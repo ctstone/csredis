@@ -197,7 +197,7 @@ namespace CSRedis
         /// <param name="asyncConcurrency">Max concurrent threads (default 1000)</param>
         /// <param name="asyncBufferSize">Async thread buffer size (default 10240 bytes)</param>
         public RedisClient(EndPoint endpoint, bool ssl, int asyncConcurrency, int asyncBufferSize)
-            : this(new RedisSocket(ssl), endpoint, asyncConcurrency, asyncBufferSize)
+            : this(new RedisSocket(endpoint, ssl), endpoint, asyncConcurrency, asyncBufferSize)
         { }
 
         internal RedisClient(IRedisSocket socket, EndPoint endpoint)

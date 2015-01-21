@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CSRedis.Internal.IO
 {
@@ -26,6 +27,19 @@ namespace CSRedis.Internal.IO
             byte[] data = _io.Encoding.GetBytes(prepared);
             stream.Write(data, 0, data.Length);
             return data.Length;
+        }
+
+        public Task<int> WriteAsync(RedisCommand command, Stream stream)
+        {
+            var tcs = new TaskCompletionSource<int>();
+            string prepared = Prepare(command);
+            byte[] data = _io.Encoding.GetBytes(prepared);
+            stream.BeginWrite(data, 0, data.Length, iar =>
+            {
+                stream.EndWrite(iar);
+                tcs.SetResult(data.Length);
+            }, null);
+            return tcs.Task;
         }
 
         public int Write(RedisCommand command, byte[] buffer, int offset)
