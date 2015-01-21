@@ -41,9 +41,9 @@ namespace CSRedis.Internal.IO
 
             return _socket.ConnectAsync().ContinueWith(t =>
             {
-                _connected.SetResult(t.Result);
                 if (Connected != null)
                     Connected(this, new EventArgs());
+                _connected.SetResult(t.Result);
                 return t.Result;
             });
 

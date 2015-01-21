@@ -29,13 +29,7 @@ namespace CSRedis.Internal.Fakes
             }
         }
 
-        public bool SSL
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-        }
+        public bool SSL { get { return false;  } }
 
         public FakeRedisSocket(params string[] responses)
             : this(Encoding.UTF8, responses)
