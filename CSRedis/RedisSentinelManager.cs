@@ -35,7 +35,7 @@ namespace CSRedis
                 string[] parts = host.Split(':');
                 string hostname = parts[0].Trim();
                 int port = Int32.Parse(parts[1]);
-                Add(host, port);
+                Add(hostname, port);
             }
         }
 
