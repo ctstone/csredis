@@ -2,19 +2,20 @@
   "version": "3.3.0-*",
 
 	"dependencies": {
-		"NETStandard.Library": "1.6.0"
+		
 	},
 
   "frameworks": {
 			"netstandard1.6": {
 				"imports": "dnxcore50",
-				"dependencies": {
-					"System.ComponentModel.TypeConverter": "4.3.0",
-					"System.Runtime.Serialization.Primitives": "4.3.0",
-					"System.Runtime.Serialization.Formatters": "4.3.0",
-					"System.Net.Security": "4.3.0",
-					"System.Threading.Thread": "4.3.0"
-				}
+							"dependencies": {
+								"NETStandard.Library": "1.6.0",
+								"System.ComponentModel.TypeConverter": "4.3.0",
+								"System.Runtime.Serialization.Primitives": "4.3.0",
+								"System.Runtime.Serialization.Formatters": "4.3.0",
+								"System.Net.Security": "4.3.0",
+								"System.Threading.Thread": "4.3.0"
+							}
 			},
 			"net461": {},
 			"net452": {} 
