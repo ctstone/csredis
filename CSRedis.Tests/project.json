@@ -5,7 +5,7 @@
 				"dependencies": {
 								"NETStandard.Library": "1.6.0",
 								"MSTest.TestFramework": "1.0.7-preview",
-								"CSRedis": "3.2.0",
+								"CSRedis": "3.3.0",
 								"dotnet-test-mstest": "1.1.2-preview"
 				},
 
