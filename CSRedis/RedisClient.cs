@@ -206,11 +206,15 @@ namespace CSRedis
 
         internal RedisClient(IRedisSocket socket, EndPoint endpoint, int asyncConcurrency, int asyncBufferSize)
         {
-            // use invariant culture - we have to set it explicitly for every thread we create to 
-            // prevent any floating-point problems (mostly because of number formats in non en-US cultures).
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+			// use invariant culture - we have to set it explicitly for every thread we create to 
+			// prevent any floating-point problems (mostly because of number formats in non en-US cultures).
+#if NET452
+			Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+#else
+			CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+#endif
 
-            _connector = new RedisConnector(endpoint, socket, asyncConcurrency, asyncBufferSize);
+			_connector = new RedisConnector(endpoint, socket, asyncConcurrency, asyncBufferSize);
             _transaction = new RedisTransaction(_connector);
             _subscription = new SubscriptionListener(_connector);
             _monitor = new MonitorListener(_connector);

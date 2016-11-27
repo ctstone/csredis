@@ -1,0 +1,27 @@
+﻿{
+				"version": "1.0.0-*",
+				"testRunner": "mstest",
+
+				"dependencies": {
+								"NETStandard.Library": "1.6.0",
+								"MSTest.TestFramework": "1.0.7-preview",
+								"CSRedis": "3.2.0",
+								"dotnet-test-mstest": "1.1.2-preview"
+				},
+
+				"frameworks": {
+								"netcoreapp1.0": {
+												"imports":
+												[
+																"dnxcore50",
+																"portable-net45+win8"
+												],
+												"dependencies": {
+																"Microsoft.NETCore.App": {
+																				"version": "1.0.0",
+																				"type": "platform"
+																}
+												}
+								}
+				}
+}

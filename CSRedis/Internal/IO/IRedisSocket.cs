@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CSRedis.Internal.IO
 {
@@ -16,6 +17,6 @@ namespace CSRedis.Internal.IO
         void Connect(EndPoint endpoint);
         bool ConnectAsync(SocketAsyncEventArgs args);
         bool SendAsync(SocketAsyncEventArgs args);
-        Stream GetStream();
+        Task<Stream> GetStream();
     }
 }

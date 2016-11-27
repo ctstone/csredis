@@ -34,7 +34,7 @@ namespace CSRedis.Internal.Utilities
 
         public static Dictionary<string, string> Serialize(T obj)
         {
-            if (typeof(ISerializable).IsAssignableFrom(typeof(T)))
+            if (typeof(ISerializable).GetTypeInfo().IsAssignableFrom(typeof(T)))
                 return _serializer.Value(obj);
             else
                 return _propertySerializer.Value(obj);
@@ -42,7 +42,7 @@ namespace CSRedis.Internal.Utilities
 
         public static T Deserialize(Dictionary<string, string> fields)
         {
-            if (typeof(ISerializable).IsAssignableFrom(typeof(T)))
+            if (typeof(ISerializable).GetTypeInfo().IsAssignableFrom(typeof(T)))
                 return _deserializer.Value(fields);
             else
                 return _propertyDeserializer.Value(fields);
@@ -57,16 +57,16 @@ namespace CSRedis.Internal.Utilities
             var d_t = typeof(Dictionary<string, string>);
             var d = Expression.Variable(d_t, "d");
             var d_init = Expression.MemberInit(Expression.New(d_t));
-            var d_add = d_t.GetMethod("Add");
-            var d_setters = o_t.GetProperties(BindingFlags.Public | BindingFlags.Instance) // build setters via Add(k,v)
+            var d_add = d_t.GetTypeInfo().GetMethod("Add");
+            var d_setters = o_t.GetTypeInfo().GetProperties(BindingFlags.Public | BindingFlags.Instance) // build setters via Add(k,v)
                 .Where(x => x.CanRead)
                 .Select(x =>
                 {
                     var prop = Expression.Property(o, x.Name);
-                    var prop_mi_to_string = x.PropertyType.GetMethod("ToString", new Type[0]);
+                    var prop_mi_to_string = x.PropertyType.GetTypeInfo().GetMethod("ToString", new Type[0]);
                     var add_to_dict = Expression.Call(d, d_add, Expression.Constant(x.Name), Expression.Call(prop, prop_mi_to_string));
 
-                    if (x.PropertyType.IsValueType)
+                    if (x.PropertyType.GetTypeInfo().IsValueType)
                         return (Expression)add_to_dict;
                     else
                         return (Expression)Expression.IfThen(
@@ -92,20 +92,20 @@ namespace CSRedis.Internal.Utilities
 
             var d_t = typeof(Dictionary<string, string>);
             var d = Expression.Parameter(d_t, "d");
-            var d_mi_try_get_value = d_t.GetMethod("TryGetValue");
+            var d_mi_try_get_value = d_t.GetTypeInfo().GetMethod("TryGetValue");
 
             var item_t = typeof(String);
             var item = Expression.Variable(item_t, "item");
 
             var tc_t = typeof(TypeConverter);
             var tc = Expression.Variable(tc_t, "tc");
-            var tc_mi_can_convert_from = tc_t.GetMethod("CanConvertFrom", new[] { typeof(Type) });
-            var tc_mi_convert_from = tc_t.GetMethod("ConvertFrom", new[] { typeof(Object) });
+            var tc_mi_can_convert_from = tc_t.GetTypeInfo().GetMethod("CanConvertFrom", new[] { typeof(Type) });
+            var tc_mi_convert_from = tc_t.GetTypeInfo().GetMethod("ConvertFrom", new[] { typeof(Object) });
 
             var td_t = typeof(TypeDescriptor);
-            var td_mi_get_converter = td_t.GetMethod("GetConverter", new[] { typeof(Type) });
+            var td_mi_get_converter = td_t.GetTypeInfo().GetMethod("GetConverter", new[] { typeof(Type) });
 
-            var binds = o_t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            var binds = o_t.GetTypeInfo().GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(x => x.CanRead)
                 .Select(x =>
                 {
@@ -140,22 +140,22 @@ namespace CSRedis.Internal.Utilities
         {
             var o_t = typeof(T);
             var o = Expression.Parameter(o_t, "original");
-            var o_get_object_data = o_t.GetMethod("GetObjectData");
+            var o_get_object_data = o_t.GetTypeInfo().GetMethod("GetObjectData");
 
             var d_t = typeof(Dictionary<string, string>);
             var d = Expression.Variable(d_t, "d"); // define object variable
             var d_init = Expression.MemberInit(Expression.New(d_t)); // object ctor
-            var d_add = d_t.GetMethod("Add"); // add method
-
+            var d_add = d_t.GetTypeInfo().GetMethod("Add"); // add method
+            
             var fc_t = typeof(FormatterConverter);
             var fc = Expression.Variable(fc_t, "fc");
             var fc_init = Expression.MemberInit(Expression.New(fc_t));
 
             var info_t = typeof(SerializationInfo);
             var info = Expression.Variable(info_t, "info");
-            var info_ctor = info_t.GetConstructor(new[] { typeof(Type), fc_t });
+            var info_ctor = info_t.GetTypeInfo().GetConstructor(new[] { typeof(Type), fc_t });
             var info_init = Expression.MemberInit(Expression.New(info_ctor, Expression.Constant(o_t), fc));
-            var info_get_enumerator = info_t.GetMethod("GetEnumerator");
+            var info_get_enumerator = info_t.GetTypeInfo().GetMethod("GetEnumerator");
 
             var ctx_t = typeof(StreamingContext);
             var ctx = Expression.Variable(ctx_t, "ctx");
@@ -163,10 +163,10 @@ namespace CSRedis.Internal.Utilities
 
             var enumerator_t = typeof(SerializationInfoEnumerator);
             var enumerator = Expression.Variable(enumerator_t, "enumerator");
-            var enumerator_move_next = enumerator_t.GetMethod("MoveNext");
+            var enumerator_move_next = enumerator_t.GetTypeInfo().GetMethod("MoveNext");
             var enumerator_name = Expression.Property(enumerator, "Name");
             var enumerator_value = Expression.Property(enumerator, "Value");
-            var mi_to_string = typeof(Object).GetMethod("ToString", new Type[0]);
+            var mi_to_string = typeof(Object).GetTypeInfo().GetMethod("ToString", new Type[0]);
             var exit_loop = Expression.Label("exit_loop");
             var body = Expression.Block(new[] { d, fc, info, ctx },
                 Expression.Assign(d, d_init),
@@ -196,11 +196,11 @@ namespace CSRedis.Internal.Utilities
         static Func<Dictionary<string, string>, T> CompileDeserializer()
         {
             var o_t = typeof(T);
-            var o_ctor = o_t.GetConstructor(new[] { typeof(SerializationInfo), typeof(StreamingContext) });
+            var o_ctor = o_t.GetTypeInfo().GetConstructor(new[] { typeof(SerializationInfo), typeof(StreamingContext) });
 
             var d_t = typeof(Dictionary<string, string>);
             var d = Expression.Parameter(d_t, "d");
-            var d_mi_get_enumerator = d_t.GetMethod("GetEnumerator");
+            var d_mi_get_enumerator = d_t.GetTypeInfo().GetMethod("GetEnumerator");
 
             var fc_t = typeof(FormatterConverter);
             var fc = Expression.Variable(fc_t, "fc");
@@ -208,9 +208,9 @@ namespace CSRedis.Internal.Utilities
 
             var info_t = typeof(SerializationInfo);
             var info = Expression.Variable(info_t, "info");
-            var info_ctor = info_t.GetConstructor(new[] { typeof(Type), fc_t });
+            var info_ctor = info_t.GetTypeInfo().GetConstructor(new[] { typeof(Type), fc_t });
             var info_init = Expression.MemberInit(Expression.New(info_ctor, Expression.Constant(o_t), fc));
-            var info_mi_add_value = info_t.GetMethod("AddValue", new[] { typeof(String), typeof(Object) });
+            var info_mi_add_value = info_t.GetTypeInfo().GetMethod("AddValue", new[] { typeof(String), typeof(Object) });
 
             var ctx_t = typeof(StreamingContext);
             var ctx = Expression.Variable(ctx_t, "ctx");
@@ -218,12 +218,12 @@ namespace CSRedis.Internal.Utilities
 
             var enumerator_t = typeof(Dictionary<string, string>.Enumerator);
             var enumerator = Expression.Variable(enumerator_t, "enumerator");
-            var enumerator_mi_move_next = enumerator_t.GetMethod("MoveNext");
+            var enumerator_mi_move_next = enumerator_t.GetTypeInfo().GetMethod("MoveNext");
             var enumerator_current = Expression.Property(enumerator, "Current");
 
             var kvp_t = typeof(KeyValuePair<string, string>);
-            var kvp_pi_key = kvp_t.GetProperty("Key");
-            var kvp_pi_value = kvp_t.GetProperty("Value");
+            var kvp_pi_key = kvp_t.GetTypeInfo().GetProperty("Key");
+            var kvp_pi_value = kvp_t.GetTypeInfo().GetProperty("Value");
 
             var exit_loop = Expression.Label("exit_loop");
 
