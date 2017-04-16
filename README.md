@@ -49,7 +49,7 @@ using (IRedisClientAsync csredis = new RedisClient(Host))
 }
 ```
 
-##Pipelining
+## Pipelining
 CSRedis supports pipelining commands to lessen the effects of network overhead on sequential server calls. To enable pipelining, wrap a group of commands between **StartPipe()** and **EndPipe()**. Note that redis-server currently has a 1GB limit on client buffers but CSRedis does not enforce this. Similar performance gains may be obtained by using the deferred Task/Asyncronous methods.
 ```csharp
 using (var redis = new RedisClient("localhost"))
@@ -76,17 +76,17 @@ using (var redis = new RedisClient("localhost"))
 ```
 
 
-##Why csredis?
+## Why csredis?
 There are a handful of .NET redis clients in active development, but none quite suited my needs: clean interface of the native Redis API; Sentinel support; easy-to-use pipelining/async. If there are gaps between CSRedis and another implementation please open an Issue or Pull Request.
 
 
-##Authentication
+## Authentication
 Password authentication is handled according to the native API (i.e. not in the connection constructor):
 ```csharp
 redis.Auth("mystrongpasword");
 ```
 
-##Reconnecting
+## Reconnecting
 CSRedis supports a simple reconnect option to handle dropped connections to the same Redis host. See **RedisSentinelManager** for a fuller implementation between multiple masters.
 ```csharp
 using (var redis = new RedisClient("localhost"))
@@ -98,7 +98,7 @@ using (var redis = new RedisClient("localhost"))
 }
 ```
 
-##Flexible hash mapping
+## Flexible hash mapping
 Pass any POCO or anonymous object to the generic hash methods:
 ```chsarp
 redis.HMSet("myhash", new
@@ -129,7 +129,7 @@ redis.HMSet("myhash", new[] { "F1", "string", "F2", "true", "F3", DateTime.Now.T
 ```
 
 
-##Transactions
+## Transactions
 Synchronous transactions are handled using the API calls MULTI/EXEC/DISCARD. Attach an event handler to **RedisClient.TransactionQueued** event to observe server queue replies (typically 'OK'). When inside of a transaction, command return values will be default(T).
 ```csharp
 redis.TransactionQueued += (s, e) =>
@@ -147,7 +147,7 @@ var item3 = (DateTime)result[2];
 ```
 
 
-##Subscription model
+## Subscription model
 The subscription model is event based. Attach a handler to one or both of SubscriptionChanged/SubscriptionReceived to receive callbacks on subscription events. Opening the first subscription channel blocks the main thread, so unsubscription (and new subscriptions) must be handled by a background thread/task.
 
 **SubscriptionChanged**: Occurs when a subsciption channel is opened or closed  
@@ -166,7 +166,7 @@ redis.SubscriptionReceived += (s, e) =>
 redis.PSubscribe("*");
 ```
 
-##Future-proof
+## Future-proof
 CSRedis exposes a basic **Call()** method that sends arbitrary commands to the Redis server. Use this command to easily implement future Redis commands before they are included in CSRedis. This can also be used to work with "bare-metal" server responses or if a command has been renamed in redis.conf.
 ```csharp
 object resp = redis.Call("ANYTHING", "arg1", "arg2", "arg3");
@@ -174,7 +174,7 @@ object resp = redis.Call("ANYTHING", "arg1", "arg2", "arg3");
 Note that the response object will need to be cast according to the Redis unified protocol: status (System.String), integer (System.Int64), bulk (System.String), multi-bulk (System.Object[]).
 
 
-##Streaming responses
+## Streaming responses
 For large result sizes, it may be preferred to stream the raw bytes from the server rather than allocating large chunks of memory in place. This can be achieved with **RedisClient.StreamTo()**. Note that this only applies to BULK responses (e.g. GET, HGET, LINDEX, etc). Attempting to stream any other response will result in an InvalidOperationException. Here is an example that stores the response in a MemoryStream 64 bytes at a time. A more useful example might use a FileStream and a larger buffer size.
 ```csharp
 redis.Set("test", new string('x', 1048576)); // 1MB string
@@ -185,11 +185,11 @@ using (var ms = new MemoryStream())
 }
 ```
 
-##Tracing
+## Tracing
 Use [.NET tracing](http://msdn.microsoft.com/en-us/library/ms733025(v=vs.110).aspx) to expose low level TCP messages
 
 
-##Sentinel
+## Sentinel
 **RedisSentinelManager** is a managed connection that will automatically obtain a connection to a Redis master node based on information from one or more Redis Sentinel nodes. Async methods coming soon
 ```csharp
 using (var sentinel = new RedisSentinelManager("host1:123", "host2:456"))
