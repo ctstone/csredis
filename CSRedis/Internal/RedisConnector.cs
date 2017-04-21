@@ -16,14 +16,13 @@ namespace CSRedis.Internal
     {
         readonly int _concurrency;
         readonly int _bufferSize;
-        readonly Lazy<AsyncConnector> _asyncConnector;
+        readonly Lazy<IAsyncConnector> _asyncConnector;
         readonly IRedisSocket _redisSocket;
         readonly EndPoint _endPoint;
         readonly RedisIO _io;
 
         public event EventHandler Connected;
 
-        public AsyncConnector Async { get { return _asyncConnector.Value; } }
         public bool IsConnected { get { return _redisSocket.Connected; } }
         public EndPoint EndPoint { get { return _endPoint; } }
         public bool IsPipelined { get { return _io.IsPipelined; } }
@@ -44,7 +43,7 @@ namespace CSRedis.Internal
             get { return _io.Encoding; }
             set { _io.Encoding = value; }
         }
-        
+        IAsyncConnector _async { get { return _asyncConnector.Value; } }
 
         public RedisConnector(EndPoint endPoint, IRedisSocket socket, int concurrency, int bufferSize)
         {
@@ -53,12 +52,12 @@ namespace CSRedis.Internal
             _endPoint = endPoint;
             _redisSocket = socket;
             _io = new RedisIO();
-            _asyncConnector = new Lazy<AsyncConnector>(AsyncConnectorFactory);
+            _asyncConnector = new Lazy<IAsyncConnector>(AsyncConnectorFactory);
         }
 
         public bool Connect()
         {
-            _redisSocket.Connect(_endPoint);
+            _redisSocket.Connect();
 
             if (_redisSocket.Connected)
                 OnConnected();
@@ -68,7 +67,7 @@ namespace CSRedis.Internal
 
         public Task<bool> ConnectAsync()
         {
-            return Async.ConnectAsync();
+            return _async.ConnectAsync();
         }
 
         public T Call<T>(RedisCommand<T> command)
@@ -94,7 +93,7 @@ namespace CSRedis.Internal
 
         public Task<T> CallAsync<T>(RedisCommand<T> command)
         {
-            return Async.CallAsync(command);
+            return _async.CallAsync(command);
         }
 
         public void Write(RedisCommand command)
@@ -210,9 +209,14 @@ namespace CSRedis.Internal
             OnConnected();
         }
 
-        AsyncConnector AsyncConnectorFactory()
+        IAsyncConnector AsyncConnectorFactory()
         {
-            var connector = new AsyncConnector(_redisSocket, _endPoint, _io, _concurrency, _bufferSize);
+            IAsyncConnector connector;
+            if (_redisSocket.SSL)
+                connector = new SSLAsyncConnector(_redisSocket, _endPoint, _io);
+            else
+                connector = new AsyncConnector(_redisSocket, _endPoint, _io, _concurrency, _bufferSize);
+
             connector.Connected += OnAsyncConnected;
             return connector;
         }

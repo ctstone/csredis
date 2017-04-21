@@ -14,6 +14,8 @@ namespace CSRedis.Internal.IO
         readonly ConcurrentStack<Socket> _pool;
         readonly int _max;
 
+        public EndPoint EndPoint { get { return _endPoint; } }
+
         public SocketPool(EndPoint endPoint, int max)
         {
             _max = max;

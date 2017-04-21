@@ -116,7 +116,11 @@ namespace CSRedis
         /// <param name="port">Redis sentinel port</param>
         /// <param name="ssl">Set to true if remote Redis server expects SSL</param>
         public RedisSentinelClient(string host, int port, bool ssl)
-            : this(new RedisSocket(ssl), new DnsEndPoint(host, port), DefaultConcurrency, DefaultBufferSize)
+            : this(new DnsEndPoint(host, port), ssl, DefaultConcurrency, DefaultBufferSize)
+        { }
+
+        internal RedisSentinelClient(EndPoint endPoint, bool ssl, int concurrency, int bufferSize)
+            : this(new RedisSocket(endPoint, ssl), endPoint)
         { }
 
         internal RedisSentinelClient(IRedisSocket socket, EndPoint endpoint)
