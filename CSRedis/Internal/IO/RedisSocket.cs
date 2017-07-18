@@ -37,7 +37,14 @@ namespace CSRedis.Internal.IO
         public void Connect(EndPoint endpoint)
         {
             InitSocket(endpoint);
-            _socket.Connect(endpoint);
+            if (endpoint is DnsEndPoint)
+            {
+                var host = (endpoint as DnsEndPoint).Host;
+                var port = (endpoint as DnsEndPoint).Port;
+                _socket.Connect(host,port);
+            }
+            else if (endpoint is IPEndPoint) 
+                _socket.Connect((endpoint as IPEndPoint));
         }
 
         public bool ConnectAsync(SocketAsyncEventArgs args)
@@ -72,7 +79,7 @@ namespace CSRedis.Internal.IO
             if (_socket != null)
                 _socket.Dispose();
 
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _socket = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             _remote = endpoint;
         }
 
