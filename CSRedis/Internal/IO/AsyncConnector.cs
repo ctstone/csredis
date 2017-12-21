@@ -9,12 +9,11 @@ using System.Threading.Tasks;
 
 namespace CSRedis.Internal.IO
 {
-    class AsyncConnector : IDisposable
+    class AsyncConnector : IAsyncConnector
     {
         readonly SocketAsyncEventArgs _asyncConnectArgs;
         readonly SocketAsyncPool _asyncTransferPool;
-        readonly ConcurrentQueue<IRedisAsyncCommandToken> _asyncReadQueue;
-        readonly ConcurrentQueue<IRedisAsyncCommandToken> _asyncWriteQueue;
+        readonly IOQueue _ioQueue;
         readonly object _readLock;
         readonly object _writeLock;
         readonly int _concurrency;
@@ -36,8 +35,7 @@ namespace CSRedis.Internal.IO
             _bufferSize = bufferSize;
             _asyncTransferPool = new SocketAsyncPool(concurrency, bufferSize);
             _asyncTransferPool.Completed += OnSocketCompleted;
-            _asyncReadQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
-            _asyncWriteQueue = new ConcurrentQueue<IRedisAsyncCommandToken>();
+            _ioQueue = new IOQueue();
             _readLock = new object();
             _writeLock = new object();
             _asyncConnectArgs = new SocketAsyncEventArgs { RemoteEndPoint = endpoint };
@@ -69,8 +67,8 @@ namespace CSRedis.Internal.IO
         public Task<T> CallAsync<T>(RedisCommand<T> command)
         {
             var token = new RedisAsyncCommandToken<T>(command);
-            _asyncWriteQueue.Enqueue(token);
-            ConnectAsync().ContinueWith(CallAsyncDeferred);
+            _ioQueue.Enqueue(token);
+            ConnectAsync().ContinueWith(CallAsync_Continued);
             return token.TaskSource.Task;
         }
 
@@ -82,30 +80,29 @@ namespace CSRedis.Internal.IO
             _connectionTaskSource = new TaskCompletionSource<bool>();
         }
 
-        void CallAsyncDeferred(Task t)
+        void CallAsync_Continued(Task t)
         {
             lock (_writeLock)
             {
-                IRedisAsyncCommandToken token;
-                if (!_asyncWriteQueue.TryDequeue(out token))
-                    throw new Exception();
+                IRedisAsyncCommandToken token = _ioQueue.DequeueForWrite();
 
-                _asyncReadQueue.Enqueue(token);
-
-                var args = _asyncTransferPool.Acquire();
-                int bytes;
-                try
-                {
-                    bytes = _io.Writer.Write(token.Command, args.Buffer, args.Offset);
-                }
-                catch (ArgumentException e)
-                {
-                    throw new RedisClientException("Could not write command '" + token.Command.Command + "'. Argument size exceeds buffer allocation of " + args.Count + ".", e);
-                }
+                SocketAsyncEventArgs args = _asyncTransferPool.Acquire();
+                int bytes = TryWriteBuffer(token.Command, args.Buffer, args.Offset);
                 args.SetBuffer(args.Offset, bytes);
-
                 if (!_redisSocket.SendAsync(args))
                     OnSocketSent(args);
+            }
+        }
+
+        int TryWriteBuffer(RedisCommand command, byte[] buffer, int offset)
+        {
+            try
+            {
+                return _io.Writer.Write(command, buffer, offset);
+            }
+            catch (ArgumentException e)
+            {
+                throw new RedisClientException("Could not write command '" + command.Command + "'. Argument size exceeds buffer size.", e);
             }
         }
 
@@ -136,28 +133,23 @@ namespace CSRedis.Internal.IO
         {
             _asyncTransferPool.Release(args);
 
-            IRedisAsyncCommandToken token;
             lock (_readLock)
             {
-                if (_asyncReadQueue.TryDequeue(out token))
-                {
-                    try
-                    {
-                        token.SetResult(_io.Reader);
-                    }
-                    /*catch (IOException) // TODO implement async retry
-                    {
-                        if (ReconnectAttempts == 0)
-                            throw;
-                        Reconnect();
-                        _asyncWriteQueue.Enqueue(token);
-                        ConnectAsync().ContinueWith(CallAsyncDeferred);
-                    }*/
-                    catch (Exception e)
-                    {
-                        token.SetException(e);
-                    }
-                }
+                IRedisAsyncCommandToken token = _ioQueue.DequeueForRead();
+                TrySetResult(token);
+            }
+        }
+
+        void TrySetResult(IRedisAsyncCommandToken token)
+        {
+            try
+            {
+                token.SetResult(_io.Reader);
+            }
+            // TODO: catch IOException and reconnect
+            catch (Exception e)
+            {
+                token.SetException(e);
             }
         }
 
