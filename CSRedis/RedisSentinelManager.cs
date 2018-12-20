@@ -154,7 +154,7 @@ namespace CSRedis
                     if (master == null)
                         continue;
 
-                    _redisClient = new RedisClient(master.Item1, master.Item2);
+                    _redisClient = new RedisClient(MapHost(master.Item1), master.Item2);
                     _redisClient.Connected += OnConnectionConnected;
                     if (!_redisClient.Connect(timeout))
                         continue;
