@@ -17,6 +17,7 @@ namespace CSRedis
         string _masterName;
         int _connectTimeout;
         RedisClient _redisClient;
+        Dictionary<string, string> _hostMapping;
 
         /// <summary>
         /// Occurs when the master connection has sucessfully connected
@@ -46,6 +47,22 @@ namespace CSRedis
         public void Add(string host)
         {
             Add(host, DefaultPort);
+        }
+
+        /// <summary>
+        /// Add host mapping for the internal IP returned by Sentinel to the external IP
+        /// </summary>
+        /// <param name="hostMapping">Dictionary of sentinel host mapping between internal and external IPs</param>
+        public void AddHostMapping(Dictionary<string, string> hostMapping)
+        {
+            _hostMapping = hostMapping;
+        }
+
+        private string MapHost(string host)
+        {
+            if (_hostMapping != null && _hostMapping.ContainsKey(host))
+                return _hostMapping[host];
+            return host;
         }
 
         /// <summary>

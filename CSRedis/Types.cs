@@ -403,10 +403,24 @@ namespace CSRedis
             Port = info.GetInt32("port");
             RunId = info.GetString("runid");
             Flags = info.GetString("flags").Split(',');
-            PendingCommands = info.GetInt64("pending-commands");
+            PendingCommands = Exists(info, "pending-commands")? info.GetInt64("pending-commands"): info.GetInt64("link-pending-commands");
             LastOkPingReply = info.GetInt64("last-ok-ping-reply");
             LastPingReply = info.GetInt64("last-ping-reply");
             DownAfterMilliseconds = info.GetInt64("down-after-milliseconds");
+        }
+
+        /// <summary>
+        /// Check if key exists in SerializationInfo
+        /// </summary>
+        /// <param name="info">SerializationInfo object</param>
+        /// <param name="key">The key to check</param>
+        /// <returns>Return true if key exists in SerializationInfo object</returns>
+        protected static bool Exists(SerializationInfo info, string key)
+        {
+            foreach(var entry in info)
+                if (entry.Name == key)
+                    return true;
+            return false;
         }
 
         /// <summary>
@@ -618,7 +632,8 @@ namespace CSRedis
         public RedisSentinelInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
-            SDownTime = info.GetInt64("s-down-time");
+            if(Exists(info, "s-down-time"))
+                SDownTime = info.GetInt64("s-down-time");
             LastHelloMessage = info.GetInt64("last-hello-message");
             VotedLeader = info.GetString("voted-leader");
             VotedLeaderEpoch = info.GetInt64("voted-leader-epoch");
