@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 // http://redis.io/topics/sentinel-clients
@@ -13,9 +14,11 @@ namespace CSRedis
     public class RedisSentinelManager : IDisposable
     {
         const int DefaultPort = 26379;
+        private const int NUMBER_OF_CONNECTIONS = 10;
         readonly LinkedList<Tuple<string, int>> _sentinels;
         string _masterName;
         int _connectTimeout;
+        LinkedList<Tuple<string, RedisConnectionPool>> _pools;
         RedisClient _redisClient;
         Dictionary<string, string> _hostMapping;
 
@@ -31,6 +34,7 @@ namespace CSRedis
         public RedisSentinelManager(params string[] sentinels)
         {
             _sentinels = new LinkedList<Tuple<string, int>>();
+            _pools = new LinkedList<Tuple<string, RedisConnectionPool>>();
             foreach (var host in sentinels)
             {
                 string[] parts = host.Split(':');
@@ -38,6 +42,37 @@ namespace CSRedis
                 int port = Int32.Parse(parts[1]);
                 Add(hostname, port);
             }
+            
+        }
+
+        /// <summary>
+        /// Return a client from the connection pool
+        /// </summary>
+        /// <returns>a master redis client</returns>
+        public RedisClient GetClient()
+        {
+            RedisClient client;
+            client = GetClientFromPool();
+            if (!IsMaster(client))
+            {
+                Connect(_masterName, _connectTimeout);
+                client = GetClientFromPool();
+            }
+                        
+            return client;
+        }
+
+        // return true if client is master
+        private bool IsMaster(RedisClient client) => client != null && client.Info("role") == "master";
+
+        private RedisClient GetClientFromPool()
+        {
+            var first = _pools.FirstOrDefault();
+            if (first != null)
+            {
+                return first.Item2.GetClient();
+            }
+            return null;
         }
 
         /// <summary>
@@ -96,6 +131,14 @@ namespace CSRedis
                 throw new IOException("Could not connect to sentinel or master");
 
             _redisClient.ReconnectAttempts = 0;
+            if(!_pools.Any(c=>c.Item1 == sentinel))
+                _pools.AddFirst(Tuple.Create(sentinel, new RedisConnectionPool(_redisClient.Host, _redisClient.Port, NUMBER_OF_CONNECTIONS)));
+            else
+            {
+                var pool = _pools.Where(c => c.Item1 == sentinel).First();
+                _pools.Remove(pool);
+                _pools.AddFirst(pool);
+            }
             return sentinel;
         }
 
