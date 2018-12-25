@@ -158,3 +158,6 @@ $RECYCLE.BIN/
 .DS_Store
 *.nupkg
 /ctstone.Redis/nuget-pack-push.cmd
+
+# Visual studio stuff
+.vs/
