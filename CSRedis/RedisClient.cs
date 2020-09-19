@@ -200,7 +200,7 @@ namespace CSRedis
             : this(new RedisSocket(ssl), endpoint, asyncConcurrency, asyncBufferSize)
         { }
 
-        public RedisClient(IRedisSocket socket, EndPoint endpoint)
+        internal RedisClient(IRedisSocket socket, EndPoint endpoint)
             : this(socket, endpoint, DefaultConcurrency, DefaultBufferSize)
         { }
 
@@ -287,32 +287,27 @@ namespace CSRedis
 
         void OnMonitorReceived(object sender, RedisMonitorEventArgs obj)
         {
-            if (MonitorReceived != null)
-                MonitorReceived(this, obj);
+            MonitorReceived?.Invoke(this, obj);
         }
 
         void OnSubscriptionReceived(object sender, RedisSubscriptionReceivedEventArgs args)
         {
-            if (SubscriptionReceived != null)
-                SubscriptionReceived(this, args);
+            SubscriptionReceived?.Invoke(this, args);
         }
 
         void OnSubscriptionChanged(object sender, RedisSubscriptionChangedEventArgs args)
         {
-            if (SubscriptionChanged != null)
-                SubscriptionChanged(this, args);
+            SubscriptionChanged?.Invoke(this, args);
         }
 
         void OnConnectionConnected(object sender, EventArgs args)
         {
-            if (Connected != null)
-                Connected(this, args);
+            Connected?.Invoke(this, args);
         }
 
         void OnTransactionQueued(object sender, RedisTransactionQueuedEventArgs args)
         {
-            if (TransactionQueued != null)
-                TransactionQueued(this, args);
+            TransactionQueued?.Invoke(this, args);
         }
 
         string GetHost()
