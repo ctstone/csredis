@@ -1,0 +1,138 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D35E185E-A7E1-41E1-846C-21944F56074F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CSRedis</RootNamespace>
+    <AssemblyName>csredis</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\csredis.XML</DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\csredis.XML</DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(APPVEYOR)' == 'True' ">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(StrongNameKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(APPVEYOR)' == '' ">
+    <SignAssembly>true</SignAssembly>
+    <DelaySign>true</DelaySign>
+    <AssemblyOriginatorKeyFile>..\csredis.pub.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Events.cs" />
+    <Compile Include="Internal\Commands\RedisArray.cs" />
+    <Compile Include="Internal\Commands\RedisRoleCommand.cs" />
+    <Compile Include="Exceptions.cs" />
+    <Compile Include="Internal\Commands\RedisIsMasterDownByAddrCommand.cs" />
+    <Compile Include="Internal\Commands\RedisSlowLogCommand.cs" />
+    <Compile Include="Internal\Fakes\FakeRedisSocket.cs" />
+    <Compile Include="Internal\Fakes\FakeStream.cs" />
+    <Compile Include="Internal\IO\AsyncConnector.cs" />
+    <Compile Include="Internal\IO\SocketPool.cs" />
+    <Compile Include="Internal\IO\IRedisSocket.cs" />
+    <Compile Include="Internal\IO\RedisPooledSocket.cs" />
+    <Compile Include="RedisConnectionPool.cs" />
+    <Compile Include="Internal\IO\RedisIO.cs" />
+    <Compile Include="Internal\IO\RedisSocket.cs" />
+    <Compile Include="Internal\IO\RedisAsyncCommandToken.cs" />
+    <Compile Include="Internal\RedisConnector.cs" />
+    <Compile Include="Internal\IO\RedisReader.cs" />
+    <Compile Include="Internal\IO\RedisWriter.cs" />
+    <Compile Include="Internal\IO\SocketAsyncPool.cs" />
+    <Compile Include="Internal\RedisListener.cs" />
+    <Compile Include="Internal\MonitorListener.cs" />
+    <Compile Include="Internal\RedisPipeline.cs" />
+    <Compile Include="Internal\SubscriptionListener.cs" />
+    <Compile Include="Internal\RedisTransaction.cs" />
+    <Compile Include="Internal\Utilities\RedisArgs.cs" />
+    <Compile Include="Internal\Commands\RedisBool.cs" />
+    <Compile Include="Internal\Commands\RedisBytes.cs" />
+    <Compile Include="Internal\Commands\RedisDate.cs" />
+    <Compile Include="Internal\Commands\RedisFloat.cs" />
+    <Compile Include="Internal\Commands\RedisHash.cs" />
+    <Compile Include="Internal\Commands\RedisInt.cs" />
+    <Compile Include="Internal\Commands\RedisScanCommand.cs" />
+    <Compile Include="Internal\Commands\RedisTuple.cs" />
+    <Compile Include="Internal\Commands\RedisObject.cs" />
+    <Compile Include="Internal\Commands\RedisStatus.cs" />
+    <Compile Include="Internal\Commands\RedisString.cs" />
+    <Compile Include="Internal\Commands\RedisSubscription.cs" />
+    <Compile Include="IRedisClient.cs" />
+    <Compile Include="IRedisClientAsync.cs" />
+    <Compile Include="IRedisClientSync.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RedisClient.cs" />
+    <Compile Include="Internal\RedisCommand.cs" />
+    <Compile Include="RedisClient.Async.cs">
+      <DependentUpon>RedisClient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RedisClient.Sync.cs">
+      <DependentUpon>RedisClient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RedisSentinelClient.cs" />
+    <Compile Include="RedisSentinelClient.Async.cs">
+      <DependentUpon>RedisSentinelClient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RedisSentinelManager.cs" />
+    <Compile Include="Internal\Utilities\Serializer.cs" />
+    <Compile Include="Types.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="RedisSentinelClient.Sync.cs">
+      <DependentUpon>RedisSentinelClient.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CSRedis.nuspec" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

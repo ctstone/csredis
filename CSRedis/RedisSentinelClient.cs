@@ -119,7 +119,7 @@ namespace CSRedis
             : this(new RedisSocket(ssl), new DnsEndPoint(host, port), DefaultConcurrency, DefaultBufferSize)
         { }
 
-        internal RedisSentinelClient(IRedisSocket socket, EndPoint endpoint)
+        public RedisSentinelClient(IRedisSocket socket, EndPoint endpoint)
             : this(socket, endpoint, DefaultConcurrency, DefaultBufferSize)
         { }
 

@@ -200,7 +200,7 @@ namespace CSRedis
             : this(new RedisSocket(ssl), endpoint, asyncConcurrency, asyncBufferSize)
         { }
 
-        internal RedisClient(IRedisSocket socket, EndPoint endpoint)
+        public RedisClient(IRedisSocket socket, EndPoint endpoint)
             : this(socket, endpoint, DefaultConcurrency, DefaultBufferSize)
         { }
 
