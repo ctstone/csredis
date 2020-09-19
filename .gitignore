@@ -5,6 +5,7 @@
 *.suo
 *.user
 *.sln.docstates
+.vs/
 
 # Configuration
 [Ap]pp[Ll]ocal.config
