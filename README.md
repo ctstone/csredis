@@ -1,5 +1,8 @@
 # csredis [![Build status](https://ci.appveyor.com/api/projects/status/cfhtnvf9vuyf5797)](https://ci.appveyor.com/project/ctstone/csredis-675)
 
+# Forked from original and ported to netstandard2.0
+
+
 CSRedis is a .NET client for Redis and Redis Sentinel (2.8.12). Includes both synchronous and asynchronous implementations.
 
 The easiest way to install CSRedis is from [NuGet](https://nuget.org/packages/csredis) via the [Package Manager Console](http://docs.nuget.org/docs/start-here/using-the-package-manager-console):  
