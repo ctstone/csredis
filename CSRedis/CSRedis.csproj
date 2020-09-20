@@ -2,7 +2,19 @@
 
   <PropertyGroup>
     <TargetFrameworks>net472;netstandard2.0</TargetFrameworks>
-    <AssemblyVersion>3.1.0</AssemblyVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyVersion>3.2.2</AssemblyVersion>
+    <Description>CSRedis is a .NET Standard 2.0 client for Redis and Sentinel (Works with Dynomite)</Description>
+    <VersionPrefix>3.2.2</VersionPrefix>
+    <SignAssembly>false</SignAssembly>
+    <PackageTags>redis;sentinel;dynomite;async</PackageTags>
+    <PackageProjectUrl>https://github.com/TwoUnderscorez/csredis.core</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TwoUnderscorez/csredis.core</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <RootNamespace>CSRedis</RootNamespace>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
