@@ -150,7 +150,7 @@ var item3 = (DateTime)result[2];
 ## Subscription model
 The subscription model is event based. Attach a handler to one or both of SubscriptionChanged/SubscriptionReceived to receive callbacks on subscription events. Opening the first subscription channel blocks the main thread, so unsubscription (and new subscriptions) must be handled by a background thread/task.
 
-**SubscriptionChanged**: Occurs when a subsciption channel is opened or closed  
+**SubscriptionChanged**: Occurs when a subscription channel is opened or closed  
 **RedisSubscriptionReceived**: Occurs when a subscription message has been received
 
 Example:
