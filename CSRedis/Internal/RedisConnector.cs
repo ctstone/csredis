@@ -200,15 +200,16 @@ namespace CSRedis.Internal
 
         void OnConnected()
         {
-            _io.SetStream(_redisSocket.GetStream());
-            if (Connected != null)
-                Connected(this, new EventArgs());
+	        OnAsyncConnected(this, new EventArgs());
         }
 
-        void OnAsyncConnected(object sender, EventArgs args)
+        async void OnAsyncConnected(object sender, EventArgs args)
         {
-            OnConnected();
-        }
+	        var stream = await _redisSocket.GetStream().ConfigureAwait(false);
+			_io.SetStream(stream);
+			if (Connected != null)
+				Connected(this, new EventArgs());
+		}
 
         AsyncConnector AsyncConnectorFactory()
         {

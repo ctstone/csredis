@@ -46,7 +46,7 @@ namespace CSRedis.Internal.IO
         {
             foreach (var socket in _pool)
             {
-                System.Diagnostics.Debug.WriteLine("Disposing socket #{0}", socket.Handle);
+                System.Diagnostics.Debug.WriteLine("Disposing socket #{0}", socket);
                 socket.Dispose();
             }
         }

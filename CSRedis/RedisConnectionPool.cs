@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CSRedis
 {
@@ -116,7 +117,7 @@ namespace CSRedis
         public void Connect(EndPoint endpoint)
         {
             _socket = _pool.Connect();
-            System.Diagnostics.Debug.WriteLine("Got socket #{0}", _socket.Handle);
+            System.Diagnostics.Debug.WriteLine("Got socket #{0}", _socket);
         }
 
         public bool ConnectAsync(SocketAsyncEventArgs args)
@@ -129,9 +130,9 @@ namespace CSRedis
             return _socket.SendAsync(args);
         }
 
-        public Stream GetStream()
+        public Task<Stream> GetStream()
         {
-            return new NetworkStream(_socket);
+	        return Task.FromResult((Stream) new NetworkStream(_socket));
         }
 
         public void Dispose()

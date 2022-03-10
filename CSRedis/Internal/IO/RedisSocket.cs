@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CSRedis.Internal.IO
 {
@@ -51,14 +52,14 @@ namespace CSRedis.Internal.IO
             return _socket.SendAsync(args);
         }
 
-        public Stream GetStream()
+        public async Task<Stream> GetStream()
         {
             Stream netStream = new NetworkStream(_socket);
 
             if (!_ssl) return netStream;
 
             var sslStream = new SslStream(netStream, true);
-            sslStream.AuthenticateAsClient(GetHostForAuthentication());
+            await sslStream.AuthenticateAsClientAsync(GetHostForAuthentication());
             return sslStream;
         }
 

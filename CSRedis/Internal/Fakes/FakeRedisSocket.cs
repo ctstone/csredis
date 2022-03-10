@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CSRedis.Internal.Fakes
 {
@@ -51,9 +52,9 @@ namespace CSRedis.Internal.Fakes
             return false;
         }
 
-        public Stream GetStream()
+        public Task<Stream> GetStream()
         {
-            return _stream;
+	        return Task.FromResult((Stream)_stream);
         }
 
         public void Dispose()
