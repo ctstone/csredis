@@ -618,7 +618,10 @@ namespace CSRedis
         public RedisSentinelInfo(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
-            SDownTime = info.GetInt64("s-down-time");
+            // safety get from SerializationInfo
+            var s_down_time = GetSerializationItemValue<Int64>(info, "s-down-time");
+
+            SDownTime = s_down_time == 0 ? -1 : s_down_time;
             LastHelloMessage = info.GetInt64("last-hello-message");
             VotedLeader = info.GetString("voted-leader");
             VotedLeaderEpoch = info.GetInt64("voted-leader-epoch");
@@ -642,6 +645,26 @@ namespace CSRedis
         /// Get or set the voted-leader epoch
         /// </summary>
         public long VotedLeaderEpoch { get; set; }
+        
+        /// <summary>
+        /// Get a value from an instance of the SerializationInfo
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="info"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        private T GetSerializationItemValue<T>(SerializationInfo info, string key)
+        {
+            foreach (SerializationEntry entry in info)
+            {
+                if (entry.Name == key)
+                {
+                    return (T)Convert.ChangeType(entry.Value, typeof(T), System.Globalization.CultureInfo.InvariantCulture);
+                }
+            }
+
+            return default(T);
+        }
     }
 
     /// <summary>
