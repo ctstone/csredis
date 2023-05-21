@@ -64,7 +64,8 @@ namespace CSRedis.Internal.IO
 
         public void Dispose()
         {
-            _socket.Dispose();
+            if (_socket != null)
+                _socket.Dispose();
         }
 
         void InitSocket(EndPoint endpoint)
